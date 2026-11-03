@@ -1,7 +1,7 @@
 # Tlilli
 
 Local-first desktop editor for scientific manuscripts. An external MCP agent proposes (red ink);
-the author decides (black ink). Concept and definition: https://claude.ai/artifact/6DG5bEukSRevE3nucGeuMs
+the author decides (black ink). Concept and definition: [Placeholder]
 
 ## Layout
 
