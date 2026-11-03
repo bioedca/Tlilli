@@ -1,0 +1,110 @@
+# 41 · Risks and decision log
+
+## 1. Risk register
+
+Likelihood and impact: L/M/H. Owner is the maintainer unless stated. Reviewed at every gate (`PR-SEC-005` for security rows; all rows at the retrospective).
+
+| ID | Risk | L | I | Mitigation | Trigger to act |
+| --- | --- | --- | --- | --- | --- |
+| R-01 | Span IDs do not survive heavy author edits; anchors (comments, claim links, provenance) drift | M | H | Diff anchoring with property tests and a real-revision corpus metric (≥ 99%) before v0.2 (`FR-01-012`); tombstones; manual re-anchor UI | Metric < 99% at G1 |
+| R-02 | Two document models (Rust truth, ProseMirror view) drift | M | H | `INV-02`; fault-injection test; no optimistic view state; UI integration tests with the fake core | Any view-only state found in review |
+| R-03 | Manuscript read-only during runs frustrates authors | M | M | Scoped short runs; comments queue during runs; metric on run duration; revisit if runs routinely exceed 10 min (concept) | Median agent turn > 10 min at G2 |
+| R-04 | Prompt injection through sources and reviewer text | H | H | Untrusted envelopes, scope-limited write tools, author review of every suggestion (`INV-01`, `INV-03`, `INV-07`); skills instruct | Any suggestion traced to injected text at a gate |
+| R-05 | Paywalled papers have no full text; verification cannot run | H | M | `unverifiable` status with a request for the PDF; Europe PMC and Unpaywall first | Share of unverifiable > 30% on a gate manuscript (docs guidance) |
+| R-06 | docx fidelity for co-authors; tracked changes are a large effort | M | M | v0.4 exports comments; tracked changes post-1.0; snapshot tests; LibreOffice headless check | Co-author cannot use the export at G4 |
+| R-07 | Name "Tlilli" collides with a trademark | L | H | Search before `v0.1.0` (D-035); rename script (`scripts/rename.sh`) prepared in Phase 0 | Negative search result |
+| R-08 | ChatGPT connector needs public HTTPS and write-capable plans | M | M | Guarded tunnel; read-mostly documentation; plan matrix re-checked at v0.5 start (D-038) | Plan matrix changes |
+| R-09 | Unsigned binaries deter users; OS warnings become habit-forming | M | M | Checksums + attestations + channels + honest docs (D-026); Sponsors earmarked for notarization; SignPath application | Install-funnel feedback at G6 |
+| R-10 | AI-reviewer rate limits or outages stall the pipeline | M | M | Ledger and back-off (D-019); pipeline degrades to Codex + human for gated PRs; nothing else blocks | > 2 stalled PRs in a week |
+| R-11 | Greptile budget exhausted mid-month | M | L | 90% threshold defers `review:deep`; gated PRs fall back to Codex + CodeRabbit + maintainer | Ledger at 90% before day 20 |
+| R-12 | Agent sessions restart or stop mid-task, leaving half work | H | L | Push early as Draft; Agent-session report form; stale sweep; WIP limit 3 | Reports without follow-up for 2 weeks |
+| R-13 | Rebase churn with several agent PRs in flight | M | M | WIP ≤ 3, one per area; queue rebases; small PRs | Queue failures > 20% of entries |
+| R-14 | Merge queue unavailable because the repo is user-owned | H (now) | M | Org move before v0.1 (D-013); interim rule "require up to date" until the move | Phase 0 |
+| R-15 | GitHub changes plan features (merge queue, attestations, Codespaces quotas) | L | M | Settings exported and audited at gates; fallbacks listed in [39](39-github-configuration.md) | Feature change announced |
+| R-16 | Pure-Rust PDF extraction is not good enough | M | M | ADR-0007 at G3 may adopt `pdfium-render` (BSD) under the sidecar/native-dependency rule | DOI sniff < 90% or text quality complaints at G3 |
+| R-17 | `hayagriva` lacks a needed CSL feature | L | M | Styles tested against the CSL suite subset; fall back to post-processing or contribute upstream | Snapshot failures on required styles |
+| R-18 | Solo maintainer unavailable (bus factor) | L | H | GOVERNANCE succession, backup owner, secrets inventory, runbook drill at G6 (T-15) | Any absence > 1 month |
+| R-19 | Updater private key lost or leaked | L | H/Critical | Custody and rotation rules (`PR-REL-034`, T-09, T-10) | Yearly drill fails |
+| R-20 | Scope creep into chat, reference management or cloud features | M | M | Non-goals in [01](01-vision-and-scope.md) §3; `phase/post-1.0` for Could items; retrospectives | Issues outside FR scope accumulate |
+| R-21 | The PRD itself drifts from practice | M | M | Decision-log discipline; PRD re-baselined at gates; gated path | Retro finds undocumented practice |
+| R-22 | CodeQL Rust coverage or `zizmor` false positives slow PRs | L | L | Allow-lists with reasons; quarterly retune | Noise complaints in metrics |
+| R-23 | Fixture licensing error (vendored paper not CC) | L | M | `LICENSES.md` gated; only CC-BY/CC0 with DOI recorded | License check at triage |
+| R-24 | Resolver APIs change or rate-limit | M | L | Recorded fixtures; graceful `unresolved`; cache; polite pool | Nightly live smoke fails |
+
+## 2. Decision log
+
+Decisions taken for this PRD on 2026-11-03 in the maintainer interview (I) or by the drafting agent and ratified by the maintainer's approval of this document (A). Later decisions are appended with their date and the PR that recorded them.
+
+| ID | Decision | Rationale | Source |
+| --- | --- | --- | --- |
+| D-001 | Solo maintainer (bioedca) plus AI agents through v1.0; gates route to one human | Team reality; INTERSECT: right-size process | I |
+| D-002 | Claude Code (cloud and local) and Codex (CLI and cloud) both author PRs; agent-neutral rules in CONTRIBUTING, mirrored in `CLAUDE.md` and `AGENTS.md` | Two agent families in use | I |
+| D-003 | Apache-2.0 for crates and app; MIT for `skills/`; LICENSE roadmap at root; SPDX headers | Patent grant for the app; maximal reuse of skill text | I |
+| D-004 | This session delivers the PRD only, as `docs/prd/` Markdown in a draft PR; scaffolding becomes Phase 0 issues | Review the plan before the machinery | I |
+| D-005 | Full functional requirements with IDs and acceptance criteria per phase, plus NFRs and process rules | Single tracking source; issues cite IDs | I |
+| D-006 | Requirement ID scheme `INV`, `FR-<phase>-<nnn>`, `NFR-<AREA>-<nnn>`, `PR-<AREA>-<nnn>`, `D`, `R`, `ADR` | Traceability | A |
+| D-007 | GitHub Flow; `main` always releasable; tags on `main`; `release/x.y` only after v1.0 for backports | INTERSECT feature branching; release branches only when shipped externally | I |
+| D-008 | Branch naming: agent platform prefix + slug; humans `<type>/<issue>-<slug>`; reserved prefixes | Works with how cloud agents create branches | A |
+| D-009 | Conventional Commits with a closed scope list | Changelog generation; linting | A (scope list), CLAUDE.md (convention) |
+| D-010 | Rebase-merge only; every commit a Conventional Commit; ≤ 10 commits per PR; merge and squash disabled | Fine-grained, linear history | I |
+| D-011 | `main` ruleset with no bypass for anyone, including the org owner; emergency = fast-lane PR | INTERSECT protected branches; no exceptions culture | I |
+| D-012 | DCO sign-off on every commit; no CLA; no signature requirement | Lightweight certification that works for agents and humans | I |
+| D-013 | Create a free GitHub organization and transfer the repo before v0.1; keep the merge queue requirement | Merge queue is only available on org-owned public repos | I |
+| D-014 | Agent commits are authored and signed off by the maintainer's identity; no agent trailer; AI involvement stated in the PR body | DCO is a person's certification; history stays simple | I |
+| D-015 | Review pipeline order: Codex (local then cloud) → CodeRabbit → Greptile (gated or on demand) → human gate | Use each tool where it is strongest and cheapest first | I |
+| D-016 | Codex via ChatGPT Pro; local `codex review` rounds until clean, then one cloud round (more only if changes) | Codex rounds are not the scarce resource | I |
+| D-017 | Codex cloud automatic reviews off; rounds requested with `@codex review` | Preserve lane order; avoid rounds on WIP pushes | A |
+| D-018 | "Codex clean" = zero open findings of any severity; low-severity may be declined with a written reason | Clear exit condition | I |
+| D-019 | CodeRabbit Open Source plan; auto-review off; `@coderabbitai review` after Codex is clean; request ledger (≤ 3 per hour repo-wide) and back-off since no quota API exists; second round only after code changes | Stay under rate limits | I (+A for ledger mechanism) |
+| D-020 | Greptile reviews automatically on gated PRs and on demand via `review:deep` | Deep review where it matters | I |
+| D-021 | Greptile: one paid seat, budget ≈ 15–20 reviews per month, Base tier with T-Rex where supported; ledger in the Project | Spend predictably | I |
+| D-022 | Human gates: core model/event/segment/provenance, storage and migrations, MCP server, app permissions and updater config, skills, CI/review/release machinery, legal and public files, PRD/ADR/gates, fixture licenses | Where maintainer judgement is fundamental | I |
+| D-023 | Coverage: Codecov; patch ≥ 80% required on `tlilli-core` and `tlilli-mcp`; others measured | Protect the source of truth; coverage is a floor | I |
+| D-024 | Docs sync: hard CI rule on contract paths; soft checklist elsewhere | Keep the agent contract documented | I |
+| D-025 | Releases: release-plz release PR → tag → tauri-action draft release → maintainer publishes by hand | Traceable, reviewed, one manual gate | I |
+| D-026 | No code signing or notarization (no budget); zero-cost trust posture: minisign updater, Sigstore attestations, checksums, honest docs; SignPath/notarization optional if funded | Constraint stated by the maintainer | I |
+| D-027 | Fixtures: synthetic manuscripts by script plus a few CC-BY/CC0 OA papers with `LICENSES.md`; no Git LFS; real revision histories used locally only | Reproducible and legally clean | I |
+| D-028 | Bug fixes ship a failing-first test; features ship tests in the same PR; AI-written tests named in the PR body; `needs-tests` blocks auto-merge | INTERSECT TDD and LLM guidance | I |
+| D-029 | Three test layers (Rust unit/property, Playwright on web UI with mocked core, tauri-driver smoke under xvfb) plus proptest, insta, cargo-fuzz nightly, cargo-mutants weekly | Confidence without flaky native E2E | I |
+| D-030 | UI: React 19 + TypeScript + Vite; ProseMirror via react-prosemirror; Zustand | Ecosystem and agent familiarity | I |
+| D-031 | MSRV = current stable at each minor; `rust-version` pinned and tested; cargo-nextest; clippy pedantic subset | Ships binaries; modern Rust | I |
+| D-032 | Biome + Vitest + Testing Library + Playwright | One fast toolchain | I |
+| D-033 | Diagnostics stay local: structured logs, crash files, redacted "Copy diagnostics"; nothing sent automatically | No telemetry (concept) | I |
+| D-034 | Each phase ends with a tagged `v0.X.0`; the gate test runs on that release build; milestone closes on pass; failures → `v0.X.1` | Test what ships | I |
+| D-035 | Trademark search (USPTO, EUIPO, WIPO; classes 9 and 42) before `v0.1.0`; negative result → rename before any release | Open source needs a clear name | I |
+| D-036 | No Git LFS; 2 MB per file and 50 MB per directory caps; large assets are release assets | Keep the repo clonable | A |
+| D-037 | Pure Rust in-process by default (typst, pdf-extract/lopdf, zip+quick-xml); sidecars only by ADR; the v0.5 tunnel uses the user's installed cloudflared/ngrok | One binary; reproducibility | I |
+| D-038 | ChatGPT connector plan matrix re-checked at v0.5 start and documented in the product | It has moved several times (concept) | A (from concept) |
+| D-039 | The authoring agent flips Draft → Ready when CI is green and AI threads are resolved, and enables auto-merge; GitHub merges ungated PRs with no human click | Human time only at gates | I |
+| D-040 | Prefixed label scheme (`type/`, `area/`, `priority/`, `status/`, `phase/`) plus control and size labels, synced from `.github/labels.yml` | Filterable and machine-readable | I |
+| D-041 | Nine issue forms: bug, feature, task, protocol change, skill change, gate report, retrospective, documentation, agent-session report; blank issues off | Structured intake incl. agent hand-offs | I |
+| D-042 | Discussions enabled at v0.2 with Q&A, Ideas, Show-and-tell, Announcements | Questions get a home before public release | I |
+| D-043 | One Project "Tlilli roadmap": Kanban + roadmap view; fields Phase, Area, Priority, Size, Gate, Lane, ledgers; WIP 3 for agent PRs; milestones = phases; no sprints | INTERSECT: Kanban for small teams | I |
+| D-044 | Use Codespaces (devcontainer with xvfb + noVNC), a private user-owned companion repo for release rehearsal, Sponsors + CITATION.cff + Zenodo, insights and private vulnerability reporting | Put GitHub Pro perks to work | I |
+| D-045 | PR size cap 400 hand-written lines with exclusions; `size:override` + reason; size labels | INTERSECT review pace | I |
+| D-046 | Agents may apply `ci:full`, `review:deep`, `needs-tests` freely; `docs:not-needed` and `size:override` need a reason and are audited weekly; `gate` only by automation; `gate:approved` only by the maintainer | Autonomy with an audit trail | I |
+| D-047 | Support: latest minor gets fixes; security backports to the previous minor for 90 days; weekly triage; OS floor macOS 13+, Windows 10 22H2+, Ubuntu 22.04+ | Realistic for one maintainer | I |
+| D-048 | Channels: GitHub Releases (canonical), Homebrew tap, winget, Flathub, crates.io (`tlilli-core`, `tlilli-mcp`, `tlilli-cli`) | Reach without hosting | I |
+| D-049 | Tauri updater from v0.2 with minisign; opt-in launch check; channels stable and beta; no nightly channel | Signed, private, free | I |
+| D-050 | CI: fast Linux lane on every PR push; full 3-OS matrix on Ready, `ci:full`, queue and `main`; merge queue required | Fast feedback for agents, no red `main` | I |
+| D-051 | Mandatory security CI: cargo-deny + pnpm audit, Dependabot grouped weekly with auto-merge of patch/minor, CodeQL + Scorecard, actions pinned to SHAs with zizmor | Supply-chain baseline | I |
+| D-052 | Docs: MkDocs Material on GitHub Pages now, custom domain after D-035; user, protocol (generated), developer and rustdoc sets; single `latest` until v1.0 then `mike` per minor + `dev` | Zero cost, versioned when it matters | I |
+| D-053 | Human gate implemented as the required status check `gate/maintainer` (maintainer review approval or maintainer-applied `gate:approved`, reset on push) because the PR author of record is the maintainer | GitHub forbids self-approval | A |
+| D-054 | Library choices recorded for ADRs: `rmcp` (MCP), `rusqlite` + `rusqlite_migration` (storage), `hayagriva` (citations), `similar` (diff), `typst` crates (PDF) | Maintained crates.io releases; one engine for PDF and references | A |
+| D-055 | Add `crates/tlilli-cli` (binary `tlilli`) to the layout for `export`, `import`, `skills install`, `doctor`, `mcp schema`; update `CLAUDE.md` in Phase 0 | The concept names `tlilli export` and `tlilli skills install` | A |
+| D-056 | Codex, CodeRabbit and Greptile configuration files, CODEOWNERS and workflows are gated paths | Changing how review works is a maintainer decision | A |
+
+## 3. Open questions carried from the concept (status)
+
+| Question | Status in this PRD |
+| --- | --- |
+| Manuscript read-only while a run is open | Kept (`INV-04`); revisit trigger R-03 |
+| Span IDs surviving heavy edits | `FR-01-012` + metric at G1 (R-01) |
+| Two document models | `INV-02`, `FR-01-020` (R-02) |
+| ChatGPT reachability and plan limits | `FR-05-050..052`, D-038 (R-08) |
+| Full text for verification | `FR-03-003`, `unverifiable` status (R-05) |
+| docx fidelity | `FR-04-040`, tracked changes post-1.0 (R-06) |
+| Prompt injection | `INV-07`, T-01 (R-04) |
+| Name clearance | D-035 (R-07) |
+| License | D-003 |
+| Local models | Out of scope; any MCP client works (non-goal) |
