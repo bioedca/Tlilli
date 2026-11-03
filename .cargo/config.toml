@@ -1,0 +1,9 @@
+# Repo-level cargo settings; the cloud environment sets the same via environment variables,
+# this file makes local and CI builds match.
+
+[net]
+git-fetch-with-cli = true
+retry = 3
+
+[profile.dev]
+debug = "line-tables-only"

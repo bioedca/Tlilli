@@ -1,0 +1,16 @@
+# Rust
+/target
+# Node
+**/node_modules
+/ui/dist
+# Tauri
+/src-tauri/gen/schemas
+/src-tauri/target
+# Local caches and workspaces
+.cache/
+*.tlilli/
+# Never commit these
+.env
+.env.*
+*.pem
+.DS_Store

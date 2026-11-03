@@ -3,5 +3,32 @@
     "commit": "",
     "pr": "",
     "sessionUrl": false
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/scripts/install_pkgs.sh",
+            "timeout": 600
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(cargo:*)",
+      "Bash(rustup:*)",
+      "Bash(pnpm:*)",
+      "Bash(npx tauri:*)",
+      "Bash(xvfb-run:*)",
+      "Bash(typst:*)",
+      "Bash(sqlite3:*)",
+      "Bash(gh api:*)",
+      "Bash(git:*)"
+    ]
   }
 }

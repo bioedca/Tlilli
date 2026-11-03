@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "tlilli": {
+      "command": "cargo",
+      "args": ["run", "-q", "-p", "tlilli-mcp", "--", "stdio"],
+      "env": {
+        "TLILLI_LOG": "info"
+      }
+    }
+  }
+}
