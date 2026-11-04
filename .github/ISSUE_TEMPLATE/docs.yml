@@ -30,6 +30,15 @@ body:
         - out of date
     validations:
       required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: What is wrong
+      description: >-
+        The passage, command or claim that is wrong, missing, unclear or out
+        of date, and what you expected to find there.
+    validations:
+      required: true
   - type: dropdown
     id: quadrant
     attributes:

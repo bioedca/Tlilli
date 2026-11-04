@@ -14,9 +14,11 @@ body:
   - type: markdown
     attributes:
       value: |
-        The gate runs on the published release build, on a real manuscript,
-        following `docs/gates/G<n>.md` literally. The report records metrics
-        and redacted notes only, never manuscript text (PR-GATE-002).
+        From G1 on, the gate runs on the published release build, on a real
+        manuscript, following `docs/gates/G<n>.md` literally. Gate G0 has no
+        release and no manuscript: it runs on the CI artifacts of `main`, and
+        its release-tag and manuscript fields read `n/a`. The report records
+        metrics and redacted notes only, never manuscript text (PR-GATE-002).
   - type: dropdown
     id: phase
     attributes:
@@ -37,8 +39,8 @@ body:
     attributes:
       label: Release tag tested
       description: >-
-        The tag of the published release, or the CI run for Gate G0, which has
-        no release.
+        The tag of the published release. For Gate G0 write `n/a` and link
+        the CI run of `main` that was tested.
       placeholder: "v0.1.0"
     validations:
       required: true
@@ -48,7 +50,7 @@ body:
       label: Manuscript description (redacted)
       description: >-
         Field, length in words, number of sources, languages, which agent
-        vendor saw it. No title, no text.
+        vendor saw it. No title, no text. `n/a` for Gate G0.
     validations:
       required: true
   - type: input
@@ -78,16 +80,17 @@ body:
     attributes:
       label: Metrics
       description: >-
-        The success metrics from docs/prd/01-vision-and-scope.md §6. Fill
+        The success metrics from docs/prd/01-vision-and-scope.md §6 plus the
+        velocity figures PR-GATE-008 asks for, as the table below. Fill
         Measured for every metric whose From phase is this one or earlier,
         and write n/a for the rest. A missed metric is either a fail or a
         waiver with a decision entry (PR-GATE-005).
-      value: |
+      placeholder: |
         | Metric | Target | From | Measured |
         | --- | --- | --- | --- |
         | Author time per cycle, 3-request run | ≤ 10 min | v0.2 | |
         | Agent turn wall-clock, 3 requests | ≤ 5 min; ≤ 30 min hard | v0.2 | |
-        | Span-ID survival over a real revision | ≥ 99%; locked 100% | v0.1 | |
+        | Span-ID survival, unchanged sentences | ≥ 99%; locked 100% | v0.1 | |
         | Author-text overwrites by an agent | 0, ever | v0.2 | |
         | Suggestions accepted per run | ≥ 50% | v0.2 | |
         | Claim links verified correctly (20 citations) | ≥ 90% | v0.3 | |
@@ -96,6 +99,8 @@ body:
         | Clean-machine install to first manuscript | ≤ 5 min | v1.0 | |
         | Process: median PR lead time, agent PRs | ≤ 24 h | Phase 0+ | |
         | Process: zero-touch merges on ungated paths | ≥ 80% | Phase 0+ | |
+        | Velocity: PRs merged per week | recorded, no target | Phase 0+ | |
+        | Velocity: FRs verified this phase | recorded, no target | v0.1 | |
     validations:
       required: true
   - type: dropdown

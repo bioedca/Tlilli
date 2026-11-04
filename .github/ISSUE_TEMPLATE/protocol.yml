@@ -77,8 +77,8 @@ body:
       label: Transcripts to add
       description: >-
         Golden JSON-RPC transcripts under tests/fixtures/transcripts: one
-        success transcript and one per refusal for every tool or field added
-        or changed (PR-TST-017).
+        success transcript and one per refusal for every tool, resource or
+        field added or changed (PR-TST-017; PRD 34 §1, Contract row).
     validations:
       required: true
   - type: dropdown
