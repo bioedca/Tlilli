@@ -1,5 +1,7 @@
 # Syncs the repository's labels from .github/labels.yml (docs/prd/36-issues-labels-and-projects.md §2).
-# Runs on main only; the config file is the source of truth and every label not in it is deleted.
+# Runs on main only (the job condition also rejects a manual dispatch from any other branch or tag, so a
+# stale or unmerged labels.yml can never prune the repository's labels); the config file is the source of
+# truth and every label not in it is deleted.
 name: labels-sync
 
 on:
@@ -19,6 +21,7 @@ concurrency:
 jobs:
   sync:
     name: sync labels
+    if: github.ref == 'refs/heads/main' # workflow_dispatch runs on the selected ref; only main's scheme may sync
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
