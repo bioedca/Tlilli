@@ -1,0 +1,128 @@
+# Docs site: MkDocs (strict) plus rustdoc under /api, deployed to GitHub Pages through OIDC
+# (PRD 33 §1 row `docs.yml`, PRD 35 §1, D-052). Pages' source must be "GitHub Actions"
+# (PRD 39 §2). Publishing `updates/*.json` into the site and the `release: published`
+# trigger come with post-release.yml (bootstrap task 26); versioned docs with `mike` from v1.0.
+name: docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - docs/**
+      - mkdocs.yml
+      - crates/**
+      - src-tauri/**
+      - Cargo.toml
+      - Cargo.lock
+      - .github/workflows/docs.yml
+  workflow_dispatch:
+
+# Least privilege (PR-CI-003): nothing at the workflow level, each job states what it needs.
+permissions: {}
+
+# One Pages deployment at a time; a running deployment is not cancelled.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build the site
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read # checkout
+      pages: read # configure-pages reads the Pages configuration
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          # git-revision-date-localized reads each page's last commit date.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          # Same version docs/requirements.txt was compiled with (see docs/requirements.in).
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: docs/requirements.txt
+
+      - name: Install the docs toolchain
+        run: pip install --require-hashes -r docs/requirements.txt
+
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+
+      - name: Build the site
+        # Material 9.8 prints its end-of-life notice (2027-05-05, Zensical named as successor)
+        # at every build. Whether D-052 changes is the maintainer's call; the log need not repeat it.
+        env:
+          NO_MKDOCS_2_WARNING: "1"
+        run: mkdocs build --strict
+
+      # Rustdoc under /api. The guard lets the site deploy before the Cargo workspace exists
+      # (bootstrap task 12); remove the guard and the placeholder once it does.
+      - name: Tauri 2 Linux prerequisites
+        if: hashFiles('src-tauri/Cargo.toml') != ''
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file \
+            libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable branch, 2026-11-04
+        if: hashFiles('Cargo.toml') != ''
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        if: hashFiles('Cargo.toml') != ''
+
+      - name: Build the API docs
+        if: hashFiles('Cargo.toml') != ''
+        run: |
+          cargo doc --workspace --no-deps
+          mkdir -p site/api
+          cp -R target/doc/. site/api/
+          # cargo doc writes no top-level index for a workspace; list the crates.
+          if [ ! -f site/api/index.html ]; then
+            {
+              echo '<!doctype html><html lang="en"><head><meta charset="utf-8">'
+              echo '<title>Tlilli API documentation</title></head><body>'
+              echo '<h1>Tlilli API documentation</h1><ul>'
+              for crate in site/api/*/index.html; do
+                name=$(basename "$(dirname "$crate")")
+                echo "<li><a href=\"$name/index.html\">$name</a></li>"
+              done
+              echo '</ul><p><a href="../">Back to the documentation</a></p></body></html>'
+            } > site/api/index.html
+          fi
+
+      - name: Placeholder API page
+        if: hashFiles('Cargo.toml') == ''
+        run: |
+          mkdir -p site/api
+          cat > site/api/index.html <<'HTML'
+          <!doctype html>
+          <html lang="en">
+          <head><meta charset="utf-8"><title>Tlilli API documentation</title></head>
+          <body>
+          <h1>Tlilli API documentation</h1>
+          <p>The API documentation (rustdoc for the Tlilli crates) appears here once the Cargo
+          workspace exists. <a href="../">Back to the documentation</a>.</p>
+          </body>
+          </html>
+          HTML
+
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write # deploy-pages publishes the uploaded artifact
+      id-token: write # OIDC token that authenticates the deployment (no stored secret)
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
