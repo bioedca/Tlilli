@@ -120,7 +120,7 @@ None exist (observed 2026-11-04). The `main` and `tags v*` rulesets are created 
 
 - Project "Tlilli roadmap": Maintainer, 2026-11-04, created with the fields and views of PRD 36 §4 (`Gate` as a single select Yes/No, D-061). **Project URL: to record.** Agent sessions cannot read or write Projects v2 (GraphQL is refused), so the `CodeRabbit requests` and `Greptile reviews` ledger fields are filled by the maintainer at triage from the agents' PR bodies and session reports until an agent-writable ledger exists.
 - Milestones (Observed, created 2026-11-04 through the API, no due dates): 1 `0 Foundation`, 2 `v0.1 Black ink`, 3 `v0.2 Red ink`, 4 `v0.3 Ledger`, 5 `v0.4 Sweep and style`, 6 `v0.5 Beyond the article`, 7 `v1.0 Public`, 8 `post-1.0`.
-- Labels: the full scheme of PRD 36 §2 (55 labels) was created through the API on 2026-11-04 ahead of `labels.yml` (task 17), which becomes the source of truth and prunes GitHub's defaults that are not in the scheme (`bug`, `documentation`, `duplicate`, `enhancement`, `invalid`, `question`, `wontfix`, `accessibility`).
+- Labels: the full scheme of PRD 36 §2 (60 labels: 11 type, 12 area, 4 priority, 5 status, 8 phase, 13 control, 5 size, 2 community) was created through the API on 2026-11-04 ahead of `labels.yml` (task 17), which becomes the source of truth and prunes GitHub's defaults that are not in the scheme (`bug`, `documentation`, `duplicate`, `enhancement`, `invalid`, `question`, `wontfix`, `accessibility`).
 
 ## 10. Companion repositories ([PRD 39 §6](../prd/39-github-configuration.md#6-github-pro-perks-and-platform-extras-in-use-d-044))
 
