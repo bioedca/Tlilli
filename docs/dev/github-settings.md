@@ -27,8 +27,8 @@ Target column: [PRD 39 §2](../prd/39-github-configuration.md#2-repository-setti
 | --- | --- | --- |
 | Visibility | Public | Observed |
 | Default branch | `main` | Observed |
-| Merge methods | Rebase only | **Pending**: merge commits and squash still allowed (observed 2026-11-04). Settings → General → Pull Requests: uncheck "Allow merge commits" and "Allow squash merging". Repository-settings writes are refused to agent sessions |
-| Always suggest updating PR branches | On | **Pending** (observed off); same settings section |
+| Merge methods | Rebase only | Observed 2026-11-04: merge commits off, squash off, rebase on |
+| Always suggest updating PR branches | On | Observed on, 2026-11-04 |
 | Allow auto-merge | On | Observed on |
 | Automatically delete head branches | On | Observed on (merged branches of PRs 6, 7 and 8 were removed) |
 | Wiki | Off | Observed off |
@@ -118,7 +118,7 @@ None exist (observed 2026-11-04). The `main` and `tags v*` rulesets are created 
 
 ## 9. Project, milestones and labels ([PRD 36](../prd/36-issues-labels-and-projects.md))
 
-- Project "Tlilli roadmap": Maintainer, 2026-11-04, created with the fields and views of PRD 36 §4 (`Gate` as a single select Yes/No, D-061). **Project URL: to record.** Agent sessions cannot read or write Projects v2 (GraphQL is refused), so the `CodeRabbit requests` and `Greptile reviews` ledger fields are filled by the maintainer at triage from the agents' PR bodies and session reports until an agent-writable ledger exists.
+- Project "Tlilli roadmap": Maintainer, 2026-11-04, created with the fields and views of PRD 36 §4 (`Gate` as a single select Yes/No, D-061). URL: <https://github.com/users/bioedca/projects/5> (project number 5; `project.yml` adds every new issue and PR to it, bootstrap task 23). Agent sessions cannot read or write Projects v2 (GraphQL is refused), so the `CodeRabbit requests` and `Greptile reviews` ledger fields are filled by the maintainer at triage from the agents' PR bodies and session reports until an agent-writable ledger exists.
 - Milestones (Observed, created 2026-11-04 through the API, no due dates): 1 `0 Foundation`, 2 `v0.1 Black ink`, 3 `v0.2 Red ink`, 4 `v0.3 Ledger`, 5 `v0.4 Sweep and style`, 6 `v0.5 Beyond the article`, 7 `v1.0 Public`, 8 `post-1.0`.
 - Labels: the full scheme of PRD 36 §2 (60 labels: 11 type, 12 area, 4 priority, 5 status, 8 phase, 13 control, 5 size, 2 community) was created through the API on 2026-11-04 ahead of `labels.yml` (task 17), which becomes the source of truth and prunes GitHub's defaults that are not in the scheme (`bug`, `documentation`, `duplicate`, `enhancement`, `invalid`, `question`, `wontfix`, `accessibility`).
 
@@ -141,3 +141,4 @@ Not yet run. The maintainer scoped the trademark searches (USPTO, EUIPO, TMview,
 | 2026-11-04 | Page created from the bootstrap walkthrough; updater key generated and public key recorded; successor recorded as not yet designated; Sponsors request submitted; milestones 1–8 created; restore-drill issue #5 opened; DCO app observed installed; SHA-pinning setting enabled and `ci.yml` pinned (pull request 7); CodeRabbit plan recorded as Team | maintainer and agent |
 | 2026-11-04 | Full refresh after runbook sessions A–F: observed states re-read through the API; maintainer-reported states for environments, tokens, Actions permissions, apps, Project and companion repositories; full label scheme created; remaining items: merge methods and branch-update suggestion (two clicks), Project URL | maintainer and agent |
 | 2026-11-04 | Pro horizon (about two years), token expiry 2027-11-03 and the deferral of the trademark search to an agent task before v0.1.0 recorded from the maintainer's notes | maintainer and agent |
+| 2026-11-04 | Merge methods observed rebase-only with branch-update suggestion on; Project URL recorded (projects/5) | maintainer and agent |
