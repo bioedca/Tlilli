@@ -6,8 +6,8 @@ For contributors and agents who add or change files in the repository. The decis
 
 | Part of the repository | License | Where the text lives |
 | --- | --- | --- |
-| The application (`src-tauri`), the crates (`crates/*`), the UI (`ui`), scripts, documentation and configuration | Apache-2.0 | [`LICENSE`](../../LICENSE), [`NOTICE`](../../NOTICE) |
-| Skill sources under `skills/` and the per-client packages built from them | MIT | [`skills/LICENSE`](../../skills/LICENSE) |
+| The application (`src-tauri`), the crates (`crates/*`), the UI (`ui`), scripts, documentation and configuration | Apache-2.0 | [`LICENSE`](https://github.com/bioedca/Tlilli/blob/main/LICENSE), [`NOTICE`](https://github.com/bioedca/Tlilli/blob/main/NOTICE) |
+| Skill sources under `skills/` and the per-client packages built from them | MIT | [`skills/LICENSE`](https://github.com/bioedca/Tlilli/blob/main/skills/LICENSE) |
 | Canonical license texts, one per SPDX identifier, for the REUSE tooling | as named | `LICENSES/Apache-2.0.txt`, `LICENSES/MIT.txt` |
 | Vendored test fixtures (open-access papers, D-027) | per fixture; CC-BY or CC0 only | `tests/fixtures/LICENSES.md` plus an `[[annotations]]` table in `REUSE.toml` (bootstrap task 15) |
 
@@ -37,7 +37,7 @@ The repository follows the [REUSE specification 3.3](https://reuse.software/spec
 
    TypeScript uses `//` as Rust does. `REUSE.toml` deliberately matches none of these extensions anywhere, under `.github/` and `skills/` included, so a source file without a header fails `reuse lint`. (The two examples above sit between `REUSE-IgnoreStart` and `REUSE-IgnoreEnd` markers so that `reuse` does not read them as this page's own license.)
 
-2. **`REUSE.toml`, for everything else.** Markdown, TOML, JSON, YAML, CFF, shell scripts, text files, lockfiles, `.gitignore`, `NOTICE` and `.github/CODEOWNERS` are declared by path globs in [`REUSE.toml`](../../REUSE.toml): Apache-2.0 for the repository, MIT for the same header-less kinds under `skills/`. The globs name file kinds, never whole directories, so no source file is licensed by accident. When a file of a new kind arrives (a new extension, a file without one), add its glob or path to the Apache-2.0 table, and to the MIT table if it can appear under `skills/`; files that redistribute someone else's work get their own table with the right holder and identifier.
+2. **`REUSE.toml`, for everything else.** Markdown, TOML, JSON, YAML, CFF, shell scripts, text files, lockfiles, `.gitignore`, `NOTICE` and `.github/CODEOWNERS` are declared by path globs in [`REUSE.toml`](https://github.com/bioedca/Tlilli/blob/main/REUSE.toml): Apache-2.0 for the repository, MIT for the same header-less kinds under `skills/`. The globs name file kinds, never whole directories, so no source file is licensed by accident. When a file of a new kind arrives (a new extension, a file without one), add its glob or path to the Apache-2.0 table, and to the MIT table if it can appear under `skills/`; files that redistribute someone else's work get their own table with the right holder and identifier.
 
 Copyright lines: the maintainer is the only human committer through v1.0, so the default holder is `2026 bioedca`. Contributors keep the copyright in their contributions (DCO, no CLA, `PR-GIT-022`); a contributor who wants to be named adds a second `SPDX-FileCopyrightText` line to the headers of the files they change. The year is the year of first publication of the file and is not updated afterwards.
 
