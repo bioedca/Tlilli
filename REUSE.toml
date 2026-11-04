@@ -27,6 +27,10 @@ path = [
   "**/*.sh",
   "**/*.txt",
   "**/*.lock",
+  # App icons (src-tauri/icons/), generated from ui/public/favicon.svg by `tauri icon`.
+  "**/*.png",
+  "**/*.ico",
+  "**/*.icns",
   ".github/CODEOWNERS",
   ".gitignore",
   "NOTICE",

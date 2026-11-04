@@ -87,7 +87,7 @@ All tokens are issued by the maintainer's account and rotated yearly ([PRD 38 §
 - Key ID: `B83A0AA7DD3EDF35`.
 - Custody: private key and passphrase as separate password-manager entries; one sealed offline copy held by the maintainer until a backup admin is named, then handed to them; the `release` environment secret is the only online copy. The private key file was deleted from the generating machine.
 - Restore drill: issue #5, yearly, next due 2027-11-04.
-- Public key, exactly as it goes into `tauri.conf.json` → `plugins.updater.pubkey` (bootstrap task 14; it is the base64 of the `.pub` file, not a path):
+- Public key, exactly as it stands in `src-tauri/tauri.conf.json` → `plugins.updater.pubkey` (wired by bootstrap task 14, issue #22; it is the base64 of the `.pub` file, not a path). The app's updater endpoint is `https://bioedca.github.io/Tlilli/updates/stable.json`; `src-tauri/tests/config.rs` fails if the configured key or endpoint drifts from this record or from `site_url` in `mkdocs.yml`:
 
 ```text
 dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEI4M0EwQUE3REQzRURGMzUKUldRMTN6N2Rwd282dUJRZFBvZHBUSFhFT1p2c1VpZ2JMUWF6QWRxTWxJS3BuQ2hXUW5wVWpRcjEK
@@ -143,3 +143,4 @@ Not yet run. The maintainer scoped the trademark searches (USPTO, EUIPO, TMview,
 | 2026-11-04 | Full refresh after runbook sessions A–F: observed states re-read through the API; maintainer-reported states for environments, tokens, Actions permissions, apps, Project and companion repositories; full label scheme created; remaining items: merge methods and branch-update suggestion (two clicks), Project URL | maintainer and agent |
 | 2026-11-04 | Pro horizon (about two years), token expiry 2027-11-03 and the deferral of the trademark search to an agent task before v0.1.0 recorded from the maintainer's notes | maintainer and agent |
 | 2026-11-04 | Merge methods observed rebase-only with branch-update suggestion on; Project URL recorded (projects/5) | maintainer and agent |
+| 2026-11-04 | Updater public key (key ID `B83A0AA7DD3EDF35`) wired into `src-tauri/tauri.conf.json` with the `stable.json` endpoint on the docs site (bootstrap task 14) | agent |
