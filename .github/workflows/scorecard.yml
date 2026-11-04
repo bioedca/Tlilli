@@ -1,0 +1,45 @@
+# OpenSSF Scorecard (PRD 33 §1 and PR-CI-012, D-051, T-07; the v1.0 target is a score of 7 or more, PRD 15).
+# Publishes the results to api.scorecard.dev for the README badge (PR-CI-017), signed with the job's OIDC
+# token, and uploads them to code scanning. Publishing holds the workflow to Scorecard's restrictions: no
+# workflow-level env, defaults or write permissions; in this job no env, defaults, containers, services or
+# `run` steps, only checkout, scorecard-action, upload-artifact, upload-sarif and harden-runner, on a
+# GitHub-hosted Ubuntu runner. Scorecard supports `push` and `schedule` on the default branch only.
+name: scorecard
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "43 4 * * 1" # Monday 04:43 UTC
+
+permissions: {}
+
+concurrency:
+  group: scorecard
+  cancel-in-progress: false
+
+jobs:
+  analysis:
+    name: analysis
+    if: github.ref == 'refs/heads/main' # Scorecard rejects results from any other ref
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read # actions/checkout and the repository files Scorecard inspects
+      security-events: write # upload the results to code scanning
+      id-token: write # sign the results published to api.scorecard.dev
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - uses: ossf/scorecard-action@fa7117db83c52d787ae5a89f350999701505d78e # v2.5.0
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
+
+      - uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        with:
+          sarif_file: results.sarif
+          category: scorecard

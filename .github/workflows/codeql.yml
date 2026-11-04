@@ -1,0 +1,47 @@
+# CodeQL code scanning, advanced setup (PRD 33 §1 and PR-CI-012, D-051, T-07, T-11). Repository settings keep
+# code scanning's default setup off (docs/dev/github-settings.md §2): with default setup on, GitHub rejects the
+# results of this workflow.
+# Languages: Rust (crates/), JavaScript/TypeScript (ui/) and the GitHub Actions workflows themselves; all three
+# are generally available in CodeQL and extract without a build (`build-mode: none`). Default query suite, to
+# keep false positives low (R-22).
+# Runs on every PR push, on `main`, and weekly so new queries reach unchanged code. Not a required check.
+name: codeql
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "37 4 * * 1" # Monday 04:37 UTC
+
+permissions: {}
+
+concurrency:
+  group: codeql-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  analyze:
+    name: analyze (${{ matrix.language }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read # actions/checkout
+      security-events: write # upload the results to code scanning
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [actions, javascript-typescript, rust]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+
+      - uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        with:
+          category: /language:${{ matrix.language }}
