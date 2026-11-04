@@ -1,0 +1,112 @@
+# Tlilli documentation site (PRD 35 §1, D-052). Built by .github/workflows/docs.yml with
+# `mkdocs build --strict` and deployed to GitHub Pages; `scripts/docs.sh` runs the same build.
+# Navigation is built from the docs/ tree for now; the explicit `nav` arrives with bootstrap
+# task 30 together with the pages it orders.
+
+site_name: Tlilli
+site_url: https://bioedca.github.io/Tlilli/
+site_description: >-
+  Local-first desktop editor for scientific manuscripts. An external MCP agent proposes
+  (red ink); the author decides (black ink).
+site_author: bioedca
+repo_url: https://github.com/bioedca/Tlilli
+repo_name: bioedca/Tlilli
+edit_uri: edit/main/docs/
+
+# Warnings fail the build (PRD 35 §1 "Build strictness"). Anchor checks are raised from
+# their default of `info` so that a link to a heading that does not exist also fails.
+strict: true
+validation:
+  nav:
+    omitted_files: warn
+    not_found: warn
+    absolute_links: warn
+  links:
+    not_found: warn
+    anchors: warn
+    absolute_links: warn
+    unrecognized_links: warn
+
+theme:
+  name: material
+  language: en
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.tracking
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - navigation.footer
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+    - content.action.view
+  # Black and red: the author's ink and the agent's ink.
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: black
+      accent: red
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: red
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+
+# The plugin set from PRD 35 §1. `mike` (versioned docs) joins at v1.0; until then the
+# site is a single `latest`.
+plugins:
+  - search:
+      lang: en
+  - redirects:
+      # Old URL -> new page. Add an entry whenever a page moves (PRD 35 §1 keeps redirects).
+      redirect_maps: {}
+  - git-revision-date-localized:
+      type: date
+      timezone: UTC
+      # The date is decoration: a page without git history (a new file during `mkdocs serve`)
+      # gets the build date at `info` level instead of failing the strict build. docs.yml checks
+      # out the full history, so published dates are the real last-commit dates.
+      fallback_to_build_date: true
+      strict: false
+  - glightbox
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+extra:
+  # No analytics, no trackers (INV-08 applies to the site, PRD 35 §1 "Search").
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/bioedca/Tlilli
+      name: Tlilli on GitHub
