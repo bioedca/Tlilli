@@ -6,7 +6,26 @@ on:
   pull_request:
 
 jobs:
+  # Bootstrap guard: the repository has no Cargo workspace or UI package yet, so the
+  # rust and ui jobs are skipped until their manifests exist. A job-level `if` cannot
+  # use hashFiles() (it runs before checkout), hence this probe job. Remove it when the
+  # workspace layout is real (PRD Phase 0, docs/prd/42-bootstrap-backlog.md task 20).
+  detect:
+    runs-on: ubuntu-24.04
+    outputs:
+      rust: ${{ steps.probe.outputs.rust }}
+      ui: ${{ steps.probe.outputs.ui }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: probe
+        run: |
+          if [ -f Cargo.toml ]; then echo "rust=true"; else echo "rust=false"; fi >> "$GITHUB_OUTPUT"
+          if [ -f ui/package.json ]; then echo "ui=true"; else echo "ui=false"; fi >> "$GITHUB_OUTPUT"
+          cat "$GITHUB_OUTPUT"
+
   rust:
+    needs: detect
+    if: needs.detect.outputs.rust == 'true'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -24,6 +43,8 @@ jobs:
       - run: cargo test --workspace
 
   ui:
+    needs: detect
+    if: needs.detect.outputs.ui == 'true'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
