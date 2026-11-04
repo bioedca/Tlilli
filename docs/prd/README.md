@@ -2,7 +2,7 @@
 
 **Status:** Draft 2 (2026-11-03; D-057 keeps the repo on the personal account) · **Owner:** bioedca (sole maintainer) · **Governs:** build, release and maintenance of Tlilli from Phase 0 through v1.0 and the post-1.0 maintenance cycle.
 
-This PRD is the single tracking source for the project. The concept document ([Tlilli — Concept & Definition](../../Tlilli%20-%20Concept%20%26%20Definition.md)) states what Tlilli is and why; this PRD turns every statement in it into a numbered, testable requirement and adds the complete engineering process the project runs on: git workflow, pull requests, code review, CI/CD, testing, documentation, issue tracking, project management, packaging, releases, maintenance and GitHub configuration.
+This PRD is the single tracking source for the project. The concept document ([Tlilli — Concept & Definition](https://github.com/bioedca/Tlilli/blob/main/Tlilli%20-%20Concept%20%26%20Definition.md)) states what Tlilli is and why; this PRD turns every statement in it into a numbered, testable requirement and adds the complete engineering process the project runs on: git workflow, pull requests, code review, CI/CD, testing, documentation, issue tracking, project management, packaging, releases, maintenance and GitHub configuration.
 
 The process sections follow the [INTERSECT research-software curriculum](https://intersect-training.org/curriculum/) (Collaborative Git, Making Good PRs, Code Review, CI/CD, Testing, Documentation, Issue Tracking, Project Management, Packaging, Licensing, Software Design, Building a Community, Threat Assessment). Where INTERSECT states a rule, this PRD adopts it and says where. Where this project deviates, the deviation is recorded in the [decision log](41-risks-and-decision-log.md).
 
