@@ -1,0 +1,25 @@
+# Relay for .github/workflows/gate.yml (docs/prd/32-code-review.md §5). A review event must re-evaluate
+# the `gate/maintainer` status, but `pull_request_review` runs the pull request's own copy of a workflow,
+# so the evaluation cannot run here. This workflow does nothing; its completion triggers gate.yml through
+# `workflow_run`, which runs the default branch's copy with the base token and uses this run only for its
+# PR identity. No PR code is checked out or run, no secret or input is used, and the token has no scope.
+name: gate relay
+
+on:
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+
+permissions: {}
+
+concurrency:
+  # A superseded run still completes (cancelled), and the newest run's completion re-evaluates everything.
+  group: gate-relay-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  relay:
+    name: relay
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - run: echo "relay for the gate workflow; no PR code is checked out or run"
