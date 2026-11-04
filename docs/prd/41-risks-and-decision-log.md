@@ -19,11 +19,11 @@ Likelihood and impact: L/M/H. Owner is the maintainer unless stated. Reviewed at
 | R-11 | Greptile budget exhausted mid-month | M | L | 90% threshold defers `review:deep`; gated PRs fall back to Codex + CodeRabbit + maintainer | Ledger at 90% before day 20 |
 | R-12 | Agent sessions restart or stop mid-task, leaving half work | H | L | Push early as Draft; Agent-session report form; stale sweep; WIP limit 3 | Reports without follow-up for 2 weeks |
 | R-13 | Rebase churn with several agent PRs in flight | M | M | WIP ≤ 3, one per area; queue rebases; small PRs | Queue failures > 20% of entries |
-| R-14 | Merge queue unavailable because the repo is user-owned | H (now) | M | Org move before v0.1 (D-013); interim rule "require up to date" until the move | Phase 0 |
+| R-14 | Merge queue unavailable on a personal-account repository | H | L | Replaced by "require branches to be up to date before merging" plus auto-merge (D-057); WIP ≤ 3 keeps rebase cost to at most two rebases per landing; an organization move is reconsidered only when funding covers an organization plan | Rebase-induced check failures > 20% of landings (see R-13) |
 | R-15 | GitHub changes plan features (merge queue, attestations, Codespaces quotas) | L | M | Settings exported and audited at gates; fallbacks listed in [39](39-github-configuration.md) | Feature change announced |
 | R-16 | Pure-Rust PDF extraction is not good enough | M | M | ADR-0007 at G3 may adopt `pdfium-render` (BSD) under the sidecar/native-dependency rule | DOI sniff < 90% or text quality complaints at G3 |
 | R-17 | `hayagriva` lacks a needed CSL feature | L | M | Styles tested against the CSL suite subset; fall back to post-processing or contribute upstream | Snapshot failures on required styles |
-| R-18 | Solo maintainer unavailable (bus factor) | L | H | GOVERNANCE succession, backup owner, secrets inventory, runbook drill at G6 (T-15) | Any absence > 1 month |
+| R-18 | Solo maintainer unavailable (bus factor) | L | H | GOVERNANCE succession, GitHub account successor and backup admin, secrets inventory, runbook drill at G6 (T-15) | Any absence > 1 month |
 | R-19 | Updater private key lost or leaked | L | H/Critical | Custody and rotation rules (`PR-REL-034`, T-09, T-10) | Yearly drill fails |
 | R-20 | Scope creep into chat, reference management or cloud features | M | M | Non-goals in [01](01-vision-and-scope.md) §3; `phase/post-1.0` for Could items; retrospectives | Issues outside FR scope accumulate |
 | R-21 | The PRD itself drifts from practice | M | M | Decision-log discipline; PRD re-baselined at gates; gated path | Retro finds undocumented practice |
@@ -47,9 +47,9 @@ Decisions taken for this PRD on 2026-11-03 in the maintainer interview (I) or by
 | D-008 | Branch naming: agent platform prefix + slug; humans `<type>/<issue>-<slug>`; reserved prefixes | Works with how cloud agents create branches | A |
 | D-009 | Conventional Commits with a closed scope list | Changelog generation; linting | A (scope list), CLAUDE.md (convention) |
 | D-010 | Rebase-merge only; every commit a Conventional Commit; ≤ 10 commits per PR; merge and squash disabled | Fine-grained, linear history | I |
-| D-011 | `main` ruleset with no bypass for anyone, including the org owner; emergency = fast-lane PR | INTERSECT protected branches; no exceptions culture | I |
+| D-011 | `main` ruleset with no bypass for anyone, including the repository owner; emergency = fast-lane PR | INTERSECT protected branches; no exceptions culture | I |
 | D-012 | DCO sign-off on every commit; no CLA; no signature requirement | Lightweight certification that works for agents and humans | I |
-| D-013 | Create a free GitHub organization and transfer the repo before v0.1; keep the merge queue requirement | Merge queue is only available on org-owned public repos | I |
+| D-013 | ~~Create a free GitHub organization and transfer the repo before v0.1; keep the merge queue requirement~~ **Superseded by D-057 (2026-11-03)** | Merge queue is only available on org-owned public repos | I |
 | D-014 | Agent commits are authored and signed off by the maintainer's identity; no agent trailer; AI involvement stated in the PR body | DCO is a person's certification; history stays simple | I |
 | D-015 | Review pipeline order: Codex (local then cloud) → CodeRabbit → Greptile (gated or on demand) → human gate | Use each tool where it is strongest and cheapest first | I |
 | D-016 | Codex via ChatGPT Pro; local `codex review` rounds until clean, then one cloud round (more only if changes) | Codex rounds are not the scarce resource | I |
@@ -86,13 +86,15 @@ Decisions taken for this PRD on 2026-11-03 in the maintainer interview (I) or by
 | D-047 | Support: latest minor gets fixes; security backports to the previous minor for 90 days; weekly triage; OS floor macOS 13+, Windows 10 22H2+, Ubuntu 22.04+ | Realistic for one maintainer | I |
 | D-048 | Channels: GitHub Releases (canonical), Homebrew tap, winget, Flathub, crates.io (`tlilli-core`, `tlilli-mcp`, `tlilli-cli`) | Reach without hosting | I |
 | D-049 | Tauri updater from v0.2 with minisign; opt-in launch check; channels stable and beta; no nightly channel | Signed, private, free | I |
-| D-050 | CI: fast Linux lane on every PR push; full 3-OS matrix on Ready, `ci:full`, queue and `main`; merge queue required | Fast feedback for agents, no red `main` | I |
+| D-050 | CI: fast Linux lane on every PR push; full 3-OS matrix on Ready, `ci:full` and `main`; branch must be up to date before merging (merge queue not available, D-057) | Fast feedback for agents, no red `main` | I |
 | D-051 | Mandatory security CI: cargo-deny + pnpm audit, Dependabot grouped weekly with auto-merge of patch/minor, CodeQL + Scorecard, actions pinned to SHAs with zizmor | Supply-chain baseline | I |
 | D-052 | Docs: MkDocs Material on GitHub Pages now, custom domain after D-035; user, protocol (generated), developer and rustdoc sets; single `latest` until v1.0 then `mike` per minor + `dev` | Zero cost, versioned when it matters | I |
 | D-053 | Human gate implemented as the required status check `gate/maintainer` (maintainer review approval or maintainer-applied `gate:approved`, reset on push) because the PR author of record is the maintainer | GitHub forbids self-approval | A |
 | D-054 | Library choices recorded for ADRs: `rmcp` (MCP), `rusqlite` + `rusqlite_migration` (storage), `hayagriva` (citations), `similar` (diff), `typst` crates (PDF) | Maintained crates.io releases; one engine for PDF and references | A |
 | D-055 | Add `crates/tlilli-cli` (binary `tlilli`) to the layout for `export`, `import`, `skills install`, `doctor`, `mcp schema`; update `CLAUDE.md` in Phase 0 | The concept names `tlilli export` and `tlilli skills install` | A |
 | D-056 | Codex, CodeRabbit and Greptile configuration files, CODEOWNERS and workflows are gated paths | Changing how review works is a maintainer decision | A |
+| D-057 | **Stay on the personal account `bioedca/Tlilli`; no organization.** GitHub Pro comes from the Student Developer Pack and does not extend to organizations; an organization plan cannot be afforded now. Merge queue (organization-only) is replaced by the ruleset's "require branches to be up to date before merging" plus auto-merge; CODEOWNERS uses `@bioedca`; succession uses GitHub's account-successor setting plus a backup admin. Nothing in the plan depends on a Pro feature that would lapse with student status. Revisit an organization move only when contributions or funding cover it. Supersedes D-013. (2026-11-03) | Maintainer decision after reviewing D-013 | I |
+| D-058 | Channel identifiers follow the personal account: Homebrew tap `bioedca/homebrew-tlilli` (`brew tap bioedca/tlilli`), Flathub app id `io.github.bioedca.Tlilli` (Flathub convention for GitHub-hosted projects without a verified domain), attestations verified against `bioedca/Tlilli` (2026-11-03) | Consequence of D-057; Flathub id rules | A |
 
 ## 3. Open questions carried from the concept (status)
 

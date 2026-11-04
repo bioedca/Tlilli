@@ -5,7 +5,7 @@
 ## 1. The pipeline
 
 ```
- author agent                      GitHub PR (Draft)                              Ready → queue
+ author agent                      GitHub PR (Draft)                              Ready → merge
  ┌──────────────┐   push   ┌─────────────────────────────────────────┐   ┌───────────────────┐
  │ self-review  │ ───────▶ │ Linux lane CI                           │   │ full matrix       │
  │ Codex local  │          │ ① Codex cloud round(s)  (@codex review) │ ─▶│ gate/maintainer   │
@@ -22,7 +22,7 @@
 | 2 | **CodeRabbit** | Author comments `@coderabbitai review` after step 1 is clean **and** the quota ledger allows it | All actionable findings fixed or declined with reason; threads resolved via `@coderabbitai resolve`. A second round only if the first caused code changes (D-019) |
 | 3 | **Greptile deep review** | Automatic on PRs with the `gate` label; on demand with `review:deep` | Findings handled like CodeRabbit's; budget ≈ 15–20 per month (one paid seat, D-021) tracked in the triage ledger. Base tier with T-Rex runtime validation enabled where Greptile supports it |
 | 4 | **Human gate** | PR has `gate` label and is Ready | Maintainer approval (review approval, or `gate:approved` label when the maintainer is the PR author of record) — see §5 |
-| 5 | **Merge** | Author enables auto-merge at Ready | Merge queue lands it when all required checks pass |
+| 5 | **Merge** | Author enables auto-merge at Ready | Auto-merge lands it (rebase) once the branch is up to date with `main` and all required checks pass |
 
 Rules:
 
@@ -73,7 +73,7 @@ The maintainer reviews only PRs that touch **gated paths**. Everything else merg
 | `docs/prd/**`, `docs/adr/**`, `docs/gates/**` | Requirements and decisions |
 | `tests/fixtures/LICENSES.md` | Licensing of vendored texts |
 
-`.github/CODEOWNERS` lists these paths with owner `@bioedca` (later `@tlilli/maintainers`). The path labeler applies `gate` when any changed file matches.
+`.github/CODEOWNERS` lists these paths with owner `@bioedca` (a team only if the project ever moves to an organization). The path labeler applies `gate` when any changed file matches.
 
 ## 4. Human review checklist (used at gates)
 
@@ -95,7 +95,7 @@ Problem: agent PRs are opened and committed under the maintainer's own GitHub id
 
 | ID | Rule |
 | --- | --- |
-| `PR-REV-010` | `gate/maintainer` runs on `pull_request` (`opened`, `synchronize`, `reopened`, `labeled`, `unlabeled`, `ready_for_review`), `pull_request_review` (`submitted`, `dismissed`) and in the merge group. It **passes** when the PR touches no CODEOWNERS path, or when the PR has an approving review from a CODEOWNER who is not the author, or when the `gate:approved` label is present and was applied by a CODEOWNER after the latest push. Otherwise it **fails** with a message naming the gated files. |
+| `PR-REV-010` | `gate/maintainer` runs on `pull_request` (`opened`, `synchronize`, `reopened`, `labeled`, `unlabeled`, `ready_for_review`), `pull_request_review` (`submitted`, `dismissed`) and `push` to `main` (to re-evaluate open PRs). It **passes** when the PR touches no CODEOWNERS path, or when the PR has an approving review from a CODEOWNER who is not the author, or when the `gate:approved` label is present and was applied by a CODEOWNER after the latest push. Otherwise it **fails** with a message naming the gated files. |
 | `PR-REV-011` | Any new push invalidates approval: the workflow removes `gate:approved` on `synchronize` and comments "gate approval reset by new commits"; stale review approvals are dismissed by the ruleset setting "dismiss stale reviews". |
 | `PR-REV-012` | Only CODEOWNERS can apply `gate:approved`; the workflow verifies the label event's actor against CODEOWNERS and removes the label with a comment if applied by anyone else. |
 | `PR-REV-013` | The maintainer records the gate decision in a PR comment (two lines minimum: what was checked, any follow-up issue). This is the audit trail INTERSECT asks for from a human reviewer. |

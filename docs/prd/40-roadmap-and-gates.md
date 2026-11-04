@@ -6,13 +6,13 @@ Concept rule kept: **a phase ends when its test passes on a real manuscript, not
 
 | Phase | Milestone | FR file | Process deliverables | Release | Gate |
 | --- | --- | --- | --- | --- | --- |
-| 0 | `0 Foundation` | — | Everything in [42](42-bootstrap-backlog.md): org transfer, licenses, CODEOWNERS, rulesets, labels, forms, templates, workflows, reviewer apps, docs skeleton, devcontainer, companion repo, initial ADRs, trademark search started | none (CI artifacts) | G0 |
+| 0 | `0 Foundation` | — | Everything in [42](42-bootstrap-backlog.md): account and repository settings, licenses, CODEOWNERS, rulesets, labels, forms, templates, workflows, reviewer apps, docs skeleton, devcontainer, companion repo, initial ADRs, trademark search started | none (CI artifacts) | G0 |
 | v0.1 | `v0.1 Black ink` | [10](10-fr-v0.1-black-ink.md) | Trademark search complete (D-035); `tlilli-core` published to crates.io; tutorial "first manuscript" | `v0.1.0` | G1 |
 | v0.2 | `v0.2 Red ink` | [11](11-fr-v0.2-red-ink.md) | Discussions on; updater key generated; `tlilli-mcp`, `tlilli-cli` on crates.io; agent how-tos; beta channel first used | `v0.2.0` | G2 |
 | v0.3 | `v0.3 Ledger` | [12](12-fr-v0.3-ledger.md) | Network allow-list test; ADR-0007 (PDF extraction) decided | `v0.3.0` | G3 |
 | v0.4 | `v0.4 Sweep and style` | [13](13-fr-v0.4-sweep-and-style.md) | Mutation score ≥ 70% on core; LaTeX nightly compile; Linux arm64 experimental builds | `v0.4.0` | G4 |
 | v0.5 | `v0.5 Beyond the article` | [14](14-fr-v0.5-beyond-the-article.md) | ChatGPT plan matrix re-checked and documented; tunnel ADR exception | `v0.5.0` | G5 |
-| v1.0 | `v1.0 Public` | [15](15-fr-v1.0-public.md) | Homebrew, winget, Flathub; versioned docs; GOVERNANCE backup owner; newcomer dry run; Scorecard ≥ 7 | `v1.0.0` | G6 |
+| v1.0 | `v1.0 Public` | [15](15-fr-v1.0-public.md) | Homebrew, winget, Flathub; versioned docs; GOVERNANCE successor and backup admin; newcomer dry run; Scorecard ≥ 7 | `v1.0.0` | G6 |
 | post-1.0 | `post-1.0` | — | Maintenance per [38](38-maintenance-and-support.md); SignPath application; JOSS; tracked changes in docx; Zotero write-back | `v1.x` | per minor: smoke journey on each channel |
 
 ## 2. Gate procedure (PR-GATE-001 … 008)
@@ -31,8 +31,8 @@ Concept rule kept: **a phase ends when its test passes on a real manuscript, not
 ## 3. Gate scripts (outline; full scripts live in `docs/gates/`)
 
 ### Gate G0 (Phase 0 Foundation)
-1. Org created, repo transferred, redirects work; rulesets, labels, forms, templates present ([39](39-github-configuration.md) audit checklist passes).
-2. A hello-world workspace (`crates/*` skeletons, `src-tauri`, `ui`) builds; `ci.yml` green with every required check reporting; a Draft PR by an agent goes through Codex → CodeRabbit → Ready → auto-merge → queue → `main` with zero human clicks (ungated path), and a second PR touching a gated path is blocked until `gate:approved`.
+1. Account and repository settings per [39](39-github-configuration.md) (2FA, successor, Actions allow-list, rulesets, labels, forms, templates present); the audit checklist passes.
+2. A hello-world workspace (`crates/*` skeletons, `src-tauri`, `ui`) builds; `ci.yml` green with every required check reporting; a Draft PR by an agent goes through Codex → CodeRabbit → Ready → auto-merge (branch up to date) → `main` with zero human clicks (ungated path), and a second PR touching a gated path is blocked until `gate:approved`.
 3. `release.yml` rehearsed in the companion repo with `dry_run=true`; `docs.yml` deploys the skeleton site.
 4. DCO, commitlint, size, docs-sync, zizmor, Scorecard all report.
 
@@ -90,7 +90,7 @@ Concept rule kept: **a phase ends when its test passes on a real manuscript, not
 2. `tlilli skills install --claude-code`, `--codex`, `--chatgpt`; `--check` reports drift after editing a skill (`FR-10-010..011`).
 3. Docs site: every quadrant present; search works; `latest`/`dev`; link check clean; newcomer dry run of CONTRIBUTING and setup completed by someone other than the maintainer (`FR-10-020..022`, `PR-DOC-018`).
 4. Root files complete; `CITATION.cff` validates; Zenodo DOI minted on publish (`FR-10-030..032`).
-5. Public-release checklist in [15](15-fr-v1.0-public.md) §5 all green; threat register reviewed; GOVERNANCE backup owner named.
+5. Public-release checklist in [15](15-fr-v1.0-public.md) §5 all green; threat register reviewed; GOVERNANCE successor and backup admin named.
 6. Release runbook executed literally by following the doc (bus-factor drill).
 
 ## 4. Velocity and dates

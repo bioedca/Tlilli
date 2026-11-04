@@ -79,7 +79,7 @@ release = false
 | `sbom` | `ubuntu-24.04` | `anchore/sbom-action` on the workspace (Cargo + npm) → `sbom.spdx.json` attached to the draft release |
 | `checksums` | `ubuntu-24.04` | download all assets, write `SHA256SUMS`, attach |
 | `attest` | `ubuntu-24.04` (`id-token: write`, `attestations: write`) | `actions/attest` build provenance for every asset and the SBOM (Sigstore public-good; SLSA Build L2; L3 when moved to a reusable workflow) |
-| `verify` | `ubuntu-24.04` | `gh release download`, `sha256sum -c SHA256SUMS`, `gh attestation verify <asset> --repo tlilli/tlilli` for each asset, size assertions (`NFR-PERF-010`), `latest.json` schema check; fails the run (release stays draft) on any error |
+| `verify` | `ubuntu-24.04` | `gh release download`, `sha256sum -c SHA256SUMS`, `gh attestation verify <asset> --repo bioedca/Tlilli` for each asset, size assertions (`NFR-PERF-010`), `latest.json` schema check; fails the run (release stays draft) on any error |
 
 **Beta channel (`prerelease.yml`):** `workflow_dispatch` with `version` input (`0.4.0-beta.2`); builds `main` HEAD with `tauri build --config '{"version":"0.4.0-beta.2"}'` (overrides the app version without touching Cargo), tags `v0.4.0-beta.2` on that commit, creates a **prerelease** draft, same sbom/checksums/attest/verify jobs; `post-release.yml` updates `updates/beta.json` only. Beta builds are never promoted; the stable release is always rebuilt from the release PR.
 
@@ -99,7 +99,7 @@ Linux arm64 is built as `experimental` (not required, not gate-tested) from v0.4
 No Apple Developer ID, no notarization, no Windows Authenticode certificate can be afforded. The project therefore:
 
 1. **Signs updates** with the Tauri updater's minisign key (free; `cargo tauri signer generate -w ~/.tauri/tlilli.key`; public key in `tauri.conf.json`; private key only in the `release` environment and the maintainer's offline backups, T-09).
-2. **Attests provenance** of every asset with GitHub artifact attestations (free for public repos; Sigstore public-good; transparency log). Users verify with `gh attestation verify tlilli-<v>-<platform>.<ext> --repo tlilli/tlilli`.
+2. **Attests provenance** of every asset with GitHub artifact attestations (free for public repos; Sigstore public-good; transparency log). Users verify with `gh attestation verify tlilli-<v>-<platform>.<ext> --repo bioedca/Tlilli`.
 3. **Publishes checksums** (`SHA256SUMS`) and shows them on the download page.
 4. **Documents the OS prompts honestly:** macOS Gatekeeper ("App is damaged / cannot be opened": right-click → Open, or `xattr -dr com.apple.quarantine /Applications/Tlilli.app`); Windows SmartScreen ("More info → Run anyway"); Linux AppImage `chmod +x`. The app never tells users to disable security settings globally.
 5. **Reduces random downloads** by publishing through package channels (Homebrew, winget, Flathub) that point at the GitHub Release.
@@ -110,9 +110,9 @@ No Apple Developer ID, no notarization, no Windows Authenticode certificate can 
 | ID | Channel | Rule |
 | --- | --- | --- |
 | `PR-REL-020` | GitHub Releases | Canonical. Every other channel points here. Draft → maintainer publish. Release notes per `PR-DOC-011`. |
-| `PR-REL-021` | Homebrew | Own tap `tlilli/homebrew-tap`, cask `tlilli` (unsigned app: cask includes the `--no-quarantine` note in caveats); `post-release.yml` opens a bump PR in the tap with new version and sha256; the tap repo has its own minimal CI (`brew audit --cask`). |
+| `PR-REL-021` | Homebrew | Own tap `bioedca/homebrew-tlilli` (used as `brew tap bioedca/tlilli`), cask `tlilli` (unsigned app: cask includes the `--no-quarantine` note in caveats); `post-release.yml` opens a bump PR in the tap with new version and sha256; the tap repo has its own minimal CI (`brew audit --cask`). |
 | `PR-REL-022` | winget | Manifest `Tlilli.Tlilli` in `microsoft/winget-pkgs` via `vedantmgoyal9/winget-releaser` from `post-release.yml` (installer URLs + hashes for `.msi`); unsigned installers are accepted; SmartScreen note in docs. |
-| `PR-REL-023` | Flathub | App id `org.tlilli.Tlilli`; manifest in the Flathub repo built from the release source tarball (Rust and Node offline sources generated with `flatpak-cargo-generator` and `flatpak-node-generator`); updates by Flathub's external-data-checker PRs, reviewed by the maintainer. Added at v1.0. |
+| `PR-REL-023` | Flathub | App id `io.github.bioedca.Tlilli` (Flathub's convention for GitHub-hosted projects without a verified domain; changes to a domain-based id only after D-035 and a Flathub rename request); manifest in the Flathub repo built from the release source tarball (Rust and Node offline sources generated with `flatpak-cargo-generator` and `flatpak-node-generator`); updates by Flathub's external-data-checker PRs, reviewed by the maintainer. Added at v1.0. |
 | `PR-REL-024` | crates.io | `tlilli-core`, `tlilli-mcp`, `tlilli-cli` published by release-plz with trusted publishing (OIDC, `rust-lang/crates-io-auth-action`); `cargo install tlilli-mcp` / `tlilli-cli`; `cargo binstall` metadata points at the GitHub Release binaries for `tlilli-mcp` and `tlilli`. From v0.2 (mcp, cli) and v0.1 (core). |
 | `PR-REL-025` | Docs site | `updates/stable.json` and `updates/beta.json` (updater endpoints) and the download page with checksums and verify instructions, updated by `post-release.yml`. |
 | `PR-REL-026` | Not maintained by the project | AUR, Chocolatey, Scoop, Nix: community-maintained if at all; README lists them as unofficial. |

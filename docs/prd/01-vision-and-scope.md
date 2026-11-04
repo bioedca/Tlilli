@@ -87,7 +87,7 @@ Measured at gate tests on the maintainer's own manuscripts, recorded in the gate
 - A2. Agent review budgets: Codex via ChatGPT Pro (rounds not scarce), CodeRabbit Open Source plan (rate-limited), Greptile one paid seat (≈15–20 deep reviews per month). See [32](32-code-review.md).
 - A3. No money is available for code signing or notarization. Trust is established with checksums, Sigstore build attestations and the updater's minisign signatures. See [37](37-releases-and-packaging.md).
 - A4. GitHub-hosted runners are free for the public repository; macOS and Windows jobs are slow and run only on Ready PRs and `main`.
-- A5. The repository moves to a free GitHub organization before v0.1 so that merge queue, org rulesets and teams are available ([D-013](41-risks-and-decision-log.md)).
+- A5. The repository stays on the maintainer's personal account (`bioedca/Tlilli`), whose GitHub Pro plan comes from the Student Developer Pack. Organization-only features (merge queue, teams, organization rulesets) are not used, and nothing in the plan depends on a Pro feature that would lapse with student status ([D-057](41-risks-and-decision-log.md)). An organization move is revisited only when contributions or funding cover it.
 - A6. Authors already hold an agent subscription; Tlilli never needs its own API key.
 - A7. The cloud development sandbox has no display, 4 vCPU, 16 GB RAM, 30 GB disk, raised Bash timeouts, and GitHub access scoped to this repository; dependencies therefore come from crates.io and npm releases only.
 
@@ -105,7 +105,7 @@ Measured at gate tests on the maintainer's own manuscripts, recorded in the gate
 
 | Phase | Name | Closes with | Gate (summary) |
 | --- | --- | --- | --- |
-| 0 | Foundation | Repo scaffolding, org transfer, CI green on skeleton workspace | A hello-world Tauri build passes every required check |
+| 0 | Foundation | Repo scaffolding, account and repository settings, CI green on skeleton workspace | A hello-world Tauri build passes every required check |
 | v0.1 | Black ink | Tag `v0.1.0` | Import, edit, mark up, snapshot and export a real manuscript; span IDs stable |
 | v0.2 | Red ink | Tag `v0.2.0` | Run 7 scenario end to end with Claude Code and Codex |
 | v0.3 | Ledger | Tag `v0.3.0` | 20 citations resolved, linked and verified on a real manuscript |

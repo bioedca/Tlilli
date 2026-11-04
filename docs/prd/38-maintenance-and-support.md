@@ -64,8 +64,8 @@ Private vulnerability reporting → triage → fix on `main` → patch release �
 
 | Item | Mitigation |
 | --- | --- |
-| Single maintainer | `GOVERNANCE.md` names a succession plan: if the maintainer is unresponsive for 6 months, a named backup owner (to be designated before v1.0) may assume org ownership; the organization has two owners from v1.0 (the second is a trusted account that holds no day-to-day role). |
-| Secrets | Inventory in [39](39-github-configuration.md) §5; updater key custody per `PR-REL-034`; release token is a fine-grained PAT or GitHub App owned by the organization, rotated yearly. |
+| Single maintainer | `GOVERNANCE.md` names a succession plan: the maintainer designates a GitHub **account successor** (Settings → Access → Successor), who can take over the public repositories if the account becomes inactive; before v1.0 a trusted collaborator is given admin rights on the repository and holds no day-to-day role. If the maintainer is unresponsive for 6 months, that collaborator may assume maintenance under this PRD. |
+| Secrets | Inventory in [39](39-github-configuration.md) §5; updater key custody per `PR-REL-034`; the release token is a fine-grained PAT on the maintainer's account (a GitHub App if a second maintainer joins), rotated yearly; the backup admin knows where the offline key copies are. |
 | Knowledge | This PRD, the ADRs, the release runbook and the agent playbook are sufficient for a new maintainer to cut a release in one day; G6 includes a dry run by following the runbook literally. |
 | Infrastructure | Everything is in the repository or GitHub settings exported to `docs/dev/github-settings.md` (rulesets as JSON, label file, app list); no personal machines hold unique state except the offline key copies. |
 

@@ -2,17 +2,17 @@
 
 The first issues to open, in dependency order. Each becomes a `type/task` issue (or an epic with sub-issues) with the labels shown, `phase/0-foundation`, milestone `0 Foundation`, and the requirement references. Items marked **H** need the maintainer's hands (GitHub settings, accounts, keys); everything else can be done by an agent in a PR. Sizes are T-shirt estimates for one PR each.
 
-## A. Organization and repository (H)
+## A. Account and repository (H)
 
 | # | Task | Labels | Refs | Size |
 | --- | --- | --- | --- | --- |
-| 1 | Create the `tlilli` GitHub organization (free), enable 2FA requirement, base permission read, Actions allow-list, fork-PR approval; transfer `bioedca/Tlilli` → `tlilli/tlilli`; verify redirects | `area/repo`, `gate` | D-013, [39](39-github-configuration.md) §1 | S |
+| 1 | Account settings: 2FA on; designate a GitHub account successor; confirm Pro (Student Developer Pack) status and note its expiry in `docs/dev/github-settings.md`. Repository settings: Actions allow-list, default workflow permissions read, fork-PR approval; add the backup admin collaborator before v1.0 | `area/repo`, `gate` | D-057, [39](39-github-configuration.md) §1 | S |
 | 2 | Repository settings: rebase-merge only, auto-delete branches, auto-merge, Discussions off until v0.2, Wiki off, topics, description, website | `area/repo`, `gate` | [39](39-github-configuration.md) §2 | XS |
 | 3 | Install apps: Codex (automatic reviews off), CodeRabbit (OSS plan), Greptile (label trigger), Codecov, DCO, Zenodo; record permissions in `docs/dev/github-settings.md` | `area/repo`, `gate` | [32](32-code-review.md) §2, [39](39-github-configuration.md) §5 | S |
 | 4 | Create environment `release` with required reviewer; create fine-grained PATs `RELEASE_PLZ_TOKEN`, `PROJECT_TOKEN`; crates.io trusted-publisher entries (after first crate exists) | `area/release`, `gate` | `PR-CI-007`, [39](39-github-configuration.md) §5 | S |
 | 5 | Generate the updater minisign keypair offline; store per `PR-REL-034`; add public key to `tauri.conf.json` (task 14) and private key to `release` | `area/release`, `gate` | `PR-REL-034`, T-09 | XS |
 | 6 | Create the Project "Tlilli roadmap" with fields and views; create milestones `0 Foundation` … `v1.0 Public`, `post-1.0` | `area/repo` | [36](36-issues-labels-and-projects.md) §3–4 | S |
-| 7 | Create the private companion repo `bioedca/tlilli-release-rehearsal` (user-owned) and the `tlilli/homebrew-tap` repo (empty cask skeleton) | `area/release` | [39](39-github-configuration.md) §6, `PR-REL-021` | XS |
+| 7 | Create the private companion repo `bioedca/tlilli-release-rehearsal` (user-owned) and the `bioedca/homebrew-tlilli` tap repo (empty cask skeleton) | `area/release` | [39](39-github-configuration.md) §6, `PR-REL-021` | XS |
 | 8 | Start the trademark search (USPTO, EUIPO, WIPO GBD; classes 9, 42); record result in the decision log before `v0.1.0`; prepare `scripts/rename.sh` | `area/repo`, `gate` | D-035, R-07 | S |
 
 ## B. Legal and project files
@@ -63,8 +63,10 @@ The first issues to open, in dependency order. Each becomes a `type/task` issue 
 
 Run [G0](40-roadmap-and-gates.md#gate-g0-phase-0-foundation): audit checklist passes; an agent PR on an ungated path merges with zero human clicks; a gated PR is blocked until `gate:approved`; release workflows rehearsed; docs site deployed; all required checks reporting. File the Gate test report; open milestone `v0.1 Black ink` with its epics (one per FR group in [10](10-fr-v0.1-black-ink.md)).
 
-## G. Interim rules until the org move (task 1) completes
+## G. Rules that follow from staying on the personal account (D-057)
 
-- Merge queue cannot be enabled on a user-owned repo: the `main` ruleset uses "require branches to be up to date before merging" instead, and auto-merge still applies (R-14).
-- CODEOWNERS uses `@bioedca` until the `maintainers` team exists.
-- All other rules apply unchanged.
+- Merge queue is organization-only, so the `main` ruleset uses "require branches to be up to date before merging" with auto-merge; agents rebase their Ready PRs whenever `main` moves (`PR-GIT-042`, `PR-GIT-045`).
+- CODEOWNERS names `@bioedca`; there are no teams.
+- Succession uses GitHub's account-successor setting plus a backup admin on the repository ([38](38-maintenance-and-support.md) §8).
+- Channel identifiers follow the account: `bioedca/homebrew-tlilli`, `io.github.bioedca.Tlilli`, attestations against `bioedca/Tlilli` (D-058).
+- An organization move is reconsidered only when contributions or funding cover an organization plan; if it happens, D-013 is reinstated as a new decision and the merge queue replaces the up-to-date rule.
