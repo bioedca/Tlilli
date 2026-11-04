@@ -70,7 +70,7 @@ Caching: `Swatinem/rust-cache@<sha>` keyed by lockfile and toolchain; pnpm store
 | --- | --- |
 | `PR-CI-001` | Every third-party action is pinned to a full commit SHA with a version comment (`uses: actions/checkout@<sha> # v4.2.2`); Dependabot (`github-actions` ecosystem) keeps SHAs current; `zizmor` fails on unpinned uses. |
 | `PR-CI-002` | Runner images are pinned (`ubuntu-24.04`, `macos-15`, `windows-2025`) and reviewed quarterly; never `-latest` (INTERSECT). |
-| `PR-CI-003` | Default `permissions: read-all` at workflow level; jobs raise only what they need (`contents: write` for release upload, `pull-requests: write` for labels, `id-token: write` for attestations/Pages/crates.io/Codecov OIDC). |
+| `PR-CI-003` | Least privilege: the workflow-level `permissions` block is `{}` (preferred, zizmor-clean under every persona) or `read-all` where every job needs read access; each job then declares exactly the scopes it needs (`contents: write` for release upload, `pull-requests: write` for labels, `issues: write` for label sync, `id-token: write` for attestations/Pages/crates.io/Codecov OIDC, `pages: write` for Pages deploys). A job that only runs a token-bearing action declares `permissions: {}` (D-064). |
 | `PR-CI-004` | No `|| true`, `continue-on-error` or `exit 0` to hide failures except on explicitly experimental matrix entries, which are labelled `experimental` and not required (INTERSECT: never hack exit codes). |
 | `PR-CI-005` | `fail-fast: false` on all matrices so one platform failure does not hide another. |
 | `PR-CI-006` | Workflows never checkout untrusted PR code in a privileged context (`pull_request_target` jobs do not run `actions/checkout` of the PR head). |
