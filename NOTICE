@@ -1,0 +1,25 @@
+Tlilli
+Copyright 2026 bioedca
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+The skill sources under skills/ and the packages built from them are licensed
+under the MIT License (see skills/LICENSE). The license of every file is
+declared by an SPDX header or by REUSE.toml (see docs/dev/licensing.md).
+
+Third-party notices
+-------------------
+Tlilli does not yet redistribute third-party code or texts. When it does, each
+redistributed work is listed here with its copyright holder and license. The
+licensing of vendored test fixtures (open-access papers) is recorded in
+tests/fixtures/LICENSES.md.
+
+Naming
+------
+"Tlilli", "Tlapalli" and "amoxtli" are Nahuatl words: tlilli is black ink,
+tlapalli is red ink, and amoxtli is a book or codex. In the codex tradition the
+paired phrase "in tlilli in tlapalli", the black ink and the red ink, stood for
+writing and the knowledge it carried. The project uses these three words, and
+no others from the language, to name the author's text, the agent's proposals
+and a manuscript. It claims no rights in the Nahuatl language or in the words
+themselves; section 6 of the Apache License grants no trademark rights in the
+project name either.
