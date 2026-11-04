@@ -29,15 +29,15 @@ Automated review is the default; the maintainer reviews only gated paths.
 
 ## Running the checks locally
 
-The Cargo workspace (pull request #45) and the UI package (pull request #50) are landing in Phase 0, and the `ci.yml` rewrite (bootstrap task 20) wires these commands into CI; until then, run the ones whose manifest exists in your checkout. Until `scripts/ci.sh` exists (bootstrap task 15), these are the commands CI runs:
+`scripts/ci.sh` runs the commands of the CI jobs on your machine (`PR-CI-010`) and stops at the first failure. Run `scripts/ci.sh all` before you push; `scripts/ci.sh --help` lists the jobs and their commands:
 
 ```sh
-cargo fmt --all --check
-cargo clippy --workspace --all-targets -- -D warnings
-cargo test --workspace
-pnpm -C ui install --frozen-lockfile && pnpm -C ui build && pnpm -C ui test && pnpm -C ui lint
-pip install reuse && reuse lint
+scripts/ci.sh all          # rust-lint, rust-test, ui and docs-build, in CI order
+scripts/ci.sh rust-test    # one job
+scripts/ci.sh reuse        # the license check, reuse lint
 ```
+
+The `ci.yml` rewrite (bootstrap task 20) adds `reuse` to `all` and fills in the jobs listed as pending, such as `commits` and `size/limit`. The script installs no toolchain: it expects rustup, pnpm, Node 22 and Python 3 on `PATH`.
 
 `pnpm -C ui install` also installs the git hooks (`lefthook`): formatting, lint and commit-message checks on commit, the tests of the changed crates on push. Setup pages for a laptop, the cloud sandbox and Codespaces land under `docs/dev/`.
 

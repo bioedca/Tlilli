@@ -34,6 +34,7 @@ path = [
   ".github/CODEOWNERS",
   ".gitignore",
   "NOTICE",
+  "scripts/gen_fixtures.py",
 ]
 precedence = "closest"
 SPDX-FileCopyrightText = "2026 bioedca"
@@ -55,3 +56,8 @@ path = [
 precedence = "closest"
 SPDX-FileCopyrightText = "2026 bioedca"
 SPDX-License-Identifier = "MIT"
+
+# Vendored test fixtures (D-027): one table per open-access paper under tests/fixtures/papers/,
+# added with the paper and its row in tests/fixtures/LICENSES.md, with the paper's own copyright
+# holder and CC-BY or CC0 identifier. They come after the Apache-2.0 table, which also matches
+# .md, .txt and .json files, so that they win. None yet.
