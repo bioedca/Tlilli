@@ -125,7 +125,7 @@ No Apple Developer ID, no notarization, no Windows Authenticode certificate can 
 | `PR-REL-031` | Check on launch is **opt-in** (default off); manual "Check for updates" always available; the request carries only target, arch and current version (`NFR-PRIV-002`). |
 | `PR-REL-032` | Release notes are shown before install; install is one click; the app relaunches; Linux deb/rpm users are told to use their package manager. |
 | `PR-REL-033` | The manifests are generated from tauri-action's `latest.json` by `post-release.yml` and validated (every platform entry complete; signature present) before upload, because Tauri rejects the whole file on one malformed entry. |
-| `PR-REL-034` | Key custody: generated offline by the maintainer; stored in a password manager and a sealed offline copy; passphrase separate; the GitHub secret is the only online copy; a yearly restore drill is a `type/task` issue (T-09). |
+| `PR-REL-034` | Key custody: generated offline by the maintainer; stored in a password manager and a sealed offline copy held by the backup admin once named; passphrase separate; the GitHub secret is the only online copy; a yearly restore drill is a `type/task` issue (T-09). |
 
 ## 7. Release runbook (`docs/dev/release-runbook.md`, summary)
 

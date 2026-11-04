@@ -6,10 +6,10 @@ The first issues to open, in dependency order. Each becomes a `type/task` issue 
 
 | # | Task | Labels | Refs | Size |
 | --- | --- | --- | --- | --- |
-| 1 | Account settings: 2FA on; designate a GitHub account successor; confirm Pro (Student Developer Pack) status and note its expiry in `docs/dev/github-settings.md`. Repository settings: Actions allow-list, default workflow permissions read, fork-PR approval; add the backup admin collaborator before v1.0 | `area/repo`, `gate` | D-057, [39](39-github-configuration.md) §1 | S |
+| 1 | Account settings: 2FA on; designate a GitHub account successor; confirm Pro (Student Developer Pack) status and note its expiry in `docs/dev/github-settings.md`. Repository settings: Actions allow-list, default workflow permissions read, fork-PR approval; add the backup admin collaborator before v1.0 (admin on the repository and allowed `release` environment reviewer) | `area/repo`, `gate` | D-057, [39](39-github-configuration.md) §1 | S |
 | 2 | Repository settings: rebase-merge only, auto-delete branches, auto-merge, Discussions off until v0.2, Wiki off, topics, description, website | `area/repo`, `gate` | [39](39-github-configuration.md) §2 | XS |
 | 3 | Install apps: Codex (automatic reviews off), CodeRabbit (OSS plan), Greptile (label trigger), Codecov, DCO, Zenodo; record permissions in `docs/dev/github-settings.md` | `area/repo`, `gate` | [32](32-code-review.md) §2, [39](39-github-configuration.md) §5 | S |
-| 4 | Create environment `release` with required reviewer; create fine-grained PATs `RELEASE_PLZ_TOKEN`, `PROJECT_TOKEN`; crates.io trusted-publisher entries (after first crate exists) | `area/release`, `gate` | `PR-CI-007`, [39](39-github-configuration.md) §5 | S |
+| 4 | Create environment `release` with required reviewers (maintainer; backup admin once named); create fine-grained PATs `RELEASE_PLZ_TOKEN`, `PROJECT_TOKEN`; crates.io trusted-publisher entries (after first crate exists) | `area/release`, `gate` | `PR-CI-007`, [39](39-github-configuration.md) §5 | S |
 | 5 | Generate the updater minisign keypair offline; store per `PR-REL-034`; add public key to `tauri.conf.json` (task 14) and private key to `release` | `area/release`, `gate` | `PR-REL-034`, T-09 | XS |
 | 6 | Create the Project "Tlilli roadmap" with fields and views; create milestones `0 Foundation` … `v1.0 Public`, `post-1.0` | `area/repo` | [36](36-issues-labels-and-projects.md) §3–4 | S |
 | 7 | Create the private companion repo `bioedca/tlilli-release-rehearsal` (user-owned) and the `bioedca/homebrew-tlilli` tap repo (empty cask skeleton) | `area/release` | [39](39-github-configuration.md) §6, `PR-REL-021` | XS |
@@ -47,7 +47,7 @@ The first issues to open, in dependency order. Each becomes a `type/task` issue 
 | 24 | `release-plz.toml`, `cliff.toml`, `release-plz.yml` (release PR + tag + trusted publishing), `CITATION.cff` version script | `area/release`, `gate` | D-025, [37](37-releases-and-packaging.md) §2 | M |
 | 25 | `release.yml` (tauri-action matrix → draft release, SBOM, checksums, attestations, verify) and `prerelease.yml`; rehearse in the companion repo with `dry_run` | `area/release`, `gate` | [37](37-releases-and-packaging.md) §2, `PR-CI-018` | L (split: build; sbom/checksums; attest/verify; prerelease) |
 | 26 | `post-release.yml` (tap bump, winget, updates JSON, Zenodo check, announcement draft); Flathub manifest deferred to v1.0 | `area/release`, `gate` | `PR-REL-021..025` | M |
-| 27 | Ruleset `main` (no bypass, PR, linear, queue, conversation resolution, required checks from task 20), ruleset `tags v*`; export JSON to `docs/dev/github-settings.md` (H) | `area/repo`, `gate` | D-010, D-011, [39](39-github-configuration.md) §3 | S |
+| 27 | Ruleset `main` (no bypass, PR required, linear history, branch up to date before merging, conversation resolution, required checks from task 20), ruleset `tags v*`; export JSON to `docs/dev/github-settings.md` (H) | `area/repo`, `gate` | D-010, D-011, [39](39-github-configuration.md) §3 | S |
 
 ## E. Documentation and developer environment
 

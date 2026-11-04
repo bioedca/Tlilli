@@ -8,7 +8,7 @@ Everything the project relies on in GitHub, as a checklist that can be audited. 
 | --- | --- |
 | Owner | Personal account `bioedca`; repository stays `bioedca/Tlilli`. GitHub Pro comes from the Student Developer Pack and applies to the personal account only; no organization is created (an organization would not inherit Pro, and an organization plan cannot be afforded). Revisit only when contributions or funding cover it |
 | 2FA | Enabled on the account (required for Sponsors and recommended by the threat register) |
-| Successor | A GitHub account successor designated in Settings → Access → Successor ([38](38-maintenance-and-support.md) §8); a trusted collaborator gets admin on the repository before v1.0 |
+| Successor and backup admin | A GitHub account successor designated in Settings → Account → Successor settings (ownership transfer on an authorized request after death or incapacity; not a temporary-absence mechanism). A trusted collaborator gets admin on the repository before v1.0 and is added as an allowed `release` environment reviewer, so releases and secret rotation can continue during an absence ([38](38-maintenance-and-support.md) §8) |
 | Teams | None (personal accounts have no teams); CODEOWNERS names `@bioedca` |
 | Actions (per repository) | "Allow select actions and reusable workflows": GitHub-owned, verified creators, plus the allow-list in `PR-CI-019`; default workflow permissions **read**; "Allow GitHub Actions to create and approve pull requests" **off** (release-plz uses its own token) |
 | Fork PR workflows | Require approval for all outside collaborators |
@@ -90,7 +90,7 @@ Everything the project relies on in GitHub, as a checklist that can be audited. 
 | winget | token | `WINGET_TOKEN`: PAT for the fork of `microsoft/winget-pkgs` | `release` environment |
 | Updater | secret | `TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | `release` environment; offline backups |
 
-Environment `release`: required reviewer bioedca; deployment branches and tags limited to `v*` tags and `main`; secrets listed above; wait timer 0. All PATs are fine-grained, scoped to the minimum repositories, and tracked in `docs/dev/github-settings.md` with expiry dates; a yearly rotation task is scheduled.
+Environment `release`: required reviewers bioedca and the backup admin once named (any one approves); deployment branches and tags limited to `v*` tags and `main`; secrets listed above; wait timer 0. All PATs are fine-grained, scoped to the minimum repositories, and tracked in `docs/dev/github-settings.md` with expiry dates; a yearly rotation task is scheduled.
 
 ## 6. GitHub Pro perks and platform extras in use (D-044)
 
@@ -103,7 +103,7 @@ Environment `release`: required reviewer bioedca; deployment branches and tags l
 | **Private vulnerability reporting + security advisories** | Disclosure channel and CVE issuance |
 | **Artifact attestations** | Free on public repos; used for every release asset |
 | **Rulesets, code owners, auto-merge, environments, Pages, attestations** | Available on personal public repositories on every plan, so none of them depends on Pro. Merge queue is organization-only and is replaced by the up-to-date rule (D-057) |
-| **Student Developer Pack** | Source of the Pro upgrade (time-limited to student status: only the companion repo's extra private Actions minutes and the larger Codespaces quota depend on it); its one-year free domain offers are a candidate for the docs custom domain after D-035; Copilot Pro is included but is not a review lane (D-015) |
+| **Student Developer Pack** | Source of the Pro upgrade (time-limited to student status; Pro only enlarges quotas: 3,000 instead of 2,000 private Actions minutes per month for the rehearsal repository and 180 instead of 120 Codespaces core-hours; if it lapses, the rehearsal repository stays within the free minutes or becomes a public repository with dummy secrets); its one-year free domain offers are a candidate for the docs custom domain after D-035; Copilot Pro is included but is not a review lane (D-015) |
 | **GitHub Pages** | Docs site and updater manifests |
 | **Projects v2** | Roadmap board |
 | **Discussions** | Community from v0.2 |
