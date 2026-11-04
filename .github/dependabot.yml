@@ -1,8 +1,9 @@
 # Dependabot version updates (PR-MNT-010, PR-CI-012, PRD 39 §4, D-051).
 # Weekly, before Monday triage. Every entry has the same two groups: `patch-minor`, which
-# dependabot-automerge.yml auto-merges after CI for the entries CI builds and tests (cargo `/`, npm `/ui`,
-# pip `/docs`), and `major`, which waits for triage. Security updates are not grouped (no
-# `applies-to: security-updates` group) and skip the cooldown, so an advisory opens its own PR at once.
+# dependabot-automerge.yml auto-merges after CI for the entries CI builds and tests (cargo `/`, npm `/ui`;
+# pip `/docs` joins once a required check builds the docs), and `major`, which waits for triage. Security
+# updates are not grouped (no `applies-to: security-updates` group) and skip the cooldown, so an advisory
+# opens its own PR at once.
 # Commit messages must pass commitlint (commitlint.config.mjs: exactly one scope from the closed list, so no
 # `include: scope`, which would write `deps-dev`); `chore(deps)` and `ci` stay out of the user-facing
 # changelog (PRD 37).
