@@ -8,9 +8,10 @@
 # key to `pending` ("evaluating") with its first API call, evaluates every open PR whose current head is
 # the key, and writes the conjunction as `success` or `failure` with a short reason, or `error` if the
 # evaluator throws; a crashed run leaves `pending`, which blocks the merge. If no open PR has the key as
-# its head any more, the key gets `failure` ("not the head of an open pull request"), so no stale
-# `success` survives on a SHA that a later push could restore; the restore's own `synchronize` run then
-# evaluates it. A run never writes any other SHA. The job's own check run (`gate / evaluate`) fails only
+# its head any more, the key gets `failure` ("not the head of an open pull request"). A run never writes
+# any other SHA. A push that restores a former head is a force-push, which resets every approval (below);
+# until the first run keyed to the restored SHA sets `pending`, seconds later, the SHA shows its old
+# status, and that run (the newest queued event for the SHA always runs) rejects every older approval. The job's own check run (`gate / evaluate`) fails only
 # on evaluator errors. Each verdict's details are in the run's job summary, linked from the status.
 #
 # Triggers. Both run the default branch's copy of this file with the base repository's token, and the job
@@ -35,27 +36,31 @@
 #   from the same files: re-applied when removed from a gated PR (PR-PRQ-033), removed when no gated file
 #   is left.
 # - A gated PR succeeds when a gate authority approved X against the current base, by:
-#   * a review in state APPROVED on X, submitted after the last base change; or
+#   * a review in state APPROVED on X, submitted after the last reset; or
 #   * the `gate:approved` label, whose latest timeline event is a `labeled` event by a gate authority in
-#     person (`performed_via_github_app` null) after the last base change, together with an approval
-#     record on X: the commit status `gate/approval-record` ("approved-by:<login> base:<ref>"), written
-#     by github-actions[bot], naming that actor and the current base, newer than both the last base
-#     change and the label's `labeled` event. A new push has no record (PR-REV-011).
-#   The last base change is the newest `base_ref_changed` timeline event, or the PR's creation. Every time
-#   compared is a GitHub server time.
+#     person (`performed_via_github_app` null) after the last reset, together with an approval record on
+#     X: the commit status `gate/approval-record` ("approved-by:<login> base:<ref>"), written by
+#     github-actions[bot], naming that actor and the current base, newer than both the last reset and the
+#     label's `labeled` event.
+#   The last reset is the newest `base_ref_changed` or `head_ref_force_pushed` timeline event, or the PR's
+#   creation. A fast-forward push yields a new SHA, which has no record and no review; a force-push, to a
+#   new SHA (a rebase, "Update branch") or back to a former one, voids every approval before it, whatever
+#   handler ran or was replaced (PR-REV-011). Every time compared is a GitHub server time.
 # - The record is written only by the run of the `labeled` event that applied the label, on that event's
 #   head X, and only when the run can prove the association: the timeline holds exactly one `gate:approved`
 #   `labeled` event within 5 seconds of the payload's `pull_request.updated_at` (a label change updates
 #   it; the payload carries no event id), by the payload's sender, in person, with no later label event
-#   for `gate:approved`, while X is still the PR's head. Otherwise no record is written and the status
-#   says to re-apply the label in person, so a delayed or ambiguous run fails closed.
+#   for `gate:approved`, after the last reset, while X is still the PR's head. Otherwise no record is
+#   written and the status says to re-apply the label in person, so a delayed or ambiguous run fails
+#   closed.
 # - Gate authorities: the maintainer always; the backup admin only while the repository Actions variable
 #   HANDOFF_ACTIVE is `true` AND the variable BACKUP_ADMIN names their login AND that login is listed in
 #   CODEOWNERS (PRD 32 §3: never on the CODEOWNERS entry alone; PRD 38 §8).
 # - Courtesy steps the verdict never depends on, decided from the latest timeline event: a `gate:approved`
 #   label applied by anyone else (PR-REV-012), or through any GitHub App, is removed with a comment; one
-#   that predates the last base change is removed with "gate approval reset: base changed"; on
-#   `synchronize`, one older than the push is removed with "gate approval reset by new commits".
+#   that predates the last reset is removed with "gate approval reset: base changed" or "gate approval
+#   reset by a force-push"; on `synchronize`, one older than the push is removed with "gate approval reset
+#   by new commits".
 #
 # Agent sessions act as the maintainer's account through the Claude GitHub App (D-014). A label applied
 # that way carries `performed_via_github_app` in the timeline, so the gate refuses it: `gate:approved`
@@ -207,12 +212,15 @@ jobs:
               };
               const reapply = 'A gate authority re-applies it in person, or approves the head by review, after reviewing the change.';
 
-              // The timeline, in server time: the last base change, and every `gate:approved` label event.
+              // The timeline, in server time: the last reset (base change or force-push; every approval before
+              // it is void), and every `gate:approved` label event.
               const timeline = await github.paginate(github.rest.issues.listEventsForTimeline, { owner, repo, issue_number: number, per_page: 100 });
-              let lastBaseChange = new Date(pr.created_at);
+              let lastReset = new Date(pr.created_at);
+              let reset = { kind: 'creation of the PR', event: null };
               const labelEvents = [];
               for (const t of timeline) {
-                if (t.event === 'base_ref_changed' && new Date(t.created_at) > lastBaseChange) lastBaseChange = new Date(t.created_at);
+                const kind = { base_ref_changed: 'base change', head_ref_force_pushed: 'force-push' }[t.event];
+                if (kind && new Date(t.created_at) > lastReset) { lastReset = new Date(t.created_at); reset = { kind, event: t }; }
                 if (['labeled', 'unlabeled'].includes(t.event) && t.label?.name === APPROVED) labelEvents.push(t);
               }
               labelEvents.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
@@ -239,7 +247,7 @@ jobs:
                 const near = labelEvents.filter((t) => t.event === 'labeled' && Math.abs(new Date(t.created_at) - updatedAt) <= MATCH_MS);
                 const own = near.length === 1 ? near[0] : null;
                 if (own && own === labelEvent && lower(own.actor?.login) === sender && !own.performed_via_github_app
-                  && authorities.has(sender) && labels.has(APPROVED)) {
+                  && authorities.has(sender) && labels.has(APPROVED) && new Date(own.created_at) > lastReset) {
                   // X is this PR's head: it was read from pulls.get in this run, and X is the event's head.
                   const record = `approved-by:${sender} base:${ev.pull_request.base.ref}`;
                   if (record.length > 140) throw new Error(`approval record longer than 140 characters: ${record}`);
@@ -262,10 +270,12 @@ jobs:
                   ignored.push(`label by ${who} through the GitHub App ${labelApp}, not in person`);
                   await removeLabel(APPROVED);
                   await comment(`\`${APPROVED}\` applied through the GitHub App ${labelApp} was removed: the maintainer applies it in person (PR-PRQ-032).`);
-                } else if (!(labeledAt > lastBaseChange)) {
-                  ignored.push(`label by ${who} predates the base change`);
+                } else if (!(labeledAt > lastReset)) {
+                  ignored.push(`label by ${who} predates the ${reset.kind}`);
                   await removeLabel(APPROVED);
-                  await comment(`gate approval reset: base changed to \`${baseRef}\` at ${iso(lastBaseChange)}, after \`${APPROVED}\` was applied, so it was removed. ${reapply}`);
+                  await comment(reset.kind === 'force-push'
+                    ? `gate approval reset by a force-push: the head branch was force-pushed at ${iso(lastReset)} (to ${short(reset.event.commit_id)}), after \`${APPROVED}\` was applied, so it was removed (PR-REV-011). ${reapply}`
+                    : `gate approval reset: base changed to \`${baseRef}\` at ${iso(lastReset)}, after \`${APPROVED}\` was applied, so it was removed. ${reapply}`);
                 }
               }
 
@@ -288,7 +298,7 @@ jobs:
               } else if (!gated.length && labels.has(GATE)) {
                 await removeLabel(GATE);
               }
-              sum.addRaw(`Gate authorities: ${authorityList}. Last base change: ${iso(lastBaseChange)}.`, true);
+              sum.addRaw(`Gate authorities: ${authorityList}. Last reset: ${reset.kind} at ${iso(lastReset)}.`, true);
               if (notes.length) sum.addList(notes);
               if (!gated.length) {
                 sum.addRaw('No changed file matches a CODEOWNERS path: no approval needed.', true);
@@ -309,10 +319,10 @@ jobs:
                 if (r.state !== 'APPROVED') continue;
                 if (!authorities.has(login)) ignored.push(`review by @${login}: not a gate authority`);
                 else if (r.commit_id !== X) ignored.push(`review by @${login} is for ${short(r.commit_id)}, not the head ${short(X)}`);
-                else if (!(new Date(r.submitted_at) > lastBaseChange)) ignored.push(`review by @${login} predates the base change`);
+                else if (!(new Date(r.submitted_at) > lastReset)) ignored.push(`review by @${login} predates the ${reset.kind}`);
                 else grants.push(`review by @${login} on ${short(X)}`);
               }
-              if (labels.has(APPROVED) && labelActor && authorities.has(labelActor) && !labelApp && labeledAt > lastBaseChange) {
+              if (labels.has(APPROVED) && labelActor && authorities.has(labelActor) && !labelApp && labeledAt > lastReset) {
                 // Newest first; the newest record for this base decides.
                 const statuses = await github.paginate(github.rest.repos.listCommitStatusesForRef, { owner, repo, ref: X, per_page: 100 });
                 const parse = (s) => (s.description || '').match(/^approved-by:(\S+) base:(\S+)$/);
@@ -324,14 +334,14 @@ jobs:
                 else if (record.state !== 'success') invalid = `record is ${record.state}`;
                 else if (lower(record.creator?.login) !== BOT) invalid = `record not written by ${BOT}`;
                 else if (by !== labelActor || !authorities.has(by)) invalid = `record names @${by}, not the label's gate authority`;
-                else if (!(at > lastBaseChange)) invalid = 'record predates the base change';
+                else if (!(at > lastReset)) invalid = `record predates the ${reset.kind}`;
                 else if (!(at > labeledAt)) invalid = 'record predates the label';
                 if (invalid) ignored.push(`label by ${who}: ${invalid}; re-apply ${APPROVED} in person`);
                 else grants.push(`${APPROVED} by ${who}, record on ${short(X)}`);
               }
               sum.addRaw('Gated files:', true).addList(gated.map((p) => `\`${p}\``));
               if (grants.length) sum.addRaw('Approval:', true).addList(grants);
-              if (ignored.length) sum.addRaw(`Ignored (re-apply a label by removing and adding it; last base change ${iso(lastBaseChange)}):`, true).addList(ignored);
+              if (ignored.length) sum.addRaw(`Ignored (re-apply a label by removing and adding it; last reset: ${reset.kind} at ${iso(lastReset)}):`, true).addList(ignored);
               if (grants.length) return { number, state: 'success', description: `approved: ${grants[0]}` };
               const why = `needs approval on ${short(X)} (${gated.length} gated file${gated.length === 1 ? '' : 's'})`;
               sum.addRaw(`${why}: a review from a gate authority, or \`${APPROVED}\` applied in person by one (${authorityList}). The decision is recorded in a PR comment (PR-REV-013).`, true);
