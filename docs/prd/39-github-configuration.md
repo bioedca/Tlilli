@@ -78,7 +78,7 @@ Everything the project relies on in GitHub, as a checklist that can be audited. 
 | OpenAI Codex | GitHub App | pull requests read/write, contents read | automatic reviews **off**; `@codex review` |
 | CodeRabbit | GitHub App | pull requests, contents read, checks | Open Source plan; auto-review off |
 | Greptile | GitHub App | pull requests, contents read | label-triggered |
-| Codecov | GitHub App + token | checks, statuses | `CODECOV_TOKEN` repo secret (upload only) |
+| Codecov | GitHub App + OIDC | checks, statuses | Codecov GitHub App installed; `codecov/codecov-action` runs with `use_oidc: true` and the uploading jobs grant `id-token: write`; no token is stored (`PR-CI-007`, D-061); the coverage upload is skipped for Dependabot-authored PRs |
 | DCO | GitHub App (probot) | statuses | required check `DCO` |
 | Zenodo | webhook | releases read | archives on publish |
 | Dependabot | native | — | grouped weekly |
@@ -87,10 +87,10 @@ Everything the project relies on in GitHub, as a checklist that can be audited. 
 | GitHub Pages | OIDC | `pages: write`, `id-token: write` | — |
 | Projects | token | `PROJECT_TOKEN`: fine-grained PAT with project write | `project.yml` (environment `automation`) |
 | Homebrew tap | token | `HOMEBREW_TAP_TOKEN`: fine-grained PAT scoped to `bioedca/homebrew-tlilli` contents+PRs | `release` environment |
-| winget | token | `WINGET_TOKEN`: PAT for the fork of `microsoft/winget-pkgs` | `release` environment |
+| winget | token | `WINGET_TOKEN`: **classic** PAT with the single scope `public_repo`, one-year expiry. The only classic token: `vedantmgoyal9/winget-releaser` opens the pull request on `microsoft/winget-pkgs`, a repository the maintainer does not own, and fine-grained PATs cannot create pull requests there (D-061) | `release` environment; created only when `post-release.yml` lands and after `microsoft/winget-pkgs` is forked under `bioedca` |
 | Updater | secret | `TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | `release` environment; offline backups |
 
-Environment `release`: required reviewers bioedca and the backup admin once named (any one approves); deployment branches and tags limited to `v*` tags and `main`; holds `TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`, `HOMEBREW_TAP_TOKEN`, `WINGET_TOKEN`; wait timer 0. Environment `automation`: no required reviewer; deployment branches limited to `main`; holds `RELEASE_PLZ_TOKEN` and `PROJECT_TOKEN`; declared by the `release-plz.yml`, `prerelease.yml` (tag push) and `project.yml` jobs, which run on `main` or in base-branch context, so a PR workflow can never read them. All PATs are fine-grained, scoped to the minimum repositories, and tracked in `docs/dev/github-settings.md` with expiry dates; a yearly rotation task is scheduled.
+Environment `release`: required reviewers bioedca and the backup admin once named (any one approves); deployment branches and tags limited to `v*` tags and `main`; holds `TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`, `HOMEBREW_TAP_TOKEN`, `WINGET_TOKEN`; wait timer 0. Environment `automation`: no required reviewer; deployment branches limited to `main`; holds `RELEASE_PLZ_TOKEN` and `PROJECT_TOKEN`; declared by the `release-plz.yml`, `prerelease.yml` (tag push) and `project.yml` jobs, which run on `main` or in base-branch context, so a PR workflow can never read them. All PATs except `WINGET_TOKEN` are fine-grained and scoped to the minimum repositories; `WINGET_TOKEN` is a classic PAT limited to the `public_repo` scope (D-061). All are tracked in `docs/dev/github-settings.md` with expiry dates; a yearly rotation task is scheduled.
 
 ## 6. GitHub Pro perks and platform extras in use (D-044)
 

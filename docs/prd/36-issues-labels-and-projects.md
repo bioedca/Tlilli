@@ -55,8 +55,8 @@ One milestone per roadmap phase, named exactly as the phase (`0 Foundation`, `v0
 
 | Element | Specification |
 | --- | --- |
-| Fields | Status (Todo, Ready, In progress, In review, Gate, Done); Phase (single select mirroring `phase/*`); Area; Priority; Size (XS–XL); Gate (checkbox: counts toward gate exit); Lane (Agent / Human); CodeRabbit requests (text ledger); Greptile reviews (number, monthly) |
-| Views | **Board** by Status with WIP limit 3 on In progress for Lane = Agent (`PR-GIT-012`); **Roadmap** grouped by Phase/milestone; **Triage** table filtered `status/triage`; **Agent queue** table: Status = Ready, sorted by Priority then Size, filtered by Area (what an agent picks next); **Gate** view: Gate = true for the current phase; **Budgets** view: the two ledger fields |
+| Fields | Status (Todo, Ready, In progress, In review, Gate, Done); Phase (single select mirroring `phase/*`); Area; Priority; Size (XS–XL); Gate (single select Yes/No: counts toward gate exit; Projects v2 has no checkbox field type); Lane (Agent / Human); CodeRabbit requests (text ledger); Greptile reviews (number, monthly) |
+| Views | **Board** by Status with WIP limit 3 on In progress for Lane = Agent (`PR-GIT-012`); **Roadmap** as a table grouped by Phase until milestones carry due dates (the Roadmap layout needs date fields; milestones have none until v0.1 ships, §3), then the Roadmap layout by milestone; **Triage** table filtered `status/triage`; **Agent queue** table: Status = Ready, sorted by Priority then Size, filtered by Area (what an agent picks next); **Gate** view: Gate = Yes for the current phase; **Budgets** view: the two ledger fields |
 | Automation | `project.yml` adds every new issue and PR; built-in workflows: item closed → Done; PR merged → Done; PR opened → In review when Ready; issue labelled `status/blocked` → stays with a Blocked marker |
 | Ownership | Maintainer edits fields at triage; agents may move their own items between Ready → In progress → In review and fill the ledger fields |
 
