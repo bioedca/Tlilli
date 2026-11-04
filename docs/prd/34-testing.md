@@ -11,8 +11,8 @@ INTERSECT Testing rules adopted: testing is a design tool (write the test first;
 | Snapshot | `crates/tlilli-core/tests/snap_*.rs` | `insta` (`.snap` committed; `cargo insta review` locally) | every PR | Export formats (Markdown, docx XML parts, LaTeX, Typst source, CSL output, canonical JSON), import reports, MCP schemas, error messages |
 | Contract | `crates/tlilli-mcp/tests/contract/**` | rmcp client against an in-process server; golden JSON-RPC transcripts under `tests/fixtures/transcripts/` | every PR | Every tool and resource: success and each refusal; schema snapshots; timing (`NFR-PERF-005`) |
 | UI unit/integration | `ui/src/**/*.test.tsx` | Vitest + Testing Library; core mocked by a typed fake implementing the command interface | every PR | Components, store, keyboard flows, a11y (axe) |
-| Browser E2E | `ui/e2e/**` | Playwright against the web UI with the mocked core | smoke subset every PR; full nightly | User journeys end to end in the view; visual snapshots; keyboard-only suite; axe audits |
-| Desktop smoke | `e2e/smoke/**` | `tauri-driver` + WebDriver under `xvfb-run` (Linux) | every PR | The shell wires up: open workspace, type, send a run, cancel, accept a suggestion (from v0.2 with a fake agent) |
+| Browser E2E | `ui/e2e/**` | Playwright against the web UI with the mocked core (`pnpm -C ui test:e2e`) | smoke subset every PR; full nightly | User journeys end to end in the view; visual snapshots; keyboard-only suite; axe audits |
+| Desktop smoke | `e2e/smoke/**` | `tauri-driver` + WebDriver under `xvfb-run` (Linux), `pnpm -C ui test:e2e:desktop` | every PR | The shell wires up: open workspace, type, send a run, cancel, accept a suggestion (from v0.2 with a fake agent) |
 | Fuzz | `fuzz/fuzz_targets/*.rs` | `cargo-fuzz` (libFuzzer) with corpora committed | nightly, 10 min per target | Markdown/docx/LaTeX importers, PDF text extraction, DOI sniffing, MCP tool inputs, JSON-RPC framing |
 | Mutation | `tlilli-core` | `cargo-mutants` | weekly | Test-suite strength; score tracked |
 | Benchmarks | `crates/*/benches/*.rs` | `criterion` with stored baselines in `benches/baseline/` | nightly | NFR-PERF regressions (fail at +20%) |
@@ -49,7 +49,7 @@ INTERSECT Testing rules adopted: testing is a design tool (write the test first;
 - Segmentation: fixture corpus (English, Spanish, German), abbreviation seeding, overrides, concatenation property.
 - Anchoring: similarity threshold edge cases; moves; splits/merges; tombstones; corpus metric ≥ 99% (gate).
 - Event log: append, hash chain, truncated/tampered logs, replay equality, snapshot dedupe, restore-creates-events.
-- Storage: migrations up/down on fixture databases from every released schema version (kept in `tests/fixtures/db/`), WAL crash harness (kill-9 during writes), cross-OS path handling.
+- Storage: migrations up/down on fixture databases from every released schema version (kept in `tests/fixtures/db/`), WAL crash harness (kill-9 during writes), WAL checkpoint test with a long-lived reader in a second process, commit-failure fault injection (each commit step fails for every event type; nothing is confirmed; the reloaded state equals replay), cross-OS path handling.
 - Runs: full state machine, timeout, cancel, rollback with conflicts.
 - Provenance: marks under every edit kind; `mixed` rules; export summary numbers.
 - Ledger: identifier normalization, dedupe, CSL rendering snapshots (styles × locales), quote verification (`quote_not_found`).

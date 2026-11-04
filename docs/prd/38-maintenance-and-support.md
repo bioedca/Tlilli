@@ -32,7 +32,7 @@ Private vulnerability reporting → triage → fix on `main` → patch release �
 
 | ID | Rule |
 | --- | --- |
-| `PR-MNT-010` | Dependabot grouped weekly PRs for `cargo`, `npm`, `github-actions`, `pip` (docs); patch and minor groups auto-merge after CI; majors wait for triage; security advisories open ungrouped PRs immediately. |
+| `PR-MNT-010` | Dependabot grouped weekly PRs for `cargo` (the root workspace; `fuzz/`, its own Cargo workspace, gets no version updates), `npm`, `github-actions`, `pip` (docs) and `devcontainers`, proposing only releases at least 7 days old (cooldown); the patch and minor group auto-merges after CI only for entries that PR CI builds and tests (cargo `/`, npm `/ui`; pip `/docs` once a required check builds the docs); majors and the other entries wait for triage; security advisories open ungrouped PRs immediately, without the cooldown, and these never auto-merge (D-074). |
 | `PR-MNT-011` | `cargo deny check advisories` blocks PRs and runs nightly on `main`; a new advisory on `main` opens a `priority/P1` issue automatically. |
 | `PR-MNT-012` | Unmaintained dependencies (no release in 18 months, open critical issues) are listed quarterly; replacement or fork decisions go through an ADR (`PR-ARCH-002`). |
 | `PR-MNT-013` | Toolchain: MSRV bumps to the current stable at each minor; `rust-toolchain.toml` pins `stable`; CI also compiles on `beta` nightly as an early warning (not required). |

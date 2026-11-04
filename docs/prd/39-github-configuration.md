@@ -38,7 +38,7 @@ Everything the project relies on in GitHub, as a checklist that can be audited. 
 **Ruleset `main`** (target: `main`, enforcement: active, bypass list: **empty**)
 - Restrict deletions; block force pushes; require linear history.
 - Require a pull request before merging: required approvals **0** (the gate is a status check, [32](32-code-review.md) §5); dismiss stale approvals on push; require conversation resolution; require review from Code Owners **off** (cannot be satisfied by the author of record, D-014); allowed merge methods: rebase.
-- Require status checks to pass: **strict** ("Require branches to be up to date before merging") on; checks listed in `PR-GIT-043`.
+- Require status checks to pass: **strict** ("Require branches to be up to date before merging") on; checks listed in `PR-GIT-043`, with `gate/maintainer` required as a commit status context from GitHub Actions (`PR-REV-010`).
 - Require signed commits: off (D-012).
 - Require deployments to succeed: off.
 
@@ -57,7 +57,7 @@ Everything the project relies on in GitHub, as a checklist that can be audited. 
 | `.github/labeler.yml` | path → `area/*`, `gate`, `review:deep` |
 | `.github/ISSUE_TEMPLATE/*.yml`, `config.yml` | ten forms, blank disabled, contact links |
 | `.github/PULL_REQUEST_TEMPLATE.md` | [31](31-pull-requests.md) §3 |
-| `.github/dependabot.yml` | cargo, npm, github-actions, pip weekly, grouped `patch-minor` and `major`; `open-pull-requests-limit: 5` |
+| `.github/dependabot.yml` | cargo, npm, github-actions, pip, devcontainers weekly with a 7-day cooldown; version updates grouped `patch-minor` and `major`, security updates ungrouped; `open-pull-requests-limit: 5` (`PR-MNT-010`, D-074) |
 | `.github/FUNDING.yml` | Sponsors |
 | `.github/workflows/*.yml` | [33](33-ci-cd.md) |
 | `SECURITY.md` (root only; no `.github/SECURITY.md`, which GitHub would show instead of the full policy) | disclosure policy |
