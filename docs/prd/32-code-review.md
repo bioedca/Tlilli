@@ -73,7 +73,7 @@ The maintainer reviews only PRs that touch **gated paths**. Everything else merg
 | `docs/prd/**`, `docs/adr/**`, `docs/gates/**` | Requirements and decisions |
 | `tests/fixtures/LICENSES.md` | Licensing of vendored texts |
 
-`.github/CODEOWNERS` lists these paths with owners `@bioedca` and, once named, the backup admin ([38](38-maintenance-and-support.md) §8), so the gate check accepts the backup admin's approval during a handoff; `GOVERNANCE.md` states that the backup admin exercises this authority only during a handoff. A team replaces the user list only if the project ever moves to an organization. The path labeler applies `gate` when any changed file matches.
+`.github/CODEOWNERS` lists these paths with owners `@bioedca` and, once named, the backup admin ([38](38-maintenance-and-support.md) §8), so the backup admin can be a gate authority; the check accepts their approval only while the handoff state is active (`HANDOFF_ACTIVE`, `PR-REV-010`), never on the strength of the CODEOWNERS entry alone. The entry and the check land in the same PR (bootstrap task 19), so there is no window in which the backup admin's approval counts unchecked. A team replaces the user list only if the project ever moves to an organization. The path labeler applies `gate` when any changed file matches.
 
 ## 4. Human review checklist (used at gates)
 
@@ -95,9 +95,9 @@ Problem: agent PRs are opened and committed under the maintainer's own GitHub id
 
 | ID | Rule |
 | --- | --- |
-| `PR-REV-010` | `gate/maintainer` runs on `pull_request` (`opened`, `synchronize`, `reopened`, `labeled`, `unlabeled`, `ready_for_review`), `pull_request_review` (`submitted`, `dismissed`) and `push` to `main` (to re-evaluate open PRs). It **passes** when the PR touches no CODEOWNERS path, or when the PR has an approving review from a CODEOWNER who is not the author, or when the `gate:approved` label is present and was applied by a CODEOWNER after the latest push. Otherwise it **fails** with a message naming the gated files. |
+| `PR-REV-010` | `gate/maintainer` runs on `pull_request` (`opened`, `synchronize`, `reopened`, `labeled`, `unlabeled`, `ready_for_review`), `pull_request_review` (`submitted`, `dismissed`) and `push` to `main` (to re-evaluate open PRs). It **passes** when the PR touches no CODEOWNERS path, or when a **gate authority** has approved it after the latest push, by review or by the `gate:approved` label. Gate authorities are: the maintainer (`@bioedca`) always, and the backup admin only while the repository Actions variable `HANDOFF_ACTIVE` is `true` ([38](38-maintenance-and-support.md) §8). An approval or label from anyone else, or from the backup admin while the variable is `false`, is ignored and named in the failure message. Otherwise it **fails** with a message naming the gated files. |
 | `PR-REV-011` | Any new push invalidates approval: the workflow removes `gate:approved` on `synchronize` and comments "gate approval reset by new commits"; stale review approvals are dismissed by the ruleset setting "dismiss stale reviews". |
-| `PR-REV-012` | Only CODEOWNERS can apply `gate:approved`; the workflow verifies the label event's actor against CODEOWNERS and removes the label with a comment if applied by anyone else. |
+| `PR-REV-012` | Only a gate authority (`PR-REV-010`) may apply `gate:approved`: the maintainer, or the backup admin while `HANDOFF_ACTIVE` is `true`. The workflow verifies the label event's actor against that set and the variable, and removes the label with a comment otherwise. |
 | `PR-REV-013` | The maintainer records the gate decision in a PR comment (two lines minimum: what was checked, any follow-up issue). This is the audit trail INTERSECT asks for from a human reviewer. |
 | `PR-REV-014` | `gate` is applied by the path labeler from `.github/labeler.yml` mirroring CODEOWNERS; the labeler runs on `pull_request_target` with read-only permissions and no checkout of PR code. |
 | `PR-REV-015` | If a co-maintainer joins (GOVERNANCE), approvals move to ordinary code-owner reviews and `gate:approved` is retired by a decision entry. |
