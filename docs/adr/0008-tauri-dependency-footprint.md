@@ -1,6 +1,6 @@
 # ADR-0008: The Tauri 2 dependency footprint of the desktop shell
 
-- **Status:** Proposed (the maintainer's merge of the pull request records acceptance; see the [index](README.md))
+- **Status:** Accepted 2026-11-04 (the maintainer's approval of pull request 69; see the [index](README.md))
 - **Date:** 2026-11-04
 - **Deciders:** bioedca (maintainer). Drafted by Claude Code (cloud), bootstrap task 14 ([PRD 42](../prd/42-bootstrap-backlog.md) row 14, issue 22), in answer to a review finding on pull request 69.
 
