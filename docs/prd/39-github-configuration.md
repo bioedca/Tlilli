@@ -8,7 +8,7 @@ Everything the project relies on in GitHub, as a checklist that can be audited. 
 | --- | --- |
 | Owner | Personal account `bioedca`; repository stays `bioedca/Tlilli`. GitHub Pro comes from the Student Developer Pack and applies to the personal account only; no organization is created (an organization would not inherit Pro, and an organization plan cannot be afforded). Revisit only when contributions or funding cover it |
 | 2FA | Enabled on the account (required for Sponsors and recommended by the threat register) |
-| Successor and backup admin | A GitHub account successor designated in Settings → Account → Successor settings (ownership transfer on an authorized request after death or incapacity; not a temporary-absence mechanism). A trusted collaborator gets admin on the repository before v1.0 and is added as an allowed `release` environment reviewer, so releases and secret rotation can continue during an absence ([38](38-maintenance-and-support.md) §8) |
+| Successor and backup admin | A GitHub account successor designated in Settings → Account → Successor settings (ownership transfer on an authorized request after death or incapacity; not a temporary-absence mechanism). A trusted collaborator gets admin on the repository before v1.0, is listed in CODEOWNERS (gate authority, used only during a handoff) and is added as an allowed `release` environment reviewer, so gated merges, releases and secret rotation can continue during an absence ([38](38-maintenance-and-support.md) §8) |
 | Teams | None (personal accounts have no teams); CODEOWNERS names `@bioedca` |
 | Actions (per repository) | "Allow select actions and reusable workflows": GitHub-owned, verified creators, plus the allow-list in `PR-CI-019`; default workflow permissions **read**; "Allow GitHub Actions to create and approve pull requests" **off** (release-plz uses its own token) |
 | Fork PR workflows | Require approval for all outside collaborators |
@@ -52,7 +52,7 @@ Everything the project relies on in GitHub, as a checklist that can be audited. 
 
 | File | Content |
 | --- | --- |
-| `.github/CODEOWNERS` | gated paths → `@bioedca` ([32](32-code-review.md) §3) |
+| `.github/CODEOWNERS` | gated paths → `@bioedca` and the backup admin once named ([32](32-code-review.md) §3; the backup admin uses gate authority only during a handoff) |
 | `.github/labels.yml` | label scheme ([36](36-issues-labels-and-projects.md) §2) |
 | `.github/labeler.yml` | path → `area/*`, `gate`, `review:deep` |
 | `.github/ISSUE_TEMPLATE/*.yml`, `config.yml` | nine forms, blank disabled, contact links |

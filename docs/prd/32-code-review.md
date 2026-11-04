@@ -73,7 +73,7 @@ The maintainer reviews only PRs that touch **gated paths**. Everything else merg
 | `docs/prd/**`, `docs/adr/**`, `docs/gates/**` | Requirements and decisions |
 | `tests/fixtures/LICENSES.md` | Licensing of vendored texts |
 
-`.github/CODEOWNERS` lists these paths with owner `@bioedca` (a team only if the project ever moves to an organization). The path labeler applies `gate` when any changed file matches.
+`.github/CODEOWNERS` lists these paths with owners `@bioedca` and, once named, the backup admin ([38](38-maintenance-and-support.md) §8), so the gate check accepts the backup admin's approval during a handoff; `GOVERNANCE.md` states that the backup admin exercises this authority only during a handoff. A team replaces the user list only if the project ever moves to an organization. The path labeler applies `gate` when any changed file matches.
 
 ## 4. Human review checklist (used at gates)
 

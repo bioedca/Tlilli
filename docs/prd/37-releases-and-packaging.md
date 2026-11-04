@@ -19,7 +19,7 @@ INTERSECT Packaging rules adopted: one version source; SemVer as an abbreviated 
 
 ```
 commits on main ──▶ release-plz keeps "chore(release): vX.Y.Z" PR updated (versions, CHANGELOG, CITATION.cff)
-                ──▶ maintainer approves (gate) ──▶ queue merges
+                ──▶ maintainer approves (gate) ──▶ auto-merge lands it once the branch is up to date and checks pass
                 ──▶ release-plz creates tag vX.Y.Z, publishes crates (trusted publishing)
                 ──▶ release.yml: build matrix → DRAFT GitHub Release (bundles, latest.json, .sig)
                                   + SBOM + SHA256SUMS + attestations + verify job
@@ -130,7 +130,7 @@ No Apple Developer ID, no notarization, no Windows Authenticode certificate can 
 ## 7. Release runbook (`docs/dev/release-runbook.md`, summary)
 
 1. Confirm the gate report (for `.0` releases) or the fix list (for patches) and that `main` is green.
-2. Review the release PR: versions, `CHANGELOG.md` groups, `CITATION.cff`, migration notes; approve the gate; let the queue merge.
+2. Review the release PR: versions, `CHANGELOG.md` groups, `CITATION.cff`, migration notes; approve the gate; auto-merge lands it once the branch is up to date and the checks pass.
 3. Watch `release-plz.yml` create the tag and publish crates; watch `release.yml` produce the draft and pass `verify`.
 4. Edit the draft notes (Highlights, Known issues, Upgrade notes, Verify your download); publish.
 5. Confirm `post-release.yml`: tap PR merged, winget PR opened, Flathub checker PR (v1.0+), `updates/stable.json` live, Zenodo DOI minted, announcement Discussion posted.
