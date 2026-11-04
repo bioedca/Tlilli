@@ -48,7 +48,7 @@ Observed through the API on 2026-11-04; the target column is [PRD 39 §2](../prd
 | Setting | Target | State |
 | --- | --- | --- |
 | Actions permissions | Allow `bioedca` plus select actions: GitHub-created, Marketplace verified creators, and the allow-list in `PR-CI-019` | Pending |
-| Require actions to be pinned to a full-length commit SHA | **On, after bootstrap task 20** merges. The PRD requires SHA-pinned actions (D-050), but the bootstrap `ci.yml` still references `actions/checkout@v4`, `dtolnay/rust-toolchain@stable`, `Swatinem/rust-cache@v2`, `pnpm/action-setup@v4` and `actions/setup-node@v4` by tag, so enabling the setting now would stop every run | Later (task 20) |
+| Require actions to be pinned to a full-length commit SHA | On (D-050) | Done 2026-11-04: setting enabled by the maintainer; `ci.yml` pinned to commit SHAs with version comments by pull request 7 (`actions/checkout` v4.4.0, `actions/setup-node` v4.4.0, `pnpm/action-setup` v4.3.0, `Swatinem/rust-cache` v2.9.3, `dtolnay/rust-toolchain` stable branch head). Runs 21 and 22 on pull request 6 had failed at startup between the two steps |
 | Fork pull request workflows | Require approval for all external contributors | Pending |
 | Default workflow permissions | Read repository contents and packages | Pending |
 | Allow GitHub Actions to create and approve pull requests | Off | Pending |
@@ -131,4 +131,4 @@ None exist yet (observed 2026-11-04). The `main` and `tags v*` rulesets are crea
 
 | Date | Change | By |
 | --- | --- | --- |
-| 2026-11-04 | Page created from the bootstrap walkthrough; updater key generated and public key recorded; successor recorded as not yet designated; Sponsors request submitted; milestones 1–8 and four labels created; restore-drill issue #5 opened; DCO app observed installed | maintainer and agent |
+| 2026-11-04 | Page created from the bootstrap walkthrough; updater key generated and public key recorded; successor recorded as not yet designated; Sponsors request submitted; milestones 1–8 and four labels created; restore-drill issue #5 opened; DCO app observed installed; SHA-pinning setting enabled and `ci.yml` pinned (pull request 7) | maintainer and agent |
