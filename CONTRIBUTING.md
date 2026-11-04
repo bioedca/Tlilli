@@ -6,7 +6,7 @@ Thank you for considering a contribution. Tlilli is pre-alpha (Phase 0): one mai
 
 - Read the [README](README.md) and the [concept document](Tlilli%20-%20Concept%20%26%20Definition.md). The invariants in [PRD 01 §5](docs/prd/01-vision-and-scope.md) (the author holds the pen, every change is an event, untrusted text is labelled) are not negotiable.
 - One problem per issue. Bugs, features and tasks use the issue forms ([PRD 36 §1](docs/prd/36-issues-labels-and-projects.md)); blank issues are off. Security problems never go through issues: see [SECURITY.md](SECURITY.md).
-- Questions go to GitHub Discussions once they open (v0.2); until then, open an issue with the `type/question` label. There is no chat or email support ([SUPPORT.md](SUPPORT.md)).
+- Questions go to GitHub Discussions once they open (v0.2); until then, use the **Question** form in the [issue chooser](https://github.com/bioedca/Tlilli/issues/new/choose), which labels the issue `type/question` (blank issues are off). Documentation gaps go through the **Documentation** form. There is no chat or email support ([SUPPORT.md](SUPPORT.md)).
 - Pick an issue, or open one, before writing code. A PR without an issue is allowed only for a small `chore` or `docs` change that says why.
 
 ## Workflow ([PRD 30](docs/prd/30-git-workflow.md) and [31](docs/prd/31-pull-requests.md))
@@ -29,7 +29,7 @@ Automated review is the default; the maintainer reviews only gated paths.
 
 ## Running the checks locally
 
-Until `scripts/ci.sh` exists (bootstrap task 15), run the commands CI runs:
+The Cargo workspace (pull request #45) and the UI package (pull request #50) are landing in Phase 0, and the `ci.yml` rewrite (bootstrap task 20) wires these commands into CI; until then, run the ones whose manifest exists in your checkout. Until `scripts/ci.sh` exists (bootstrap task 15), these are the commands CI runs:
 
 ```sh
 cargo fmt --all --check
