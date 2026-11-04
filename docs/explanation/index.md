@@ -12,6 +12,6 @@ PRD 35 §2 names the pages and `FR-10-020` requires the quadrant to be complete 
 - **Span anchoring**: how suggestions stay attached to text that moves.
 - **Local first**: nothing leaves the machine unless the author sends it.
 - **Agent agnostic**: Claude Code, Codex, ChatGPT and any other MCP client.
-- **Built with agents** (`PR-DOC-014`, bootstrap task 32): how the project uses AI agents and reviewers, what the human reviews, and the DCO stance.
+- **[Built with agents](built-with-agents.md)** (`PR-DOC-014`): how the project uses AI agents and reviewers, what the human reviews, and the DCO stance.
 
 Design decisions and their alternatives are recorded as ADRs (`docs/adr/`, bootstrap task 16, `PR-DOC-009`), which render as a separate section.
