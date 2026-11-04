@@ -9,10 +9,13 @@ agents ([PRD 21 §4](../../docs/prd/21-architecture-and-tech-stack.md),
 In addition to the root rules and severities:
 
 - The pen rule (`INV-01`): write tools produce suggestions, comments, proposed sources or allow-listed mechanical
-  edits only. A tool, argument or code path that can change author text is a Blocker.
+  edits only. A tool, argument or code path that changes author text other than through an allow-listed mechanical
+  edit (`apply_mechanical`, `FR-04-021`) that passes the `guard` checks below is a Blocker.
 - Every write tool requires a claimed run and a target inside the frozen queue or a standing-check scope, and
-  refuses other targets with a hint to comment (`INV-03`); the mechanical-edit allow-list, the alternative cap and
-  the rationale requirement hold for every tool. A path around `guard` is a Blocker; every refusal has a test.
+  refuses other targets with a hint to comment (`INV-03`). The mechanical-edit allow-list holds for every tool; the
+  cap of one to three alternatives and the rationale per alternative apply to `suggest_replace` and `suggest_insert`
+  (`FR-02-030`, `FR-02-031`), and every other write tool is checked against its own parameters (ADR-0002). A path
+  around `guard` is a Blocker; every refusal has a test.
 - Tool inputs are validated against their JSON Schema before they reach the core; payloads over 1 MB are rejected
   (`NFR-SEC-002`). Schema changes are additive or deprecated properly, with snapshots and reference docs updated.
 - Source text, PDFs and reviewer comments travel in envelopes marked `untrusted: true` and are never interpolated
