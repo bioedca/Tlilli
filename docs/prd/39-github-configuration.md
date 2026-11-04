@@ -35,7 +35,8 @@ Everything the project relies on in GitHub, as a checklist that can be audited. 
 
 ## 3. Rulesets (exported JSON kept in `docs/dev/github-settings.md`)
 
-**Ruleset `main`** (target: `main`, enforcement: active, bypass list: **empty**)
+**Ruleset `main`** (target: `main`, enforcement: active, bypass list: the **Repository admin** role with bypass mode **pull requests only**, D-078)
+- Bypass: a pull request merge only, never a push (`PR-GIT-040`); used only for a gated PR on the maintainer's decision, by the maintainer or by an agent with a relayed authorization recorded in the PR body (`PR-GIT-058`). Bootstrap task 27 checks that an agent session's merge (the maintainer's account through the Claude GitHub App) counts as the admin role; if it does not, relayed gated PRs wait for the maintainer to merge them and `docs/dev/github-settings.md` records the gap.
 - Restrict deletions; block force pushes; require linear history.
 - Require a pull request before merging: required approvals **0** (the gate is a status check, [32](32-code-review.md) §5); dismiss stale approvals on push; require conversation resolution; require review from Code Owners **off** (cannot be satisfied by the author of record, D-014); allowed merge methods: rebase.
 - Require status checks to pass: **strict** ("Require branches to be up to date before merging") on; checks listed in `PR-GIT-043`, with `gate/maintainer` required as a commit status context from GitHub Actions (`PR-REV-010`).
