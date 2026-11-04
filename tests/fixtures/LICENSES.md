@@ -21,7 +21,7 @@ the maintainer's approval (R-23).
 
 ## Fixture kinds
 
-No fixture is committed yet: each directory arrives with the first test that uses it.
+No fixture is committed yet: each directory arrives with the first test that uses it. A file kind that cannot carry an SPDX header, such as the `db/` databases, also needs its glob or path in [`REUSE.toml`](../../REUSE.toml) with the license in the table below; the pull request that commits the first such fixture adds it.
 
 | Directory | Contents | Provenance | License |
 | --- | --- | --- | --- |
