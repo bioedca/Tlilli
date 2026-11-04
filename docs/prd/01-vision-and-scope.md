@@ -84,7 +84,7 @@ Measured at gate tests on the maintainer's own manuscripts, recorded in the gate
 ## 7. Assumptions
 
 - A1. The maintainer is the only human committer through v1.0; agents (Claude Code cloud and local, Codex CLI and cloud) author most code under the rules in [30](30-git-workflow.md)–[34](34-testing.md).
-- A2. Agent review budgets: Codex via ChatGPT Pro (rounds not scarce), CodeRabbit Open Source plan (rate-limited), Greptile one paid seat (≈15–20 deep reviews per month). See [32](32-code-review.md).
+- A2. Agent review budgets: Codex via ChatGPT Pro (rounds not scarce), CodeRabbit Team plan (one seat, rate-limited per developer; Open Source plan when the repository qualifies), Greptile one paid seat (≈15–20 deep reviews per month). See [32](32-code-review.md).
 - A3. No money is available for code signing or notarization. Trust is established with checksums, Sigstore build attestations and the updater's minisign signatures. See [37](37-releases-and-packaging.md).
 - A4. GitHub-hosted runners are free for the public repository; macOS and Windows jobs are slow and run only on Ready PRs and `main`.
 - A5. The repository stays on the maintainer's personal account (`bioedca/Tlilli`), whose GitHub Pro plan comes from the Student Developer Pack. Organization-only features (merge queue, teams, organization rulesets) are not used, and no required capability depends on Pro, which only enlarges quotas ([D-057](41-risks-and-decision-log.md), [39](39-github-configuration.md) §6). An organization move is revisited only when contributions or funding cover it.
