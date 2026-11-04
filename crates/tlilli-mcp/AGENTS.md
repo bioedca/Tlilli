@@ -4,7 +4,7 @@ Adds to the root [`AGENTS.md`](../../AGENTS.md), which applies here in full. `tl
 agents ([PRD 21 §4](../../docs/prd/21-architecture-and-tech-stack.md),
 [PRD 22](../../docs/prd/22-security-and-threat-model.md)); the whole crate is a gated path.
 
-## Code Review Rules
+## Review guidelines
 
 In addition to the root rules and severities:
 
