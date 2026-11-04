@@ -1,0 +1,33 @@
+# Local git hooks (docs/prd/30-git-workflow.md §5, PR-CI-010). `pnpm -C ui install` installs them
+# through the `prepare` script of ui/package.json. Skip once with `git commit --no-verify` or
+# `LEFTHOOK=0 git commit`. CI runs the same checks in full; the hooks only run the fast subset on
+# staged files, and the Rust jobs run only when Rust files are staged (the workspace is task 12).
+#
+# At least one job keeps `root: ui/`: the installed hook scripts look for the lefthook binary under
+# each configured root, which is how they find ui/node_modules without a package.json at the top.
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: rustfmt
+      glob:
+        - "*.rs"
+      run: cargo fmt --all --check
+
+    - name: clippy
+      glob:
+        - "*.rs"
+        - "Cargo.toml"
+        - "Cargo.lock"
+      run: cargo clippy --workspace --all-targets -- -D warnings
+
+    - name: biome
+      root: ui/
+      glob:
+        - "*.{js,jsx,mjs,cjs,ts,tsx,json,jsonc,css,html}"
+      run: pnpm exec biome check --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
+
+commit-msg:
+  jobs:
+    - name: commitlint
+      run: ui/node_modules/.bin/commitlint --edit {1}

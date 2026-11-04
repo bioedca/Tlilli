@@ -1,0 +1,53 @@
+# SPDX-FileCopyrightText: 2026 bioedca
+# SPDX-License-Identifier: Apache-2.0
+#
+# REUSE specification 3.3 (https://reuse.software/spec-3.3/): the copyright and
+# license of every file that cannot, or need not, carry an SPDX header.
+#
+# Rust (.rs) and TypeScript (.ts, .tsx) sources are deliberately not matched
+# anywhere, under .github/ and skills/ included: they carry their own SPDX
+# header, and `reuse lint` fails when one is missing. The globs therefore name
+# file kinds, never whole directories. Add a glob here when a new kind of
+# header-less file enters the repository.
+# Policy: docs/dev/licensing.md. Decision: D-003 in docs/prd/41-risks-and-decision-log.md.
+version = 1
+SPDX-PackageName = "Tlilli"
+SPDX-PackageSupplier = "bioedca <131809205+bioedca@users.noreply.github.com>"
+SPDX-PackageDownloadLocation = "https://github.com/bioedca/Tlilli"
+
+# Documentation, configuration, data, scripts and lockfiles: Apache-2.0.
+[[annotations]]
+path = [
+  "**/*.md",
+  "**/*.toml",
+  "**/*.json",
+  "**/*.yaml",
+  "**/*.yml",
+  "**/*.cff",
+  "**/*.sh",
+  "**/*.txt",
+  "**/*.lock",
+  ".github/CODEOWNERS",
+  ".gitignore",
+  "NOTICE",
+]
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 bioedca"
+SPDX-License-Identifier = "Apache-2.0"
+
+# Skill sources and the package files built from them: MIT (D-003). Only the
+# header-less kinds are listed, so a .rs, .ts or .tsx file under skills/ still
+# needs its own header, with the identifier MIT. This table comes
+# last because, for a file matched by several tables, the later table wins.
+[[annotations]]
+path = [
+  "skills/**/*.md",
+  "skills/**/*.yml",
+  "skills/**/*.yaml",
+  "skills/**/*.json",
+  "skills/**/*.toml",
+  "skills/**/*.txt",
+]
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 bioedca"
+SPDX-License-Identifier = "MIT"

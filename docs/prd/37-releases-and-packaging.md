@@ -52,12 +52,12 @@ publish = true
 [[package]]
 name = "tlilli-mcp"
 version_group = "tlilli"
-publish = true
+publish = false  # until v0.2 (PR-REL-024)
 
 [[package]]
 name = "tlilli-cli"
 version_group = "tlilli"
-publish = true
+publish = false  # until v0.2 (PR-REL-024)
 
 [[package]]
 name = "tlilli-app"       # src-tauri
@@ -68,6 +68,8 @@ publish = false
 name = "tlilli-fuzz"
 release = false
 ```
+
+`tlilli-mcp` and `tlilli-cli` publish from v0.2 (`PR-REL-024`). Until then their manifests carry `publish = false` and the entries above match; one gated PR removes both flags before the v0.2 release PR is cut, because release-plz builds the release PR from `main` (ADR-0001, D-077).
 
 `cliff.toml` maps commit types to Keep a Changelog headings ([35](35-documentation.md) `PR-DOC-010`), links issues and PRs, and omits `ci`, `chore(deps)`, `docs` from the user-facing changelog while keeping them in the GitHub release "Full changelog" link.
 

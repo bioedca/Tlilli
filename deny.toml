@@ -1,0 +1,72 @@
+# cargo-deny policy. Rules: docs/prd/33-ci-cd.md PR-CI-012 (advisories deny; licenses allow-list;
+# bans: duplicates warn, wildcards deny; sources: crates.io only), docs/prd/21-architecture-and-
+# tech-stack.md PR-ARCH-001 (no git or foreign-registry dependencies) and PR-ARCH-003 (the
+# license allow-list; any other license needs an ADR). `cargo deny check` runs on every pull
+# request; the nightly runs `cargo deny check advisories` against a fresh advisory database.
+
+[graph]
+# The targets the release matrix builds (docs/prd/33-ci-cd.md §2), so platform-specific
+# dependencies are checked too.
+targets = [
+  "x86_64-unknown-linux-gnu",
+  "x86_64-apple-darwin",
+  "aarch64-apple-darwin",
+  "x86_64-pc-windows-msvc",
+]
+# PR-ARCH-007: feature flags are additive and CI tests `--all-features`.
+all-features = true
+
+[output]
+feature-depth = 1
+
+# Advisories: deny. Every RustSec advisory (vulnerability, unmaintained, unsound, notice) and
+# every yanked version fails the check. An ignore entry carries a reason and the tracking issue.
+[advisories]
+db-path = "$CARGO_HOME/advisory-dbs"
+db-urls = ["https://github.com/rustsec/advisory-db"]
+yanked = "deny"
+unmaintained = "all"
+unsound = "all" # every unsound advisory fails, transitive ones included (cargo-deny >= 0.19)
+ignore = []
+
+# Licenses: allow-list (PR-ARCH-003). A crate under any other license fails until an ADR adds it.
+[licenses]
+allow = [
+  "Apache-2.0",
+  "MIT",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "ISC",
+  "Zlib",
+  "MPL-2.0",
+  "Unicode-3.0",
+  "CC0-1.0",
+]
+confidence-threshold = 0.8
+exceptions = []
+# The allow-list is the policy, not a record of the graph: entries no crate uses yet are fine.
+unused-allowed-license = "allow"
+
+[licenses.private]
+# The workspace crates are published, so their license fields are checked like everyone else's.
+ignore = false
+
+# Bans: duplicate versions warn (consolidate them when a lockfile update allows); wildcard
+# version requirements are denied.
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+highlight = "all"
+workspace-default-features = "allow"
+external-default-features = "allow"
+allow = []
+deny = []
+skip = []
+skip-tree = []
+
+# Sources: crates.io only (PR-ARCH-001).
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []

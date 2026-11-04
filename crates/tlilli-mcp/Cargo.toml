@@ -1,0 +1,26 @@
+[package]
+name = "tlilli-mcp"
+description = "Tlilli MCP server: the only door for agents, over stdio and streamable HTTP on localhost"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+# Not on crates.io before v0.2 (PR-REL-024, PRD 40 §1, ADR-0001): cargo refuses to publish it
+# and release-plz skips it. One gated PR removes this line before the v0.2 release PR.
+publish = false
+
+# A library with a thin binary (docs/prd/21-architecture-and-tech-stack.md §1): the Tauri shell
+# embeds the library and can also spawn the binary for stdio clients.
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "tlilli-mcp"
+path = "src/main.rs"
+
+[dependencies]
+clap.workspace = true
+
+[lints]
+workspace = true

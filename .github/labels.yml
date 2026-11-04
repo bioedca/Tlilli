@@ -1,0 +1,89 @@
+# Label scheme for bioedca/Tlilli. Specification: docs/prd/36-issues-labels-and-projects.md §2 (D-040).
+#
+# This file is the source of truth for the repository's labels. `.github/workflows/labels-sync.yml`
+# (EndBug/label-sync) applies it on every push to `main` that changes it, and on demand: labels are
+# created or updated to match the entries below, and every label that is not listed here is DELETED
+# (`delete-other-labels: true`), GitHub's default labels included. To add, rename or recolour a label,
+# change this file in a pull request; never edit labels in the GitHub UI. The only defaults the scheme
+# keeps are `good first issue` and `help wanted` (community group below).
+#
+# Colour families: type = blues, area = greens, priority = reds to greys, status = yellows,
+# phase = purples, control = orange, size = teal. One label per line: name, colour (hex without `#`,
+# quoted so that values such as "5319e7" are never read as numbers) and the one-line description the
+# picker shows.
+
+# type/*: what kind of item (exactly one per actionable issue). Blues.
+- { name: "type/bug", color: "1d76db", description: "Something does not work as specified" }
+- { name: "type/feature", color: "1d76db", description: "New capability (user story)" }
+- { name: "type/task", color: "1d76db", description: "Work item that is not a bug or feature" }
+- { name: "type/docs", color: "1d76db", description: "Documentation change or defect" }
+- { name: "type/protocol", color: "1d76db", description: "MCP tool, resource or prompt change (gated)" }
+- { name: "type/skill", color: "1d76db", description: "Skill package change (gated)" }
+- { name: "type/gate-report", color: "1d76db", description: "Gate test report for a phase" }
+- { name: "type/retro", color: "1d76db", description: "Phase retrospective" }
+- { name: "type/agent-report", color: "1d76db", description: "Agent-session hand-off report" }
+- { name: "type/security", color: "1d76db", description: "Security issue (public follow-up only; reports go through private vulnerability reporting)" }
+- { name: "type/question", color: "1d76db", description: "Question or support request" }
+
+# area/*: where it lives (at least one; the path labeler applies them to PRs). Greens.
+- { name: "area/core", color: "0e8a16", description: "crates/tlilli-core: document model, events, ledger, export" }
+- { name: "area/mcp", color: "0e8a16", description: "crates/tlilli-mcp: MCP server and guardrails" }
+- { name: "area/cli", color: "0e8a16", description: "crates/tlilli-cli" }
+- { name: "area/tauri", color: "0e8a16", description: "src-tauri shell, updater, capabilities" }
+- { name: "area/ui", color: "0e8a16", description: "ui/: editor and review pane" }
+- { name: "area/skills", color: "0e8a16", description: "skills/: agent skill packages" }
+- { name: "area/docs", color: "0e8a16", description: "docs/ and the docs site" }
+- { name: "area/ci", color: "0e8a16", description: "CI workflows and automation" }
+- { name: "area/release", color: "0e8a16", description: "Release, packaging, signing, channels" }
+- { name: "area/deps", color: "0e8a16", description: "Dependencies and supply chain" }
+- { name: "area/fixtures", color: "0e8a16", description: "Test fixtures and generators" }
+- { name: "area/repo", color: "0e8a16", description: "Repository, GitHub settings, governance files" }
+
+# priority/*: set at triage; P0 is maintainer-only. Reds to greys.
+- { name: "priority/P0", color: "b60205", description: "Now; blocks everything (maintainer only)" }
+- { name: "priority/P1", color: "e11d21", description: "This phase" }
+- { name: "priority/P2", color: "9e9e9e", description: "Next phase" }
+- { name: "priority/P3", color: "d4d4d4", description: "Someday" }
+
+# status/*: workflow state; `triage` from the forms, `stale` from automation. Yellows.
+- { name: "status/triage", color: "fbca04", description: "Awaiting triage" }
+- { name: "status/needs-info", color: "fbca04", description: "Waiting for information from the reporter" }
+- { name: "status/blocked", color: "fbca04", description: "Blocked by another issue or external dependency" }
+- { name: "status/stale", color: "fbca04", description: "No activity; swept by automation" }
+- { name: "status/needs-maintainer", color: "fbca04", description: "Needs a maintainer decision" }
+
+# phase/*: roadmap phase, mirrors the milestone. Purples.
+- { name: "phase/0-foundation", color: "5319e7", description: "Phase 0 Foundation" }
+- { name: "phase/v0.1", color: "5319e7", description: "v0.1 Black ink" }
+- { name: "phase/v0.2", color: "5319e7", description: "v0.2 Red ink" }
+- { name: "phase/v0.3", color: "5319e7", description: "v0.3 Ledger" }
+- { name: "phase/v0.4", color: "5319e7", description: "v0.4 Sweep and style" }
+- { name: "phase/v0.5", color: "5319e7", description: "v0.5 Beyond the article" }
+- { name: "phase/v1.0", color: "5319e7", description: "v1.0 Public" }
+- { name: "phase/post-1.0", color: "5319e7", description: "Deferred past v1.0 or recurring" }
+
+# control: PR process labels; who may apply each is in docs/prd/31-pull-requests.md §4. Orange.
+- { name: "gate", color: "f0932b", description: "Touches a gated path; needs the maintainer gate" }
+- { name: "gate:approved", color: "f0932b", description: "Maintainer approval for the gate check (reset on push)" }
+- { name: "review:deep", color: "f0932b", description: "Request a Greptile deep review" }
+- { name: "ci:full", color: "f0932b", description: "Run the full OS matrix on a Draft" }
+- { name: "docs:not-needed", color: "f0932b", description: "No documentation change required (reason in PR body)" }
+- { name: "needs-tests", color: "f0932b", description: "Tests missing or insufficient" }
+- { name: "size:override", color: "f0932b", description: "PR exceeds the size limit with a stated reason" }
+- { name: "stacked", color: "f0932b", description: "Part of a stacked PR series" }
+- { name: "backport", color: "f0932b", description: "Backport to a release branch" }
+- { name: "breaking-change", color: "f0932b", description: "Breaking change (! commit, BREAKING CHANGE footer)" }
+- { name: "release", color: "f0932b", description: "Release PR or release automation" }
+- { name: "dependencies", color: "f0932b", description: "Dependency update" }
+- { name: "experimental", color: "f0932b", description: "Experimental; may be removed" }
+
+# size/*: changed-lines bucket, applied by automation (docs/prd/31-pull-requests.md §2). Teal.
+- { name: "size/XS", color: "006b75", description: "Size XS" }
+- { name: "size/S", color: "006b75", description: "Size S" }
+- { name: "size/M", color: "006b75", description: "Size M" }
+- { name: "size/L", color: "006b75", description: "Size L" }
+- { name: "size/XL", color: "006b75", description: "Size XL" }
+
+# community: GitHub defaults the scheme keeps, applied by the maintainer.
+- { name: "good first issue", color: "7057ff", description: "Good for newcomers" }
+- { name: "help wanted", color: "008672", description: "Extra attention is needed" }

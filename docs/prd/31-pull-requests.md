@@ -13,14 +13,14 @@ branch pushed ──▶ Draft PR ──▶ (Linux lane CI, Codex local rounds do
 | ID | Rule |
 | --- | --- |
 | `PR-PRQ-001` | **Every PR opens as a Draft.** Draft means: work in progress, Linux lane CI runs on each push, AI reviewers are driven by the author, the maintainer does not look at it. |
-| `PR-PRQ-002` | **Ready for review** is asserted by the author (agent or human) only when all of: Linux lane green; Codex local rounds done and one Codex cloud round clean ([32](32-code-review.md)); CodeRabbit round done and threads resolved or answered; PR body complete per the template; commits squashed and conventional; branch rebased on `origin/main`; size within cap or `size:override` justified; docs updated or `docs:not-needed` justified; tests included or `needs-tests` explained. Marking Ready triggers the full matrix and, for gated PRs, Greptile and the maintainer's attention. |
-| `PR-PRQ-003` | **Auto-merge** is enabled by the author at Ready (`gh pr merge --auto --rebase <n>` or the UI). GitHub lands the PR (rebase) when the branch is up to date with `main` and every required check passes, including `gate/maintainer` for gated PRs. Nobody presses Merge by hand except to recover from a stuck auto-merge. |
+| `PR-PRQ-002` | **Ready for review** is asserted by the author (agent or human) only when all of: Linux lane green; Codex local rounds done and one Codex cloud round clean ([32](32-code-review.md)); CodeRabbit round done and threads resolved or answered; PR body complete per the template; commits squashed and conventional; branch rebased on `origin/main`; size within cap or `size:override` justified; docs updated or `docs:not-needed` justified; tests included or `needs-tests` explained. Marking Ready triggers the full matrix and, for gated PRs, Greptile and the maintainer's attention. A cloud session asserts readiness in the PR body and the maintainer marks Ready (`PR-GIT-058`); its pushed commits stay unsquashed (`PR-GIT-054`). |
+| `PR-PRQ-003` | **Auto-merge** is enabled by the author at Ready (`gh pr merge --auto --rebase <n>` or the UI). GitHub lands the PR (rebase) when the branch is up to date with `main` and every required check passes, including `gate/maintainer` for gated PRs. Nobody presses Merge by hand except to recover from a stuck auto-merge. For a cloud-session PR the maintainer enables it when marking Ready (`PR-GIT-058`). |
 | `PR-PRQ-004` | A Ready PR that receives new review findings goes back to work in place (not to Draft); the author fixes, pushes, resolves threads, re-requests review. Converting back to Draft is only for substantial rework and is announced in a comment. |
 | `PR-PRQ-005` | **Stale policy:** no activity for 14 days → `status/stale` label and a comment; 7 more days → closed with a comment naming the branch (recoverable). Gated PRs waiting on the maintainer are exempt. |
 | `PR-PRQ-006` | PRs that touch gated paths get the `gate` label automatically (path labeler) and cannot merge without maintainer approval ([32](32-code-review.md) §5). |
 | `PR-PRQ-007` | PR titles follow Conventional Commits (`type(scope): subject`) and are linted; with rebase-merge the title is not a commit, but it names the change in the PR list, release-notes drafts and notifications. |
 | `PR-PRQ-008` | Link the issue with a closing keyword (`Closes #12`) in the body; a PR without an issue link is allowed only for `chore`/`docs` changes under 50 lines and says why. |
-| `PR-PRQ-009` | Dependabot PRs (grouped weekly) are Ready on open; the auto-merge workflow enables auto-merge for patch and minor groups after CI; majors and anything touching `.github/workflows` wait for the maintainer (gated). |
+| `PR-PRQ-009` | Dependabot PRs (grouped weekly) are Ready on open; the auto-merge workflow enables auto-merge for the patch and minor groups of the entries PR CI builds and tests (`PR-MNT-010`) after CI; majors and anything touching `.github/workflows` wait for the maintainer (gated). |
 | `PR-PRQ-010` | release-plz PRs (`chore(release): vX.Y.Z`) are gated (`CHANGELOG.md`, versions, `CITATION.cff`); the maintainer approves them as the release decision ([37](37-releases-and-packaging.md)). |
 | `PR-PRQ-011` | A PR description is written for a reader who was not in the session: no "as discussed", no session-only context. Agents include the issue text they worked from if it is short. |
 | `PR-PRQ-012` | Screenshots or short recordings are required for UI changes (Playwright-generated, committed under the PR as attachments, not in git). |
@@ -85,6 +85,8 @@ Docs not needed because:
 AI assistance: <!-- tools used, e.g. "Claude Code (cloud) wrote the implementation and tests; Codex reviewed." -->
 ```
 
+Until bootstrap task 20 adds `cargo-nextest` to CI and `scripts/install_pkgs.sh`, the Testing line is met by `cargo test --workspace` (D-077).
+
 ## 4. Labels an author may apply (PR-PRQ-030 … 034)
 
 | ID | Rule |
@@ -102,7 +104,7 @@ AI assistance: <!-- tools used, e.g. "Claude Code (cloud) wrote the implementati
 | `PR-PRQ-040` | Every review comment gets a reply: "fixed in `<sha>`", a question, or a reasoned decline. The author resolves the thread only after the reply; reviewers may unresolve. |
 | `PR-PRQ-041` | AI-reviewer findings are handled by severity ([32](32-code-review.md) §6): blocker and major are fixed; minor is fixed or declined with a reason; nit is optional but acknowledged. |
 | `PR-PRQ-042` | Disagreement with an AI reviewer that the author cannot resolve in two rounds is escalated to the maintainer with the `needs-maintainer` label and a three-line summary (claim, counter-claim, what evidence would settle it). INTERSECT: bring in a third party rather than argue. |
-| `PR-PRQ-043` | Push fixes as new commits during review; squash them before the final Ready assertion so the landed history is clean (`PR-GIT-024`). Force-pushes during review include a comment "rebased, no content change" or "squashed review fixes". |
+| `PR-PRQ-043` | Push fixes as new commits during review; squash them before the final Ready assertion so the landed history is clean (`PR-GIT-024`; a cloud session keeps pushed fixes as commits, `PR-GIT-054`). Force-pushes during review include a comment "rebased, no content change" or "squashed review fixes". |
 | `PR-PRQ-044` | Re-request review after addressing a human review; for AI reviewers, re-trigger per [32](32-code-review.md). |
 | `PR-PRQ-045` | Tone: critique code, not people; prefer "we could…" and questions; label nits as `Nit:`; praise good solutions (INTERSECT Code Review). |
 

@@ -1,0 +1,89 @@
+---
+# Agent-session report. Fields and labels:
+# docs/prd/36-issues-labels-and-projects.md §1; when to file one:
+# docs/prd/30-git-workflow.md PR-GIT-056 and PR-GIT-057.
+name: Agent-session report
+description: >-
+  Hand-off from an agent session that ends with unfinished work or at the
+  WIP limit, for the next session and the weekly triage.
+title: "[agent-report]: "
+labels:
+  - type/agent-report
+  - status/triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Written for a reader who was not in the session: no session-only
+        context and no session URLs (PR-GIT-059). The PR stays a Draft; this
+        report says where to pick it up.
+  - type: input
+    id: agent
+    attributes:
+      label: Agent and session kind
+      placeholder: "Claude Code (cloud) · Codex (local)"
+    validations:
+      required: true
+  - type: input
+    id: branch-pr
+    attributes:
+      label: Branch and PR
+      placeholder: "claude/p0-18-forms · #42"
+    validations:
+      required: true
+  - type: input
+    id: issue
+    attributes:
+      label: Issue worked
+      placeholder: "#26"
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: Done
+      description: Pushed and verified; name the checks that passed.
+    validations:
+      required: true
+  - type: textarea
+    id: not-done
+    attributes:
+      label: Not done
+      description: Acceptance criteria still open.
+    validations:
+      required: true
+  - type: textarea
+    id: blocked
+    attributes:
+      label: Blocked by
+      description: >-
+        What stopped the work: a missing decision, a failing check, another
+        PR, the WIP limit. Write "nothing" if the session simply ended.
+    validations:
+      required: true
+  - type: textarea
+    id: next-step
+    attributes:
+      label: Next step for the next session
+      description: The first concrete action, so the next session starts
+        working rather than reading.
+    validations:
+      required: true
+  - type: textarea
+    id: pipeline
+    attributes:
+      label: Review pipeline state
+      description: As in the PR template's Review pipeline section.
+      placeholder: |
+        - Codex local rounds: N · Codex cloud: clean / pending
+        - CodeRabbit: round N clean / pending
+        - Greptile: n/a / requested / clean
+        - Gated paths touched: none / <paths>
+        - Open review threads: N
+    validations:
+      required: true
+  - type: textarea
+    id: budget
+    attributes:
+      label: Budget notes
+      description: CodeRabbit and Greptile requests made in this session.

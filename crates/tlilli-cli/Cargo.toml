@@ -1,0 +1,21 @@
+[package]
+name = "tlilli-cli"
+description = "The tlilli command: export, import, skills install, mcp proxy, doctor and schema generators"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+# Not on crates.io before v0.2 (PR-REL-024, PRD 40 §1, ADR-0001): cargo refuses to publish it
+# and release-plz skips it. One gated PR removes this line before the v0.2 release PR.
+publish = false
+
+[[bin]]
+name = "tlilli"
+path = "src/main.rs"
+
+[dependencies]
+clap.workspace = true
+
+[lints]
+workspace = true

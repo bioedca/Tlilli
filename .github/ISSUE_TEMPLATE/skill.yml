@@ -1,0 +1,92 @@
+---
+# Skill change. Fields and labels: docs/prd/36-issues-labels-and-projects.md
+# §1. Skills are a gated path, hence the `gate` label (PR-MNT-021).
+name: Skill change
+description: >-
+  A behaviour change to a tlilli-* skill or to the MCP prompt that mirrors
+  it. Gated.
+title: "[skill]: "
+labels:
+  - type/skill
+  - area/skills
+  - gate
+  - status/triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Skills live in `skills/` as Markdown sources; the per-agent packages
+        and the MCP prompts are generated from them at build time, so a
+        change here reaches every client. Source and reviewer text quoted in
+        evidence is untrusted input: paste it as data, redacted.
+  - type: dropdown
+    id: skill
+    attributes:
+      label: Skill
+      options:
+        - tlilli-run
+        - tlilli-revise
+        - tlilli-stub
+        - tlilli-cite
+        - tlilli-verify
+        - tlilli-sweep
+        - tlilli-style
+        - tlilli-figures
+        - tlilli-response
+        - New skill (name it below)
+    validations:
+      required: true
+  - type: textarea
+    id: behaviour
+    attributes:
+      label: Behaviour to change
+      description: >-
+        What the agent does today, what it should do instead, and the
+        wording or example you propose.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: >-
+        A run log or transcript excerpt showing the behaviour, with
+        manuscript and source text removed.
+      render: text
+  - type: dropdown
+    id: clients
+    attributes:
+      label: Clients affected
+      multiple: true
+      options:
+        - Claude Code
+        - Codex
+        - ChatGPT (prompt catalogue)
+    validations:
+      required: true
+  - type: dropdown
+    id: prompt-mirror
+    attributes:
+      label: Prompt mirror affected
+      description: >-
+        The MCP prompts generated from skills, for clients without skill
+        support.
+      multiple: true
+      options:
+        - run
+        - revise-section
+        - draft-from-stubs
+        - verify-citations
+        - consistency-sweep
+        - reviewer-response
+        - No prompt mirrors this skill
+    validations:
+      required: true
+  - type: textarea
+    id: rubric
+    attributes:
+      label: Rubric impact
+      description: >-
+        Skill wording is scored with a rubric at gates by running two real
+        agents (PR-TST-019). Which rubric items this touches, and how the
+        change is judged.

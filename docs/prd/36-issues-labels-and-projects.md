@@ -17,6 +17,7 @@ Blank issues are disabled (`config.yml`: `blank_issues_enabled: false`); contact
 | Retrospective | `retro.yml` | `type/retro` | Phase*; What went well*; What hurt*; Process changes proposed* (each becomes a decision or an issue); Review-lane metrics summary*; Budget use* |
 | Documentation | `docs.yml` | `type/docs`, `area/docs`, `status/triage` | Page*; Problem* (wrong / missing / unclear / out of date); Diátaxis quadrant; Proposed text |
 | Agent-session report | `agent-report.yml` | `type/agent-report`, `status/triage` | Agent and session kind*; Branch and PR*; Issue worked*; Done*; Not done*; Blocked by*; Next step for the next session*; Review pipeline state*; Budget notes (CodeRabbit/Greptile requests made) |
+| Question | `question.yml` | `type/question`, `status/triage` | Title prefix `[question]`; Question*; What you tried or where you looked; Tlilli version; Operating system and agent client. The support route for questions until Discussions open at v0.2 (D-042, D-064) |
 
 Rules:
 
@@ -58,7 +59,7 @@ One milestone per roadmap phase, named exactly as the phase (`0 Foundation`, `v0
 | Fields | Status (Todo, Ready, In progress, In review, Gate, Done); Phase (single select mirroring `phase/*`); Area; Priority; Size (XS–XL); Gate (single select Yes/No: counts toward gate exit; Projects v2 has no checkbox field type); Lane (Agent / Human); CodeRabbit requests (text ledger); Greptile reviews (number, monthly) |
 | Views | **Board** by Status with WIP limit 3 on In progress for Lane = Agent (`PR-GIT-012`); **Roadmap** as a table grouped by Phase until milestones carry due dates (the Roadmap layout needs date fields; milestones have none until v0.1 ships, §3), then the Roadmap layout by milestone; **Triage** table filtered `status/triage`; **Agent queue** table: Status = Ready, sorted by Priority then Size, filtered by Area (what an agent picks next); **Gate** view: Gate = Yes for the current phase; **Budgets** view: the two ledger fields |
 | Automation | `project.yml` adds every new issue and PR; built-in workflows: item closed → Done; PR merged → Done; PR opened → In review when Ready; issue labelled `status/blocked` → stays with a Blocked marker |
-| Ownership | Maintainer edits fields at triage; agents may move their own items between Ready → In progress → In review and fill the ledger fields |
+| Ownership | Maintainer edits fields at triage, mirrors the CodeRabbit ledger lines from PR bodies and agent-session reports into the text field `CodeRabbit requests`, and sets the number field `Greptile reviews` on each pull request's item to the number of Greptile reviews its PR body records; the monthly budget count (D-021) is that field's sum over the pull requests reviewed in the month; full Greptile entries stay in PR bodies and agent-session reports (agent sessions cannot reach Projects v2, D-064); agents move their own items between Ready → In progress → In review when a session with Project access exists |
 
 ## 5. Cadence and ceremonies (Kanban, solo maintainer)
 

@@ -1,0 +1,134 @@
+// Dev container for Tlilli: GitHub Codespaces, the VS Code Dev Containers extension, or the
+// devcontainer CLI on a laptop with Docker (bootstrap task 31, decision D-044, PRD 39 §6).
+// The cloud sandbox has no display; this container has one (desktop-lite, noVNC) so a Tauri
+// window can be seen in a browser. docs/how-to/codespaces.md explains how to use it.
+// This file is JSON with comments; every comment is on its own line so that dropping the
+// lines that start with `//` leaves plain JSON.
+{
+  "name": "Tlilli",
+
+  // Ubuntu 24.04 is the OS CI runs on (`runs-on: ubuntu-24.04`) and the one the Tauri 2 Linux
+  // prerequisites in post-create.sh are named for (libwebkit2gtk-4.1). The Rust devcontainer
+  // image (mcr.microsoft.com/devcontainers/rust) is Debian-based and has no 24.04 variant, so
+  // the plain base image plus the `rust` feature keeps the container identical to CI. The base
+  // image already carries the non-root `vscode` user with passwordless sudo.
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+
+  // Features are pinned to an exact version (major.minor.patch) like every other dependency in
+  // this repository; Dependabot's `devcontainers` ecosystem can bump them.
+  "features": {
+    // rustup with the default stable toolchain, which is what rust-toolchain.toml
+    // (`channel = "stable"`) selects, so cargo does not download a second toolchain. The MSRV
+    // in Cargo.toml (`rust-version`) is the current stable release (D-031). The components are
+    // the feature's defaults, spelled out: rustfmt and clippy for the CI checks, rust-analyzer
+    // and rust-src for the editor.
+    "ghcr.io/devcontainers/features/rust:1.6.0": {
+      "version": "latest",
+      "profile": "minimal",
+      "components": "rustfmt,clippy,rust-analyzer,rust-src"
+    },
+    // Node 22 (PRD 39 §6; CI uses `node-version: 22`) and the pnpm version that
+    // ui/package.json names in `packageManager`, so the two resolve to the same binary.
+    "ghcr.io/devcontainers/features/node:2.1.1": {
+      "version": "22",
+      "pnpmVersion": "10.28.0"
+    },
+    // A Fluxbox desktop on display :1, served by TigerVNC on 5901 and noVNC on 6080. Any GUI
+    // process started from a terminal appears there, including the Tauri window. The password
+    // is the feature's default; the port is only reachable through the forwarded, authenticated
+    // tunnel.
+    "ghcr.io/devcontainers/features/desktop-lite:1.2.10": {
+      "password": "vscode",
+      "webPort": "6080",
+      "vncPort": "5901"
+    }
+  },
+
+  // desktop-lite sets DISPLAY=:1 in the container environment; repeating it here makes the
+  // value explicit for the VS Code terminal and for tools that attach to the container later.
+  "remoteEnv": {
+    "DISPLAY": ":1"
+  },
+
+  // Tauri 2 Linux prerequisites, xvfb for the WebDriver tests, and the project's package
+  // installs when the lockfiles exist. apt runs here rather than in a Dockerfile because
+  // prebuilds are off (cost, PRD 39 §6); the script is idempotent and can be re-run by hand.
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+
+  // 6080 is the noVNC web client; 5173 is the Vite dev server (`pnpm -C ui dev`; the default
+  // port, ui/vite.config.ts sets none). 4173 (`vite preview`, the web server Playwright starts
+  // in ui/playwright.config.ts) and 5901 (VNC) are only labelled and kept quiet, so a test run
+  // does not pop up a notification.
+  "forwardPorts": [6080, 5173],
+  // The devcontainer CLI has no port forwarding (that is an editor feature), so the noVNC port is
+  // also published with Docker, bound to the loopback interface only, as the desktop-lite README
+  // advises for CLI users. VS Code uses forwardPorts as well; Codespaces ignores appPort.
+  "appPort": ["127.0.0.1:6080:6080"],
+  "portsAttributes": {
+    "6080": {
+      "label": "noVNC desktop",
+      "onAutoForward": "notify"
+    },
+    "5173": {
+      "label": "Vite dev server",
+      "onAutoForward": "notify"
+    },
+    "4173": {
+      "label": "Vite preview (Playwright)",
+      "onAutoForward": "silent"
+    },
+    "5901": {
+      "label": "VNC server",
+      "onAutoForward": "silent"
+    }
+  },
+
+  // Compiling the Rust workspace and the Tauri shell wants four cores and more memory than a
+  // 2-core Codespace has. In Codespaces this makes the 4-core, 16 GB machine the smallest one
+  // offered; `target/` and node_modules fit in its 32 GB disk.
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "8gb",
+    "storage": "32gb"
+  },
+
+  // The desktop-lite README recommends a larger shared-memory segment when GUI applications
+  // crash; WebKitGTK and Chromium both use /dev/shm. The Dev Containers extension and the
+  // devcontainer CLI pass this to `docker run`.
+  "runArgs": ["--shm-size=1g"],
+
+  "customizations": {
+    "vscode": {
+      // rust-analyzer and Biome mirror the CI checks; the Tauri extension adds the
+      // tauri.conf.json schema and the dev and build commands. The rust feature also adds
+      // CodeLLDB and Even Better TOML on its own.
+      "extensions": [
+        "rust-lang.rust-analyzer",
+        "tauri-apps.tauri-vscode",
+        "biomejs.biome"
+      ],
+      "settings": {
+        // The same lint CI runs (`cargo clippy --workspace --all-targets -- -D warnings`).
+        "rust-analyzer.check.command": "clippy",
+        // Biome formats the UI (D-032); Prettier is not installed.
+        "[typescript]": {
+          "editor.defaultFormatter": "biomejs.biome"
+        },
+        "[typescriptreact]": {
+          "editor.defaultFormatter": "biomejs.biome"
+        },
+        "[json]": {
+          "editor.defaultFormatter": "biomejs.biome"
+        }
+      }
+    },
+    "codespaces": {
+      // The how-to opens with the Codespace, so the first steps are on screen.
+      "openFiles": ["docs/how-to/codespaces.md"]
+    }
+  },
+
+  // The base image's non-root user. The features install rustup and nvm for this user, and
+  // working as a normal user matches a laptop and the CI runner.
+  "remoteUser": "vscode"
+}

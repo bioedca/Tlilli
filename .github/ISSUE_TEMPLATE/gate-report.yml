@@ -1,0 +1,126 @@
+---
+# Gate test report. Fields and labels: docs/prd/36-issues-labels-and-projects.md
+# §1; procedure: docs/prd/40-roadmap-and-gates.md §2; metrics:
+# docs/prd/01-vision-and-scope.md §6.
+name: Gate test report
+description: >-
+  Results of a gate script run on a published release build. One report per
+  gate run; the milestone closes only on a pass.
+title: "[gate]: "
+labels:
+  - type/gate-report
+  - gate
+body:
+  - type: markdown
+    attributes:
+      value: |
+        From G1 on, the gate runs on the published release build, on a real
+        manuscript, following `docs/gates/G<n>.md` literally. Gate G0 has no
+        release and no manuscript: it runs on the CI artifacts of `main`, and
+        its release-tag and manuscript fields read `n/a`. The report records
+        metrics and redacted notes only, never manuscript text (PR-GATE-002).
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Phase
+      options:
+        - 0 Foundation
+        - v0.1 Black ink
+        - v0.2 Red ink
+        - v0.3 Ledger
+        - v0.4 Sweep and style
+        - v0.5 Beyond the article
+        - v1.0 Public
+        - post-1.0
+    validations:
+      required: true
+  - type: input
+    id: release-tag
+    attributes:
+      label: Release tag tested
+      description: >-
+        The tag of the published release. For Gate G0 write `n/a` and link
+        the CI run of `main` that was tested.
+      placeholder: "v0.1.0"
+    validations:
+      required: true
+  - type: textarea
+    id: manuscript
+    attributes:
+      label: Manuscript description (redacted)
+      description: >-
+        Field, length in words, number of sources, languages, which agent
+        vendor saw it. No title, no text. `n/a` for Gate G0.
+    validations:
+      required: true
+  - type: input
+    id: script
+    attributes:
+      label: Script followed
+      description: Link to the gate script at the commit you followed.
+      placeholder: >-
+        https://github.com/bioedca/Tlilli/blob/<sha>/docs/gates/G1.md
+    validations:
+      required: true
+  - type: textarea
+    id: results
+    attributes:
+      label: Results per step
+      description: >-
+        One row per script step with its FR IDs; each FR is verified, failed
+        or deferred (D-nnn) per PR-GATE-004.
+      placeholder: |
+        | Step | FR IDs | Result | Notes |
+        | --- | --- | --- | --- |
+        | 1 | FR-01-010 | verified | |
+    validations:
+      required: true
+  - type: textarea
+    id: metrics
+    attributes:
+      label: Metrics
+      description: >-
+        The success metrics from docs/prd/01-vision-and-scope.md §6 plus the
+        velocity figures PR-GATE-008 asks for, as the table below. Fill
+        Measured for every metric whose From phase is this one or earlier,
+        and write n/a for the rest. A missed metric is either a fail or a
+        waiver with a decision entry (PR-GATE-005).
+      placeholder: |
+        | Metric | Target | From | Measured |
+        | --- | --- | --- | --- |
+        | Author time per cycle, 3-request run | ≤ 10 min | v0.2 | |
+        | Agent turn wall-clock, 3 requests | ≤ 5 min; ≤ 30 min hard | v0.2 | |
+        | Span-ID survival, unchanged sentences | ≥ 99%; locked 100% | v0.1 | |
+        | Author-text overwrites by an agent | 0, ever | v0.2 | |
+        | Suggestions accepted per run | ≥ 50% | v0.2 | |
+        | Claim links verified correctly (20 citations) | ≥ 90% | v0.3 | |
+        | Sweep true positives (10 planted) | ≥ 8 found; ≤ 3 false | v0.4 | |
+        | docx export opens without repair; comments shown | 100% | v0.4 | |
+        | Clean-machine install to first manuscript | ≤ 5 min | v1.0 | |
+        | Process: median PR lead time, agent PRs | ≤ 24 h | Phase 0+ | |
+        | Process: zero-touch merges on ungated paths | ≥ 80% | Phase 0+ | |
+        | Velocity: PRs merged per week | recorded, no target | Phase 0+ | |
+        | Velocity: FRs verified this phase | recorded, no target | v0.1 | |
+    validations:
+      required: true
+  - type: dropdown
+    id: verdict
+    attributes:
+      label: Verdict
+      description: >-
+        Pass: no failed MUST step, every metric met or waived, no open
+        P0/P1 in the milestone. Fail: fix issues open as P1 and the gate is
+        re-run on the fix release.
+      options:
+        - pass
+        - fail
+    validations:
+      required: true
+  - type: textarea
+    id: fix-issues
+    attributes:
+      label: Fix issues opened
+      description: Links to the priority/P1 issues a fail verdict opened.
+      placeholder: |
+        - #101
+        - #102

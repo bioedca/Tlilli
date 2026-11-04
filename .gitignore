@@ -14,3 +14,6 @@
 .env.*
 *.pem
 .DS_Store
+
+# MkDocs build output (scripts/docs.sh, docs.yml)
+/site/

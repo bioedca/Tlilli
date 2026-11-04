@@ -1,0 +1,30 @@
+# Adds every new issue and pull request to the "Tlilli roadmap" Project (docs/prd/36-issues-labels-and-projects.md §4,
+# D-043). PROJECT_TOKEN lives in the `automation` environment (PR-CI-007, D-060): the job declares the environment,
+# whose deployment-branch rule is `main` only, so the secret is readable here (issues events run on the default
+# branch, pull_request_target runs in the base-branch context) and never in a pull_request workflow.
+name: project
+
+on:
+  issues:
+    types: [opened, reopened]
+  pull_request_target: # zizmor: ignore[dangerous-triggers] no checkout, no PR code is run
+    types: [opened, reopened, ready_for_review]
+
+permissions: read-all
+
+concurrency:
+  group: project-${{ github.event.issue.number || github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  add:
+    name: add to the roadmap Project
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    environment: automation
+    permissions: {} # the fine-grained PAT carries the Projects permission; GITHUB_TOKEN needs none
+    steps:
+      - uses: actions/add-to-project@5afcf98fcd03f1c2f92c3c83f58ae24323cc57fd # v2.0.0
+        with:
+          project-url: https://github.com/users/bioedca/projects/5
+          github-token: ${{ secrets.PROJECT_TOKEN }}

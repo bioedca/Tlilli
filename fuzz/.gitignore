@@ -1,0 +1,4 @@
+# cargo-fuzz build output and crash artifacts. Seed corpora under corpus/ are committed (PR-TST-013).
+/target
+/artifacts
+/coverage

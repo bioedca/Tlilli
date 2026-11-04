@@ -31,8 +31,8 @@ This section locks the technology decisions the concept left open, states the de
 | Path | Purpose | Crate / package | Gated |
 | --- | --- | --- | --- |
 | `crates/tlilli-core` | Document model, event log, ledger, style sheet, provenance, segmentation, import/export, storage | `tlilli-core` (lib, published) | partly: `src/model/**`, `src/event/**`, `src/storage/**` |
-| `crates/tlilli-mcp` | MCP server: tools, resources, prompts, guardrails, transports, auth token | `tlilli-mcp` (lib + bin, published) | yes |
-| `crates/tlilli-cli` | `tlilli` command: `export --canonical`, `import`, `skills install`, `mcp` (proxy to server), `doctor` | `tlilli-cli` (bin, published) | no |
+| `crates/tlilli-mcp` | MCP server: tools, resources, prompts, guardrails, transports, auth token | `tlilli-mcp` (lib + bin, published from v0.2) | yes |
+| `crates/tlilli-cli` | `tlilli` command: `export --canonical`, `import`, `skills install`, `mcp` (proxy to server), `doctor` | `tlilli-cli` (bin, published from v0.2) | no |
 | `src-tauri` | Tauri 2 shell, commands, updater, capabilities | `tlilli-app` (bin, not published) | `tauri.conf.json`, `capabilities/**` |
 | `ui` | React + ProseMirror web UI | `@tlilli/ui` (private) | no |
 | `skills` | Skill sources `tlilli-*` (MIT) and the per-agent package builder | — | yes |
@@ -42,7 +42,7 @@ This section locks the technology decisions the concept left open, states the de
 | `scripts` | Dev scripts (`install_pkgs.sh`, generators) | — | no |
 | `.github` | Workflows, templates, labels, CODEOWNERS, dependabot, labeler | — | yes |
 
-Adding `crates/tlilli-cli` extends the layout in `CLAUDE.md`; the bootstrap backlog updates `CLAUDE.md` ([42](42-bootstrap-backlog.md)). Every crate sets `version.workspace = true`, `edition.workspace = true`, `license.workspace = true`, `rust-version.workspace = true`.
+Adding `crates/tlilli-cli` extends the layout in `CLAUDE.md`; the bootstrap backlog updates `CLAUDE.md` ([42](42-bootstrap-backlog.md)). Every crate sets `version.workspace = true`, `edition.workspace = true`, `license.workspace = true`, `rust-version.workspace = true`. Until v0.2, `tlilli-mcp` and `tlilli-cli` carry `publish = false` in their manifests (`PR-REL-024`, D-077).
 
 ## 3. Technology decisions
 
@@ -51,18 +51,18 @@ Adding `crates/tlilli-cli` extends the layout in `CLAUDE.md`; the bootstrap back
 | Language | Rust, stable channel; MSRV = the stable release current at each minor release, declared in `[workspace.package] rust-version` and tested in CI | Ships binaries, not a library for old toolchains; modern features | stable-2 (friendlier to packagers; rejected, D-031) |
 | Shell | Tauri 2 | Native window, small binary, Rust in-process, three OSes | Electron (size, no Rust in-process) |
 | UI framework | React 19 + TypeScript (strict) + Vite | Largest ProseMirror ecosystem, agent familiarity | Svelte 5, SolidJS, Lit (D-030) |
-| Editor | ProseMirror (`prosemirror-model/state/view/transform`) with a schema mirroring blocks and spans; bindings via `@handlewithcare/react-prosemirror` | Mature structured editing; transactions map 1:1 to core events | Tiptap (extra abstraction over the same engine), CodeMirror (not rich text) |
+| Editor | ProseMirror (`prosemirror-model/state/view/transform`) with a schema mirroring blocks and spans; bindings via `@handlewithcare/react-prosemirror` | Mature structured editing; each transaction maps to one commit group of one or more core events (`FR-01-020`, D-073) | Tiptap (extra abstraction over the same engine), CodeMirror (not rich text) |
 | View state | Zustand store fed only by core events; derived data memoized; no persisted UI state except window geometry and pane sizes | `INV-02`: no truth in the view | Redux (boilerplate) |
 | Core data | ULID block IDs; span IDs derived by segmentation and stabilized by diff anchoring; append-only event log with hash chain; materialized snapshots | Runs, diffs and rollback cost nothing extra | CRDTs (no multi-writer need) |
 | Storage | SQLite via `rusqlite` (bundled, WAL, FTS5); one `workspace.sqlite`; files under `sources/`, `figures/`, `exports/`, `logs/`, `backups/`; migrations with `rusqlite_migration` (numbered SQL, forward-only, pre-migration backup) | Local-first, portable, inspectable | sled/redb (no FTS, no tooling) |
 | MCP | `rmcp` (official Rust MCP SDK): stdio and streamable HTTP transports; HTTP bound to 127.0.0.1 with bearer token | Spec-tracking, maintained by the MCP org | hand-rolled JSON-RPC |
 | Serialization | `serde` + `serde_json`; JSON Schema for tool inputs generated with `schemars` and committed as snapshots | Contract tests, generated docs | — |
 | Text processing | Rule-based sentence segmentation seeded by the style sheet's abbreviation list (`unicode-segmentation` for graphemes/words); diff anchoring with `similar` (Myers/patience) | All local, deterministic | ML segmenters (dependency weight, non-determinism) |
-| Citations | CSL-JSON canonical; rendering with `hayagriva` (CSL styles and locales, maintained by Typst); BibTeX export via `hayagriva`'s BibTeX support | One engine for PDF and reference lists; active maintenance | `citeproc-rs` (stalled) — recorded in ADR-0003 |
+| Citations | CSL-JSON canonical; rendering with `hayagriva` (CSL styles and locales, maintained by Typst); BibTeX export through a Tlilli-owned CSL-JSON-to-BibTeX mapping written with the `biblatex` crate's writer; `.bib` import through `hayagriva`'s BibTeX reader plus a Tlilli-owned conversion to CSL-JSON (D-071) | One engine for PDF and reference lists; active maintenance | `citeproc-rs` (stalled) — recorded in ADR-0003 |
 | Resolvers | `reqwest` (rustls) to Crossref, NCBI E-utilities, arXiv, Europe PMC, Unpaywall, doi.org, Zotero local API; rate-limited, cached in SQLite | Author-initiated only | — |
 | PDF text | Pure Rust first: `pdf-extract`/`lopdf`; `pdfium-render` (bundled pdfium, BSD) only by ADR if extraction quality is insufficient at the v0.3 gate | Sidecar policy (§5) | MuPDF (AGPL, incompatible) |
 | docx | Import and export through `zip` + `quick-xml` with our own OOXML model; comments on export v0.4, tracked changes later | Control over fidelity; no heavy dependency | `docx-rs` (import gaps) |
-| LaTeX | Export through `minijinja` templates + `.bib` from hayagriva; import of basic LaTeX with a small hand-written parser | Predictable output | pandoc sidecar (policy) |
+| LaTeX | Export through `minijinja` templates + `.bib` from the BibTeX export (`FR-03-051`); import of basic LaTeX with a small hand-written parser | Predictable output | pandoc sidecar (policy) |
 | PDF | `typst` + `typst-pdf` crates in-process with a bundled template and fonts | One binary, deterministic | Typst CLI sidecar (policy) |
 | Markdown | `pulldown-cmark` import; custom writer with span-ID comment markers for the agent view | Round-trip control | — |
 | Logging | `tracing` + `tracing-subscriber` (JSON lines, daily rotation) | NFR-OBS | — |
@@ -70,7 +70,7 @@ Adding `crates/tlilli-cli` extends the layout in `CLAUDE.md`; the bootstrap back
 | UI tooling | pnpm, Biome (lint + format), Vitest + Testing Library, Playwright; `tauri-driver` smoke suite | One fast toolchain | ESLint + Prettier (D-032) |
 | Rust tooling | `cargo-nextest`, `cargo-llvm-cov`, `cargo-deny`, `cargo-mutants`, `cargo-fuzz`, `cargo-semver-checks`, `insta`, `proptest`, `criterion` | [34](34-testing.md) | — |
 | Release tooling | `release-plz` (release PR, version bump, changelog via `git-cliff`, tag, crates.io publish), `tauri-apps/tauri-action` (bundles, draft release, `latest.json`), `anchore/sbom-action`, `actions/attest` | [37](37-releases-and-packaging.md) | cargo-dist (no Tauri bundles) |
-| Docs | MkDocs + Material, `mike` after 1.0, `mkdocs-redirects`, `lychee` link check; rustdoc under `/api` | [35](35-documentation.md) | mdBook (no Diátaxis navigation features) |
+| Docs | MkDocs + Material, `mike` after 1.0 (provisional, D-063), `mkdocs-redirects`, `lychee` link check; rustdoc under `/api` | [35](35-documentation.md) | mdBook (no Diátaxis navigation features) |
 
 ## 4. Core model boundaries
 
