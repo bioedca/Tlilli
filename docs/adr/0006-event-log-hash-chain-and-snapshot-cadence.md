@@ -1,0 +1,63 @@
+# ADR-0006: Event-log hash chain and snapshot cadence
+
+- **Status:** Proposed (the maintainer's merge of the pull request records acceptance; see the [index](README.md))
+- **Date:** 2026-11-04
+- **Deciders:** bioedca (maintainer). Drafted by Claude Code (cloud), bootstrap task 16 ([PRD 42](../prd/42-bootstrap-backlog.md) row 16).
+
+## Context
+
+Every change in Tlilli is an event, and the UI and the MCP server emit events through the same core API (`INV-02`). The concept chose "an append-only event log with materialized snapshots" so that "runs, diffs and rollback cost nothing extra", and it made the span the unit of address: a sentence with a stable ID preserved across edits by diff anchoring, on which comments, requests, claim links and provenance marks hang (`INV-05`, `INV-06`, `INV-10`). [PRD 21 §3](../prd/21-architecture-and-tech-stack.md#3-technology-decisions) and [§4](../prd/21-architecture-and-tech-stack.md#4-core-model-boundaries) lock the shape: ULID block IDs; span IDs derived by segmentation and stabilized by diff anchoring with `similar`; one event enum where every mutation carries `actor` (`Author`, `Agent{run_id, identity}`, `System`), `at`, `parent_hash` and `payload`, validated against the pen rule (`INV-01`); CRDTs rejected because there is no multi-writer need.
+
+The requirements set the bars. Replay of the log from genesis reproduces the current state byte-for-byte, and the hash chain detects a tampered or truncated log (`FR-01-030`). Snapshots are taken on Send, on import, every 50 events or 10 minutes while editing, and on demand with a label; they are immutable, deduplicated by content-addressed blocks, and restoring one creates a new event (`FR-01-031`); runs take `before` and `after` snapshots (`FR-02-002`); a snapshot is created in ≤ 100 ms and a diff renders in ≤ 1 s (`NFR-PERF-004`). A crash loses at most the last uncommitted transaction, ≤ 1 s of typing (`NFR-REL-001`); startup verifies the chain and rebuilds snapshots that disagree with the log (`NFR-REL-002`); autosave is continuous (`NFR-REL-007`). Typing latency to a committed event is ≤ 16 ms at p95 and the reference manuscript opens in ≤ 2 s cold (`NFR-PERF-002`, `NFR-PERF-001`). Span IDs survive author edits: similarity ≥ 0.6 by position-aware normalized token overlap keeps the ID, new sentences mint IDs, deleted ones leave tombstones pointing at the nearest survivor; ≥ 99% of untouched sentences and 100% of locked spans keep their IDs on the revision corpus (`FR-01-012`, [PRD 01 §6](../prd/01-vision-and-scope.md#6-success-metrics), R-01). Undo and redo are event-based and cross sessions (`FR-01-020`); rolling back a run appends new events and lists conflicts (`FR-02-045`). The PRD names no hash algorithm, no chain scope and no compaction rule; this ADR fills those gaps.
+
+## Decision
+
+**Events.** One row per event in `events` (ADR-0004), ordered by `seq`. Each event carries `manuscript_id` (null for workspace-scoped events), `actor`, `at` (UTC RFC 3339, informational: ordering is by `seq`, never by clock), `parent_hash`, `hash`, `payload_version` and `payload`. Events are immutable once committed; migrations never rewrite them (ADR-0004, migration rule 4).
+
+**Hash chain.** `hash = SHA-256(canonical_json({manuscript_id, seq, actor, at, parent_hash, payload_version, payload}))`, where `canonical_json` is the deterministic serialization the canonical export uses (stable key order, LF, `FR-01-043`). `parent_hash` is the `hash` of the previous event in the same chain; there is one chain per manuscript and one for workspace-scoped events, and the first event of a chain has an all-zero parent. SHA-256 is the option taken because the project already uses it for release checksums (`NFR-SEC-007`), a pure-Rust implementation exists, and one hash of a small payload per event is far inside the 16 ms budget. Verification is a single pass over a chain comparing stored and recomputed hashes and parents; a mismatch or a gap in `seq` is a tampering or truncation finding (`FR-01-030`). Changing the algorithm later means a new chain genesis and is a breaking storage change that needs an ADR.
+
+**Self-describing payloads.** An event records outcomes, not only inputs: a text-edit event carries the edited text and the resulting span table of the touched paragraph (span IDs in order, tombstones with their successors, provenance marks), computed once at commit time by segmentation and diff anchoring. Replay applies recorded results and never re-runs the segmenter, so `replay(log) == state` holds byte-for-byte even after segmentation rules, abbreviation lists or the anchoring threshold change between versions (`FR-01-030`, `PR-TST-005`). Minted ULIDs are in the payload for the same reason. `payload_version` lets the decoder read every payload format ever released (`PR-MNT-005`).
+
+**Durability and the crash budget.** The core applies an event in memory, then commits it in its own SQLite transaction before confirming it to the UI (`FR-01-030`); one ProseMirror transaction maps to one or more events (`FR-01-020`). With WAL and `synchronous=NORMAL`, an application crash loses nothing committed, and a power loss may lose transactions not yet checkpointed; a checkpoint therefore runs at most 1 s after the last commit while the log is dirty, which bounds the loss window to the `NFR-REL-001` budget. The kill-9 harness and the recovery property test verify both cases.
+
+**Snapshots.** A snapshot is an ordered list of content-addressed block hashes per section plus metadata (`kind`, `label`, `event_seq`, `root_hash` over the ordered block hashes); blocks are stored once in `snapshot_blocks` (`FR-01-031`). Cadence: on Send (`before`), on run close (`after`), on import, on demand with a label, and automatically every 50 events or 10 minutes while editing, whichever comes first, with the timer reset by every snapshot. Snapshots are immutable; restore appends events that bring the state back and keeps IDs (`FR-01-031`). Startup loads the newest snapshot and replays the events after it, which keeps cold open within `NFR-PERF-001`; the chain verification still covers the whole log.
+
+**No compaction.** The log is append-only and never truncated or rewritten: compaction would defeat the truncation detection `FR-01-030` requires and the replay-from-genesis property. Snapshots are not deleted in v1 either; deduplication keeps automatic snapshots cheap because only changed blocks are stored. If measured growth on the reference workspace threatens `NFR-PERF-001` or `NFR-PERF-009`, the first lever is a verified checkpoint hash that lets startup verify only the tail, recorded as a follow-up decision rather than assumed now.
+
+**Span-ID stability.** At commit time the touched paragraph is re-segmented (`FR-01-011`) and the old and new span lists are aligned with `similar` using position-aware normalized token overlap: similarity ≥ 0.6 keeps the ID, lower mints a ULID, and unmatched old spans become tombstones pointing at the nearest surviving span (`FR-01-012`). When one old span matches two new ones (a split), the earlier new span keeps the ID, mirroring the block rule in `FR-01-010`; when two old spans match one new one (a merge), the first keeps its ID and the second is tombstoned. Locked spans are read-only to agents; an author edit inside one is anchored by the same rules, and the 100% metric is measured at G1 with the ≥ 99% metric. Anchors (comments, requests, claim links, provenance marks) reference span IDs and follow them; tombstones resolve to a neighbour for display. Blocks keep their ULIDs on split (first half), merge (first) and move (`FR-01-010`).
+
+## Consequences
+
+### Positive
+
+- Tampering and truncation are detectable, and replay equality is a tested property ([PRD 34 §3](../prd/34-testing.md#3-what-to-test-by-component), Event log).
+- Runs, diffs, rollback, cross-session undo and provenance come from the same log with no extra bookkeeping (`INV-05`, `INV-06`).
+- Replay does not depend on the segmenter's version, so improving segmentation never moves old anchors (R-01).
+
+### Negative
+
+- Payloads carry span tables, so the log is larger than an input-only log, and the database grows without bound.
+- Hashing and a commit sit on the typing path; both are measured by the `NFR-PERF-002` bench.
+- Startup verification is linear in the number of events; on very long histories it competes with the 2 s cold budget until the checkpoint-hash lever is pulled.
+
+### Risks
+
+- R-01: anchors drift on heavy edits. Property tests over random edit sequences and the revision-corpus metric at G1 are the gate; manual re-anchoring is the fallback.
+- R-02: the view diverges from the log. `INV-02`, the fault-injection test and the replay property guard it.
+- T-06: a bad write corrupts state. Chain verification, snapshot rebuild and ADR-0004's backups recover it. The chain detects accidents and truncation; it does not protect against someone who rewrites the whole chain, which is out of scope on a local-first machine (`INV-08`).
+
+## Alternatives considered
+
+- **CRDTs** ([PRD 21 §3](../prd/21-architecture-and-tech-stack.md#3-technology-decisions)). Rejected: one author edits at a time ([PRD 01 §3](../prd/01-vision-and-scope.md#3-non-goals-explicitly-out-of-scope), "not real-time collaborative"); a CRDT adds merge semantics nothing needs.
+- **Snapshots only, no log.** Rejected: `INV-02`, `INV-05`, cross-session undo and the tool-call audit trail require the event sequence.
+- **Recomputing segmentation on replay.** Rejected: any change to the segmenter would rewrite history and move every anchor.
+- **Compacting old events into a snapshot.** Rejected: the append-only MUST and truncation detection; snapshots already give fast open.
+- **BLAKE3 instead of SHA-256.** Viable and faster; not chosen because SHA-256 is already the project's checksum algorithm and the per-event cost is negligible. Revisit only with a measurement.
+- **Storing snapshots as diffs.** Rejected: `FR-01-031` asks for content-addressed deduplication, which also makes `root_hash` comparison and diffing simple.
+
+## References
+
+- Concept document: "Concept", "Domain model" (Span, Run, Snapshot, Provenance mark), "Architecture" (Core row), "Open questions and risks" (span IDs, two document models).
+- PRD: [21](../prd/21-architecture-and-tech-stack.md) §3 (Core data, Text processing), §4, §7; [10](../prd/10-fr-v0.1-black-ink.md) §10.2, §10.4; [11](../prd/11-fr-v0.2-red-ink.md) §11.1, §11.5, §11.6; [20](../prd/20-non-functional-requirements.md) NFR-REL, NFR-PERF; [34](../prd/34-testing.md) §2 (`PR-TST-005`), §3 (Core); [01](../prd/01-vision-and-scope.md) §5, §6.
+- Requirements: `INV-01`, `INV-02`, `INV-04`, `INV-05`, `INV-06`, `INV-08`, `INV-10`; `FR-01-010..012`, `FR-01-020`, `FR-01-030..033`, `FR-01-043`; `FR-02-002`, `FR-02-041`, `FR-02-045`, `FR-02-050`; `FR-04-022`; `NFR-REL-001`, `NFR-REL-002`, `NFR-REL-007`; `NFR-PERF-001..004`, `NFR-PERF-009`; `NFR-SEC-007`; `NFR-COMPAT-001`; `PR-TST-005`; `PR-MNT-005`.
+- Decisions, risks, threats: D-054; R-01, R-02; T-06; ADR-0004.
