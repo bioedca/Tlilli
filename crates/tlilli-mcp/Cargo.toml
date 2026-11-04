@@ -1,0 +1,23 @@
+[package]
+name = "tlilli-mcp"
+description = "Tlilli MCP server: the only door for agents, over stdio and streamable HTTP on localhost"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+# A library with a thin binary (docs/prd/21-architecture-and-tech-stack.md §1): the Tauri shell
+# embeds the library and can also spawn the binary for stdio clients.
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "tlilli-mcp"
+path = "src/main.rs"
+
+[dependencies]
+clap.workspace = true
+
+[lints]
+workspace = true
