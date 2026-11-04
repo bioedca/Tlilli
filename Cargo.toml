@@ -1,7 +1,7 @@
 # Tlilli Cargo workspace. Layout, technology and dependency policy: docs/prd/21-architecture-and-tech-stack.md.
 [workspace]
 resolver = "2"
-members = ["crates/tlilli-core", "crates/tlilli-mcp", "crates/tlilli-cli"]
+members = ["crates/tlilli-core", "crates/tlilli-mcp", "crates/tlilli-cli", "src-tauri"]
 # fuzz/ is its own cargo-fuzz workspace: it links libFuzzer and runs only on nightly, so stable
 # `cargo build --workspace` must not see it (fuzz/README.md).
 exclude = ["fuzz"]

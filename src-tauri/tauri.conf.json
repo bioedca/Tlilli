@@ -1,0 +1,47 @@
+{
+  "$schema": "../ui/node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "Tlilli",
+  "identifier": "io.github.bioedca.Tlilli",
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "devUrl": "http://localhost:5173",
+    "beforeBuildCommand": "pnpm build",
+    "frontendDist": "../ui/dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Tlilli",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 600
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' data:; connect-src ipc: http://ipc.localhost; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "createUpdaterArtifacts": true,
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEI4M0EwQUE3REQzRURGMzUKUldRMTN6N2Rwd282dUJRZFBvZHBUSFhFT1p2c1VpZ2JMUWF6QWRxTWxJS3BuQ2hXUW5wVWpRcjEK",
+      "endpoints": ["https://bioedca.github.io/Tlilli/updates/stable.json"],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  }
+}
