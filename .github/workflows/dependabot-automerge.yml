@@ -1,0 +1,72 @@
+# Auto-merge for Dependabot's grouped patch and minor updates (PR-MNT-010, PR-PRQ-009, D-051).
+# Enables GitHub auto-merge with the rebase method; GitHub then lands the PR only when the `main` ruleset's
+# required checks pass on an up-to-date branch (PR-GIT-042, PR-GIT-043), so "after CI" is the ruleset's job.
+# Eligible: group `patch-minor`, highest update type patch or minor, in an entry whose changes PR CI builds
+# and tests: cargo `/`, npm `/ui`, pip `/docs`. Everything else is left for triage: the `major` group,
+# ungrouped security updates, github-actions (.github/workflows is gated, PR-PRQ-009) and devcontainers
+# (no PR job builds the devcontainer).
+#
+# Trust: `pull_request`, not `pull_request_target`. For a Dependabot PR, GitHub gives the token only the
+# scopes declared below and no Actions secrets; no PR code is checked out or run. The job runs only for PRs
+# authored by Dependabot (the PR author, which cannot be spoofed, not the triggering actor), and
+# fetch-metadata fails unless the head commit is Dependabot's own, with a verified signature. The mutation
+# names that head commit (`expectedHeadOid`), so nothing is enabled if another commit landed after the check.
+# Only collaborators with write access can push to Dependabot's branches; such a push fails the check on its
+# `synchronize` run and leaves an auto-merge enabled earlier in place.
+# The GraphQL mutation is used instead of `gh pr merge --auto`, which merges at once, without waiting for
+# any check, when the PR is already mergeable (for example before the `main` ruleset exists); the mutation
+# fails instead, and the PR waits for triage.
+name: dependabot auto-merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions: {}
+
+concurrency:
+  group: dependabot-automerge-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  enable:
+    name: enable auto-merge
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'bioedca/Tlilli'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write # merging, which auto-merge does on this token's behalf, needs write access
+      pull-requests: write # fetch-metadata lists the PR's commits; enablePullRequestAutoMerge
+    steps:
+      - name: Read the update metadata
+        id: meta
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+
+      - name: Enable auto-merge (rebase)
+        id: enable
+        if: >-
+          steps.meta.outputs.dependency-group == 'patch-minor' &&
+          contains(fromJSON('["version-update:semver-patch", "version-update:semver-minor"]'), steps.meta.outputs.update-type) &&
+          contains(fromJSON('["cargo /", "npm_and_yarn /ui", "pip /docs"]'), format('{0} {1}', steps.meta.outputs.package-ecosystem, steps.meta.outputs.directory))
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_ID: ${{ github.event.pull_request.node_id }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          # shellcheck disable=SC2016 # $pr and $head are GraphQL variables, not shell expansions
+          gh api graphql -f pr="$PR_ID" -f head="$HEAD_SHA" -f query='
+            mutation($pr: ID!, $head: GitObjectID!) {
+              enablePullRequestAutoMerge(
+                input: {pullRequestId: $pr, mergeMethod: REBASE, expectedHeadOid: $head}
+              ) { pullRequest { number autoMergeRequest { mergeMethod } } }
+            }'
+
+      - name: Summary
+        env:
+          ECOSYSTEM: ${{ steps.meta.outputs.package-ecosystem }}
+          DIRECTORY: ${{ steps.meta.outputs.directory }}
+          GROUP: ${{ steps.meta.outputs.dependency-group }}
+          UPDATE_TYPE: ${{ steps.meta.outputs.update-type }}
+          DECISION: ${{ steps.enable.outcome == 'success' && 'auto-merge enabled (rebase)' || 'left for triage' }}
+        run: |
+          echo "${ECOSYSTEM} ${DIRECTORY}, group '${GROUP}', ${UPDATE_TYPE}: ${DECISION}" >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,130 @@
+# Dependabot version updates (PR-MNT-010, PR-CI-012, PRD 39 §4, D-051).
+# Weekly, before Monday triage. Every entry has the same two groups: `patch-minor`, which
+# dependabot-automerge.yml auto-merges after CI for the entries CI builds and tests (cargo `/`, npm `/ui`,
+# pip `/docs`), and `major`, which waits for triage. Security updates are not grouped (no
+# `applies-to: security-updates` group) and skip the cooldown, so an advisory opens its own PR at once.
+# Commit messages must pass commitlint (commitlint.config.mjs: exactly one scope from the closed list, so no
+# `include: scope`, which would write `deps-dev`); `chore(deps)` and `ci` stay out of the user-facing
+# changelog (PRD 37).
+# cooldown: a release must be 7 days old before a version update proposes it, so a hijacked release is
+# likely yanked before auto-merge could land it (T-07; zizmor `dependabot-cooldown`).
+# Entries are written out in full: no YAML anchors, which Dependabot's parser does not promise to accept.
+version: 2
+updates:
+  - package-ecosystem: cargo
+    directory: / # the Cargo workspace; fuzz/ is its own cargo-fuzz workspace, which PR CI does not build
+    schedule:
+      interval: weekly
+      day: monday
+      time: "03:47"
+      timezone: Etc/UTC
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    labels: [dependencies, area/deps]
+    commit-message:
+      prefix: chore(deps)
+    groups:
+      patch-minor:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: [minor, patch]
+      major:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: [major]
+
+  - package-ecosystem: npm
+    directory: /ui # pnpm: Dependabot updates ui/package.json and ui/pnpm-lock.yaml
+    schedule:
+      interval: weekly
+      day: monday
+      time: "03:47"
+      timezone: Etc/UTC
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    labels: [dependencies, area/deps]
+    commit-message:
+      prefix: chore(deps)
+    groups:
+      patch-minor:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: [minor, patch]
+      major:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: [major]
+
+  - package-ecosystem: pip
+    directory: /docs # pip-compile: docs/requirements.in -> docs/requirements.txt with hashes
+    schedule:
+      interval: weekly
+      day: monday
+      time: "03:47"
+      timezone: Etc/UTC
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    labels: [dependencies, area/deps]
+    commit-message:
+      prefix: chore(deps)
+    ignore:
+      # Held at 1.2.2: 1.2.3 depends on the `properdocs` fork (D-063, docs/requirements.in).
+      - dependency-name: mkdocs-redirects
+    groups:
+      patch-minor:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: [minor, patch]
+      major:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: [major]
+
+  - package-ecosystem: github-actions
+    directory: / # SHA pins with version comments (PR-CI-001); .github/** is gated
+    schedule:
+      interval: weekly
+      day: monday
+      time: "03:47"
+      timezone: Etc/UTC
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    labels: [dependencies, area/deps]
+    commit-message:
+      prefix: ci(deps)
+    groups:
+      patch-minor:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: [minor, patch]
+      major:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: [major]
+
+  - package-ecosystem: devcontainers
+    directory: / # feature versions in .devcontainer/devcontainer.json
+    schedule:
+      interval: weekly
+      day: monday
+      time: "03:47"
+      timezone: Etc/UTC
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    labels: [dependencies, area/deps]
+    commit-message:
+      prefix: chore(deps)
+    groups:
+      patch-minor:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: [minor, patch]
+      major:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: [major]
