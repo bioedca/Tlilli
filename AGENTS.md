@@ -12,8 +12,9 @@ the same project context.
 
 - `docs/prd/` is binding on agent-authored work exactly as on human work ([PRD README](docs/prd/README.md)). Where
   this file and the PRD disagree, the PRD wins; a deviation is a dated decision-log entry
-  ([PRD 41](docs/prd/41-risks-and-decision-log.md)) in the same pull request. Phase 0 work follows the bootstrap
-  backlog ([PRD 42](docs/prd/42-bootstrap-backlog.md)).
+  ([PRD 41](docs/prd/41-risks-and-decision-log.md)) made before or with the change, and the PRD text is updated in
+  the same pull request ([PRD README](docs/prd/README.md), rule 4). Phase 0 work follows the bootstrap backlog
+  ([PRD 42](docs/prd/42-bootstrap-backlog.md)).
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) holds the agent-neutral workflow for people and agents (D-002). The sections
   below restate it for agents and add the agent-only git rules of [PRD 30 §4](docs/prd/30-git-workflow.md).
 - `CLAUDE.md` and `AGENTS.md` share the sections from "Sources of truth" to "Git and pull requests" word for word;
@@ -127,8 +128,9 @@ them (rulesets, DCO, commitlint, size and gate checks).
   (name AI-written tests), Docs, Review pipeline, Checklist, and the `Size override:`, `Docs not needed because:`
   and `AI assistance:` lines. At most 400 changed hand-written lines. The review order is fixed
   ([PRD 32](docs/prd/32-code-review.md)): self-review, Codex local rounds, `@codex review`, `@coderabbitai review`
-  within the CodeRabbit ledger, Greptile on gated or `review:deep` PRs, the maintainer on gated PRs. Answer every
-  finding in its thread (fixed with the SHA, declined with a reason, or escalated) before resolving it.
+  within the CodeRabbit ledger, Greptile on PRs labelled `gate` or `review:deep`, the maintainer on PRs labelled
+  `gate` once they are Ready. Answer every finding in its thread (fixed with the SHA, declined with a reason, or
+  escalated) before resolving it.
 
 ## Codex
 
