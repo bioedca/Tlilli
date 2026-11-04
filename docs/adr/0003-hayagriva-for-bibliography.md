@@ -22,9 +22,9 @@ A citation in Tlilli is a claim link, and the ledger stores sources as CSL-JSON:
 
 **Markers and keys.** Span text stores `[@key]` with keys of the form `author-year-slug`, stable per source (`FR-03-011`). The renderer maps keys to CSL-JSON items, emits the numeric or author-year in-text form, and renders `[@missing:key]` for deleted sources with a warning. Re-rendering markers after a style change and renumbering references are mechanical edits with a reverse operation (`FR-04-020`, `citation_format`, `reference_renumber`).
 
-**BibTeX.** Export through `hayagriva`'s BibTeX support; keys equal the `[@key]` keys so `\cite{key}` in the LaTeX export compiles against the exported `.bib` (`FR-03-051`, `FR-04-041`); Unicode is preserved or escaped per the export setting. Import of `.bib` files (Zotero Better BibTeX exports, basic LaTeX import) reuses the same support to produce CSL-JSON (`FR-05-040`, `FR-04-043`). If Better BibTeX output carries fields the engine does not read, a small reader in `tlilli-core::import` fills the gap under the same recorded fixtures; that is an implementation change, not a new ADR, because it adds no native dependency.
+**BibTeX.** Export through `hayagriva`'s BibTeX support; keys equal the `[@key]` keys so `\cite{key}` in the LaTeX export compiles against the exported `.bib` (`FR-03-051`, `FR-04-041`); Unicode is preserved or escaped per the export setting. Import of `.bib` files reuses the same support to produce CSL-JSON; this record decides that for the basic LaTeX import, which creates ledger stubs from the `.bib` (`FR-04-043`). If a `.bib` file carries fields the engine does not read, a small reader in `tlilli-core::import` fills the gap under recorded fixtures; that is an implementation change, not a new ADR, because it adds no native dependency. The Zotero import of `FR-05-040` is outside this record: its `.bib` files can use the same reader, but its CSL-JSON input and its attachment-path mapping with PDF copying need a separate decision before v0.5.
 
-**Determinism.** Rendering is a pure function of (CSL-JSON, style, locale, marker list). Outputs are snapshot-tested (`PR-TST-010`) and benchmarked within `NFR-PERF-008`.
+**Determinism.** Rendering is a pure function of (CSL-JSON, style, locale, marker list, output format). Outputs are snapshot-tested (`PR-TST-010`) and benchmarked within `NFR-PERF-008`.
 
 ## Consequences
 
@@ -44,7 +44,7 @@ A citation in Tlilli is a claim link, and the ledger stores sources as CSL-JSON:
 
 - R-17: snapshot failures on a required style. Mitigation: the CSL test-suite subset in CI, post-processing of the rendered output, or an upstream contribution; a style the project cannot render is documented on the style-sheet page.
 - Engine upgrades change rendered output: snapshots catch it (`PR-TST-010`); Dependabot groups the bump (`PR-MNT-010`).
-- Zotero's BibTeX dialect drifts: recorded fixtures under `tests/fixtures/` and the Zotero import step of G5 catch it.
+- `.bib` dialects vary between exporters: recorded fixtures under `tests/fixtures/` catch reader regressions.
 
 ## Alternatives considered
 
@@ -57,6 +57,6 @@ A citation in Tlilli is a claim link, and the ledger stores sources as CSL-JSON:
 ## References
 
 - Concept document: "Citation ledger" (Outputs), "Architecture" (References row).
-- PRD: [21](../prd/21-architecture-and-tech-stack.md) §3 (Citations, LaTeX, PDF), §5; [12](../prd/12-fr-v0.3-ledger.md) §12.1, §12.2, §12.6; [13](../prd/13-fr-v0.4-sweep-and-style.md) §13.1, §13.3, §13.5; [14](../prd/14-fr-v0.5-beyond-the-article.md) §14.5; [34](../prd/34-testing.md) §3 (Ledger); [40](../prd/40-roadmap-and-gates.md) G3 step 4, G5 step 4.
-- Requirements: `FR-03-001`, `FR-03-011`, `FR-03-050..052`, `FR-04-001`, `FR-04-020`, `FR-04-040..043`, `FR-05-040`; `NFR-I18N-002`, `NFR-PERF-008`; `PR-ARCH-003`, `PR-ARCH-004`; `PR-TST-010`; `PR-MNT-010`.
+- PRD: [21](../prd/21-architecture-and-tech-stack.md) §3 (Citations, LaTeX, PDF), §5; [12](../prd/12-fr-v0.3-ledger.md) §12.1, §12.2, §12.6; [13](../prd/13-fr-v0.4-sweep-and-style.md) §13.1, §13.3, §13.5; [34](../prd/34-testing.md) §3 (Ledger); [40](../prd/40-roadmap-and-gates.md) G3 step 4.
+- Requirements: `FR-03-001`, `FR-03-011`, `FR-03-050..052`, `FR-04-001`, `FR-04-020`, `FR-04-040..043`; `NFR-I18N-002`, `NFR-PERF-008`; `PR-ARCH-003`, `PR-ARCH-004`; `PR-TST-010`; `PR-MNT-010`. Context only, not decided here: `FR-05-040` ([PRD 14 §14.5](../prd/14-fr-v0.5-beyond-the-article.md#145-zotero-import)).
 - Decisions and risks: D-037, D-054; R-17; ADR-0004, ADR-0005.
