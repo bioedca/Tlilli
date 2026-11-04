@@ -6,7 +6,7 @@ INTERSECT CI/CD rules adopted: separate CI from CD; CD triggers on tags, with `w
 
 | Workflow file | Triggers | Purpose | Secrets |
 | --- | --- | --- | --- |
-| `ci.yml` | `pull_request` (all types incl. `ready_for_review`, `labeled`), `push` to `main` | Linux lane on every PR push; full matrix on Ready/`ci:full`/`main`; all required checks | `CODECOV_TOKEN` (read-only upload) |
+| `ci.yml` | `pull_request` (all types incl. `ready_for_review`, `labeled`), `push` to `main` | Linux lane on every PR push; full matrix on Ready/`ci:full`/`main`; all required checks | none (Codecov upload by OIDC: `codecov/codecov-action` with `use_oidc: true`, `id-token: write` on the uploading jobs; skipped for Dependabot-authored PRs) |
 | `gate.yml` | `pull_request` events, `pull_request_review`, `push` to `main` | `gate/maintainer` required check ([32](32-code-review.md) §5) | none (`GITHUB_TOKEN`, `pull-requests: write` for label/comment) |
 | `labeler.yml` | `pull_request_target` | Path labels `area/*`, `gate`; size labels; `review:deep` for gated PRs | none |
 | `commits.yml` | part of `ci.yml` (`commits` job) | commitlint on all PR commits and title; ≤ 10 commits; branch-name pattern; per-commit `cargo check` (≤ 10 commits) | none |
@@ -70,7 +70,7 @@ Caching: `Swatinem/rust-cache@<sha>` keyed by lockfile and toolchain; pnpm store
 | --- | --- |
 | `PR-CI-001` | Every third-party action is pinned to a full commit SHA with a version comment (`uses: actions/checkout@<sha> # v4.2.2`); Dependabot (`github-actions` ecosystem) keeps SHAs current; `zizmor` fails on unpinned uses. |
 | `PR-CI-002` | Runner images are pinned (`ubuntu-24.04`, `macos-15`, `windows-2025`) and reviewed quarterly; never `-latest` (INTERSECT). |
-| `PR-CI-003` | Default `permissions: read-all` at workflow level; jobs raise only what they need (`contents: write` for release upload, `pull-requests: write` for labels, `id-token: write` for attestations/Pages/crates.io OIDC). |
+| `PR-CI-003` | Default `permissions: read-all` at workflow level; jobs raise only what they need (`contents: write` for release upload, `pull-requests: write` for labels, `id-token: write` for attestations/Pages/crates.io/Codecov OIDC). |
 | `PR-CI-004` | No `|| true`, `continue-on-error` or `exit 0` to hide failures except on explicitly experimental matrix entries, which are labelled `experimental` and not required (INTERSECT: never hack exit codes). |
 | `PR-CI-005` | `fail-fast: false` on all matrices so one platform failure does not hide another. |
 | `PR-CI-006` | Workflows never checkout untrusted PR code in a privileged context (`pull_request_target` jobs do not run `actions/checkout` of the PR head). |
