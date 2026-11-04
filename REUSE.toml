@@ -30,7 +30,7 @@ path = [
   ".github/CODEOWNERS",
   ".gitignore",
   "NOTICE",
-  "scripts/gen_fixtures.py",
+  "scripts/**/*.py",
 ]
 precedence = "closest"
 SPDX-FileCopyrightText = "2026 bioedca"
