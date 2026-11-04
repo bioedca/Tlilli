@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# CodeRabbit review lane. Policy: docs/prd/32-code-review.md §2.
+# CodeRabbit runs only when the author asks for it with `@coderabbitai review`, after the Codex
+# lane is clean; it never reviews drafts or re-reviews on every push. This file is a maintainer-
+# gated path.
+language: "en-US"
+reviews:
+  request_changes_workflow: true
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: true
+  auto_review:
+    enabled: false
+    auto_incremental_review: false
+    drafts: false
+  path_filters:
+    - "!**/*.snap"
+    - "!**/pnpm-lock.yaml"
+    - "!Cargo.lock"
+    - "!docs/reference/mcp/**"
+    - "!docs/reference/schemas/**"
+  path_instructions:
+    - path: "docs/prd/**"
+      instructions: >-
+        Product requirements document. Check internal consistency (requirement IDs, decision
+        numbers, cross-references), contradictions between sections, and factual claims about
+        GitHub, Tauri, Rust and the named tools. Do not comment on prose style.
+  tone_instructions: >-
+    Critique the text or code, not the person. Prefer questions and "we could". Prefix nits with
+    "Nit:". Do not repeat findings already present in the pull request.
+chat:
+  auto_reply: true
