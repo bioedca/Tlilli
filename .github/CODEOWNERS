@@ -1,0 +1,66 @@
+# Gated paths: the files whose changes need the maintainer's judgement (docs/prd/32-code-review.md §3,
+# D-022, D-056). This file does two jobs. GitHub requests a review from the owners when a pull request
+# touches a listed path (except from the author of record, which is why the gate is a status check).
+# .github/workflows/gate.yml reads this file from the base branch on every pull-request event and reports
+# the required check `gate/maintainer`: a pull request that touches none of these paths passes; one that
+# does passes only once a gate authority approved the current head (PR-REV-010). The list is mirrored
+# by the `gate` entry of .github/labeler.yml, which routes gated pull requests to Greptile and to the
+# maintainer; keep both in step with the PRD table.
+#
+# Owners: the maintainer. There are no teams on a personal account (D-057). When the backup admin is
+# named (docs/prd/38-maintenance-and-support.md §8, bootstrap task 1), append their `@login` to every
+# line below in the same pull request that sets the `BACKUP_ADMIN` Actions variable: gate.yml accepts
+# their approval only while the `HANDOFF_ACTIVE` variable is `true`, never on this file alone.
+#
+# Syntax kept to the subset gate.yml matches: one pattern per line followed by owners, patterns
+# anchored at the repository root with a leading `/`, a trailing `/` for a directory and its contents,
+# `*` within one path segment. No negation, character classes or escapes.
+
+# The source of truth: ID stability, event semantics and provenance define the product's trust claims.
+/crates/tlilli-core/src/model/          @bioedca
+/crates/tlilli-core/src/event/          @bioedca
+/crates/tlilli-core/src/segment/        @bioedca
+/crates/tlilli-core/src/provenance/     @bioedca
+
+# Users' data durability and forward compatibility (the workspace folder layout lives under storage/).
+/crates/tlilli-core/src/storage/        @bioedca
+/crates/tlilli-core/migrations/         @bioedca
+/migrations/                            @bioedca
+
+# The only door for agents: the pen rule and the prompt-injection defences.
+/crates/tlilli-mcp/                     @bioedca
+
+# App permissions and updater configuration.
+/src-tauri/tauri.conf.json              @bioedca
+/src-tauri/capabilities/                @bioedca
+
+# The behaviour contract agents learn; MIT-licensed public text.
+/skills/                                @bioedca
+
+# Supply chain, CI, review and release machinery.
+/.github/                               @bioedca
+/.coderabbit.yaml                       @bioedca
+/greptile.json                          @bioedca
+/AGENTS.md                              @bioedca
+/CLAUDE.md                              @bioedca
+/deny.toml                              @bioedca
+/release-plz.toml                       @bioedca
+/cliff.toml                             @bioedca
+/codecov.yml                            @bioedca
+
+# The project's word to the public.
+/LICENSE*                               @bioedca
+/NOTICE                                 @bioedca
+/SECURITY.md                            @bioedca
+/GOVERNANCE.md                          @bioedca
+/CITATION.cff                           @bioedca
+/CODE_OF_CONDUCT.md                     @bioedca
+/CONTRIBUTING.md                        @bioedca
+
+# Requirements and decisions.
+/docs/prd/                              @bioedca
+/docs/adr/                              @bioedca
+/docs/gates/                            @bioedca
+
+# Licensing of vendored texts.
+/tests/fixtures/LICENSES.md             @bioedca

@@ -1,0 +1,246 @@
+# gate/maintainer: the human gate as a required status check (docs/prd/32-code-review.md §5, D-053;
+# rules PR-REV-010..012). Agent pull requests are authored by the maintainer's own account (D-014), so
+# "require a code-owner approval" cannot express the gate; this check can.
+#
+# Verdict, computed on every run from the API, never from the previous run:
+# - The changed files (new and previous names) are matched against .github/CODEOWNERS as it stands on
+#   the PR's base branch. No match: success. The `gate` label is only routing (labeler.yml) and is
+#   reconciled here from the same files: re-applied when missing on a gated PR (PR-PRQ-033), removed
+#   when no gated file is left.
+# - A gated PR succeeds when a gate authority approved the current head: a review in state APPROVED
+#   whose commit is the head SHA, or the `gate:approved` label whose latest `labeled` event was by a
+#   gate authority. Anything else is ignored and named in the failure message. The PRD prescribes a
+#   failure, not a pending state, so the check is red until the approval exists and auto-merge waits.
+# - Gate authorities: the maintainer always; the backup admin only while the repository Actions variable
+#   HANDOFF_ACTIVE is `true` AND the variable BACKUP_ADMIN names their login AND that login is listed in
+#   CODEOWNERS (docs/prd/32-code-review.md §3: never on the CODEOWNERS entry alone; PRD 38 §8).
+# - Reset on push (PR-REV-011): on `synchronize` the `gate:approved` label is removed and a comment says
+#   so. The evaluation does not depend on that run having happened: the label counts only when its
+#   `labeled` event is later than the head commit's committer date, so a label that predates the head
+#   is stale whatever the order in which the runs for a push and the labeler's label events execute.
+#   Stale review approvals never match the head SHA (and the ruleset dismisses them).
+# - Actor check (PR-REV-012): a `gate:approved` label added by anyone else is removed with a comment,
+#   both on the `labeled` event and whenever an evaluation finds it.
+#
+# Triggers. `pull_request_target` runs the base branch's copy of this file in the base-branch context,
+# so the token may write labels and comments on fork PRs too; the job never checks out or executes PR
+# code (PR-CI-006), it only calls the API. `pull_request_review` picks up approvals and dismissals.
+# `edited` covers a retargeted PR (new base, new diff). The `push` to `main` trigger PR-REV-010 lists is
+# omitted: a push run cannot report a check on a PR head SHA, and the ruleset's "require branches to be
+# up to date" makes every landing re-run this check through `synchronize`.
+# Every run evaluates fully: a skipped job would report "skipped", which satisfies a required check.
+#
+# Repository Actions variables (docs/dev/github-settings.md §4):
+#   HANDOFF_ACTIVE  `false` normally; the backup admin sets `true` to start a handoff (PRD 38 §8).
+#   BACKUP_ADMIN    GitHub login of the backup admin, without `@`; empty until they are named.
+name: gate
+
+on:
+  pull_request_target: # zizmor: ignore[dangerous-triggers] no checkout, no PR code is run; API calls only
+    types: [opened, synchronize, reopened, ready_for_review, edited, labeled, unlabeled]
+  pull_request_review:
+    types: [submitted, dismissed]
+
+permissions: {}
+
+concurrency:
+  group: gate-${{ github.event.pull_request.number }}
+  # The newest event always runs to completion and decides; superseded runs are cancelled, never skipped
+  # (a cancelled check run fails, a skipped one would pass). Safe because every run evaluates from scratch.
+  cancel-in-progress: true
+
+jobs:
+  maintainer:
+    name: gate/maintainer
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read # read .github/CODEOWNERS from the base branch through the API
+      pull-requests: write # remove or re-apply `gate:approved` and `gate`; post the reset comment
+    steps:
+      - name: Evaluate the gate
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        env:
+          MAINTAINER: bioedca
+          BACKUP_ADMIN: ${{ vars.BACKUP_ADMIN }}
+          HANDOFF_ACTIVE: ${{ vars.HANDOFF_ACTIVE }}
+        with:
+          retries: 2
+          script: |
+            const APPROVED = 'gate:approved';
+            const GATE = 'gate';
+            const { owner, repo } = context.repo;
+            const event = context.eventName;
+            const action = context.payload.action;
+            const prEvent = context.payload.pull_request;
+            const number = prEvent.number;
+            const headSha = prEvent.head.sha;
+            const baseRef = prEvent.base.ref;
+            const canWrite = event === 'pull_request_target';
+            const sender = (context.payload.sender?.login || '').toLowerCase();
+            const eventLabel = context.payload.label?.name;
+            const short = (sha) => sha.slice(0, 7);
+            const lower = (s) => (s || '').trim().replace(/^@/, '').toLowerCase();
+            const maintainer = lower(process.env.MAINTAINER);
+            const backupAdmin = lower(process.env.BACKUP_ADMIN);
+            const handoffActive = lower(process.env.HANDOFF_ACTIVE) === 'true';
+
+            // CODEOWNERS pattern → RegExp over repository-relative paths (gitignore-style subset).
+            const toRegex = (pattern) => {
+              if (/^!|[\[\]\\]/.test(pattern)) throw new Error(`unsupported CODEOWNERS pattern: ${pattern}`);
+              let p = pattern;
+              const dirOnly = p.endsWith('/');
+              if (dirOnly) p = p.slice(0, -1);
+              const anchored = p.includes('/');
+              if (p.startsWith('/')) p = p.slice(1);
+              let re = '';
+              for (let i = 0; i < p.length; i++) {
+                const c = p[i];
+                if (c === '*' && p[i + 1] === '*') {
+                  i++;
+                  if (p[i + 1] === '/') { i++; re += '(?:.*/)?'; } else re += '.*';
+                } else if (c === '*') re += '[^/]*';
+                else if (c === '?') re += '[^/]';
+                else re += c.replace(/[.+^${}()|]/g, '\\$&');
+              }
+              return new RegExp((anchored ? '^' : '^(?:.*/)?') + re + (dirOnly ? '/.+$' : '(?:/.*)?$'));
+            };
+
+            // 1. CODEOWNERS from the base branch: the trusted copy, so a PR cannot un-gate itself.
+            let text;
+            try {
+              const res = await github.rest.repos.getContent({
+                owner, repo, path: '.github/CODEOWNERS', ref: baseRef, mediaType: { format: 'raw' },
+              });
+              text = typeof res.data === 'string' ? res.data : Buffer.from(res.data.content, 'base64').toString('utf8');
+            } catch (e) {
+              if (e.status === 404) return core.setFailed(`no .github/CODEOWNERS on ${baseRef}: the gate cannot be evaluated`);
+              throw e;
+            }
+            const rules = [];
+            for (const raw of text.split('\n')) {
+              const line = raw.replace(/(^|\s)#.*$/, '').trim();
+              if (!line) continue;
+              const [pattern, ...owners] = line.split(/\s+/);
+              rules.push({ pattern, owners: owners.map(lower), regex: toRegex(pattern) });
+            }
+            // CODEOWNERS semantics: the last matching rule wins; a rule without owners clears ownership.
+            const isGated = (path) => {
+              const rule = [...rules].reverse().find((r) => r.regex.test(path));
+              return Boolean(rule && rule.owners.length);
+            };
+            const listedOwners = new Set(rules.flatMap((r) => r.owners));
+
+            // 2. Gate authorities.
+            const authorities = new Map([[maintainer, 'maintainer']]);
+            const notes = [];
+            if (backupAdmin) {
+              if (!handoffActive) notes.push(`@${backupAdmin} (BACKUP_ADMIN) is not a gate authority while HANDOFF_ACTIVE is not 'true'`);
+              else if (!listedOwners.has(backupAdmin)) notes.push(`@${backupAdmin} (BACKUP_ADMIN) is not listed in .github/CODEOWNERS on ${baseRef}; not a gate authority`);
+              else authorities.set(backupAdmin, 'backup admin, HANDOFF_ACTIVE=true');
+            }
+            const authorityList = [...authorities].map(([l, why]) => `@${l} (${why})`).join(', ');
+
+            // 3. Current PR state and the label handlers (write path, pull_request_target only).
+            const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: number });
+            const labels = new Set(pr.labels.map((l) => l.name));
+            const comment = (body) => github.rest.issues.createComment({ owner, repo, issue_number: number, body });
+            const removeLabel = async (name) => {
+              try { await github.rest.issues.removeLabel({ owner, repo, issue_number: number, name }); }
+              catch (e) { if (e.status !== 404) throw e; }
+              labels.delete(name);
+            };
+            if (canWrite && action === 'synchronize' && labels.has(APPROVED)) {
+              await removeLabel(APPROVED);
+              await comment(`gate approval reset by new commits: \`${APPROVED}\` was removed because ${short(headSha)} was pushed after it was applied (PR-REV-011). A gate authority re-applies it, or approves the new head, after reviewing the change.`);
+            }
+            if (canWrite && action === 'labeled' && eventLabel === APPROVED && !authorities.has(sender)) {
+              await removeLabel(APPROVED);
+              await comment(`\`${APPROVED}\` added by @${sender} was removed: only a gate authority may apply it (PR-REV-012). Gate authorities now: ${authorityList}.`);
+            }
+
+            // 4. Gated files: new and previous names of every changed file.
+            const gated = [];
+            if (pr.changed_files > 3000) {
+              gated.push('(more than 3000 changed files: the API cannot list them all, so the PR counts as gated)');
+            } else {
+              const files = await github.paginate(github.rest.pulls.listFiles, { owner, repo, pull_number: number, per_page: 100 });
+              const paths = new Set();
+              for (const f of files) { paths.add(f.filename); if (f.previous_filename) paths.add(f.previous_filename); }
+              gated.push(...[...paths].filter(isGated).sort());
+            }
+
+            // 5. Reconcile the routing label `gate` from the same files.
+            if (canWrite && gated.length && !labels.has(GATE)) {
+              await github.rest.issues.addLabels({ owner, repo, issue_number: number, labels: [GATE] });
+              if (action === 'unlabeled' && eventLabel === GATE) {
+                await comment(`\`${GATE}\` is applied by automation from the gated paths and was re-applied (PR-PRQ-033). Gated files: ${gated.map((p) => `\`${p}\``).join(', ')}.`);
+              }
+            } else if (canWrite && !gated.length && labels.has(GATE)) {
+              await removeLabel(GATE);
+            }
+
+            const summary = core.summary.addHeading('gate/maintainer', 2)
+              .addRaw(`PR #${number}, head \`${short(headSha)}\`, base \`${baseRef}\`, event \`${event}\`${action ? ` (${action})` : ''}.`, true)
+              .addRaw(`Gate authorities: ${authorityList}.`, true);
+            if (notes.length) summary.addList(notes);
+            if (!gated.length) {
+              core.info('ungated: no changed file matches a CODEOWNERS path');
+              await summary.addRaw('No changed file matches a CODEOWNERS path: no maintainer approval needed.', true).write();
+              return;
+            }
+
+            // 6. Approvals on the current head.
+            const grants = [];
+            const ignored = [];
+            const reviews = await github.paginate(github.rest.pulls.listReviews, { owner, repo, pull_number: number, per_page: 100 });
+            const latest = new Map();
+            for (const r of reviews) {
+              if (!['APPROVED', 'CHANGES_REQUESTED', 'DISMISSED'].includes(r.state)) continue;
+              const login = lower(r.user?.login);
+              const prev = latest.get(login);
+              if (!prev || new Date(r.submitted_at) >= new Date(prev.submitted_at)) latest.set(login, r);
+            }
+            for (const [login, r] of latest) {
+              if (r.state !== 'APPROVED') continue;
+              if (!authorities.has(login)) ignored.push(`review approval by @${login}: not a gate authority`);
+              else if (r.commit_id !== headSha) ignored.push(`review approval by @${login} is for ${short(r.commit_id)}, not the head ${short(headSha)}`);
+              else grants.push(`review approval by @${login} (${authorities.get(login)}) on ${short(headSha)}`);
+            }
+            if (labels.has(APPROVED)) {
+              const events = await github.paginate(github.rest.issues.listEvents, { owner, repo, issue_number: number, per_page: 100 });
+              const last = events.filter((e) => (e.event === 'labeled' || e.event === 'unlabeled') && e.label?.name === APPROVED).pop();
+              const actor = last && last.event === 'labeled' ? lower(last.actor?.login) : '';
+              const who = actor ? `@${actor}` : 'an unknown actor';
+              const { data: head } = await github.rest.git.getCommit({ owner, repo, commit_sha: headSha });
+              const labeledAt = last ? new Date(last.created_at) : null;
+              const headAt = new Date(head.committer.date);
+              if (!actor || !authorities.has(actor)) {
+                ignored.push(`\`${APPROVED}\` label applied by ${who}: not a gate authority`);
+                if (canWrite) {
+                  await removeLabel(APPROVED);
+                  await comment(`\`${APPROVED}\` applied by ${who} was removed: only a gate authority may apply it (PR-REV-012). Gate authorities now: ${authorityList}.`);
+                }
+              } else if (!(labeledAt > headAt)) {
+                ignored.push(`\`${APPROVED}\` label applied by ${who} at ${labeledAt?.toISOString()} predates the head commit ${short(headSha)} (${headAt.toISOString()}): reset on push (PR-REV-011)`);
+                if (canWrite) {
+                  await removeLabel(APPROVED);
+                  await comment(`gate approval reset by new commits: \`${APPROVED}\` (applied by ${who} at ${labeledAt?.toISOString()}) predates the head commit ${short(headSha)} and was removed (PR-REV-011). A gate authority re-applies it, or approves the new head, after reviewing the change.`);
+                }
+              } else {
+                grants.push(`\`${APPROVED}\` label applied by ${who} (${authorities.get(actor)}) at ${labeledAt.toISOString()}, after the head commit`);
+              }
+            }
+
+            summary.addHeading('Gated files', 3).addList(gated.map((p) => `\`${p}\``));
+            if (grants.length) summary.addHeading('Approval', 3).addList(grants);
+            if (ignored.length) summary.addHeading('Ignored', 3).addList(ignored);
+            if (grants.length) {
+              core.info(`gated and approved: ${grants.join('; ')}`);
+              await summary.write();
+              return;
+            }
+            const shown = gated.slice(0, 30).join(', ') + (gated.length > 30 ? ` and ${gated.length - 30} more` : '');
+            const how = `Needs, on head ${short(headSha)}: a review approval from a gate authority, or the \`${APPROVED}\` label applied by one (${authorityList}). The decision is recorded in a PR comment (PR-REV-013).`;
+            await summary.addRaw(how, true).write();
+            core.setFailed(`gated paths touched (${gated.length}): ${shown}. ${how}${ignored.length ? ` Ignored: ${ignored.join('; ')}.` : ''}`);
