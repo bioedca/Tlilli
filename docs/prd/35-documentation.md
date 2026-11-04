@@ -6,7 +6,7 @@ INTERSECT Documentation rules adopted: Diátaxis quadrants are not mixed; the RE
 
 | Item | Decision |
 | --- | --- |
-| Generator | MkDocs + Material for MkDocs; plugins: `search`, `mkdocs-redirects`, `mkdocs-git-revision-date-localized`, `mkdocs-glightbox`, `mike` (versioning, from v1.0); Python deps pinned with hashes in `docs/requirements.txt` |
+| Generator | MkDocs + Material for MkDocs; plugins: `search`, `mkdocs-redirects`, `mkdocs-git-revision-date-localized`, `mkdocs-glightbox`, `mike` (versioning, from v1.0); Python deps pinned with hashes in `docs/requirements.txt`. Material for MkDocs has announced its end of life for 2027-05-05; the stack is kept through 0.x and the successor (Zensical or another MkDocs-compatible generator) is decided with the v1.0 versioning setup (D-063) |
 | Hosting | GitHub Pages from `docs.yml` via `actions/deploy-pages` (OIDC); URL `https://bioedca.github.io/Tlilli/`; `site_url` set from day one; custom domain (candidate `tlilli.dev`; the Student Developer Pack's one-year free domain offers are an option for the first year) added with a `CNAME` once the trademark search clears (D-035) with redirects kept |
 | Versioning | Single `latest` through 0.x. From v1.0: `mike` publishes `1.0`, `1.1`, … with aliases `latest` (newest stable) and `dev` (built from `main` on every merge); a version switcher in the header; old minors kept read-only |
 | API docs | `cargo doc --workspace --no-deps` deployed under `/api/` of the same site; docs.rs builds happen automatically when crates publish |

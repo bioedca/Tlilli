@@ -60,7 +60,7 @@ Everything the project relies on in GitHub, as a checklist that can be audited. 
 | `.github/dependabot.yml` | cargo, npm, github-actions, pip weekly, grouped `patch-minor` and `major`; `open-pull-requests-limit: 5` |
 | `.github/FUNDING.yml` | Sponsors |
 | `.github/workflows/*.yml` | [33](33-ci-cd.md) |
-| `.github/SECURITY.md` → root `SECURITY.md` | disclosure policy |
+| `SECURITY.md` (root only; no `.github/SECURITY.md`, which GitHub would show instead of the full policy) | disclosure policy |
 | `codecov.yml` | flags per crate; patch status 80% for `tlilli-core`, `tlilli-mcp`; project informational; comment layout minimal |
 | `.coderabbit.yaml`, `greptile.json`, `AGENTS.md` | review lanes ([32](32-code-review.md) §2) |
 | `release-plz.toml`, `cliff.toml` | releases ([37](37-releases-and-packaging.md)) |
