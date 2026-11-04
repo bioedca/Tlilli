@@ -14,16 +14,16 @@ The app's own outbound traffic is limited to the allow-listed resolver hosts on 
 
 ## Decision
 
-**Default: no sidecars, no spawned executables.** The Tauri bundle configuration lists no external binaries, the app downloads no executables, and in-process pure-Rust crates are the first and normal choice ([PRD 21 §3](../prd/21-architecture-and-tech-stack.md#3-technology-decisions), D-037). This ADR extends the record beyond the definition in `PR-ARCH-004`: any executable the app launches, bundled or found on PATH, is treated as a sidecar for decision purposes, because launching it either moves data across the machine–network trust boundary ([PRD 22 §1](../prd/22-security-and-threat-model.md#1-assets-and-trust-boundaries)) or executes code the project did not build.
+**Default: no bundled external sidecars.** The rule is the one in `PR-ARCH-004`: external executables bundled with the app are forbidden by default, the Tauri bundle configuration lists no external binaries, the app downloads no executables, and in-process pure-Rust crates are the first and normal choice ([PRD 21 §3](../prd/21-architecture-and-tech-stack.md#3-technology-decisions), D-037). Three things are not sidecars and need no exception: the project's own binaries, `tlilli-mcp` and `tlilli`, which the Tauri shell may spawn for stdio clients because the in-app and standalone servers share one crate ([PRD 21 §1](../prd/21-architecture-and-tech-stack.md#1-system-shape), ADR-0001); opening links in the OS browser through the `opener` plugin, with a confirmation for non-https schemes ([PRD 22 §3](../prd/22-security-and-threat-model.md#3-security-requirements-by-component)); and tools that run only in CI (below). Any other executable the app launches, bundled or found on PATH, is an external sidecar for the purposes of this ADR, because it either moves data across the machine–network trust boundary ([PRD 22 §1](../prd/22-security-and-threat-model.md#1-assets-and-trust-boundaries)) or executes code the project did not build.
 
 **Two classes, two bars.**
 
 | Class | Allowed when | Conditions |
 | --- | --- | --- |
-| Bundled executable | An ADR states why no in-process option exists | Version pinned; binary checksummed in CI; fallback when missing documented; license on the `deny.toml` allow-list (`PR-ARCH-003`); size counted against `NFR-PERF-010` (`PR-ARCH-004`) |
-| User-installed executable | An ADR names the feature and the threat rows it touches | Never bundled or downloaded by the app; detected on PATH only; off by default; started by an explicit author action; lifetime bound to the app's; what it does with the author's data stated on its settings page |
+| Bundled external executable | An ADR states why no in-process option exists | Version pinned; binary checksummed in CI; fallback when missing documented; license on the `deny.toml` allow-list (`PR-ARCH-003`); size counted against `NFR-PERF-010` (`PR-ARCH-004`) |
+| User-installed external executable | An ADR names the feature and the threat rows it touches | Never bundled or downloaded by the app; detected on PATH only; off by default; started by an explicit author action; lifetime bound to the app's; what it does with the author's data stated on its settings page |
 
-Nothing in the first class is approved by this ADR. One item in the second class is.
+Nothing in the first class is approved by this ADR. One item in the second class is: the user-installed tunnel below remains the one approved external exception.
 
 **The tunnel exception (v0.5).** `tlilli-app` may start the user's installed `cloudflared` or `ngrok` as a child process to publish the streamable HTTP transport (ADR-0002), under these conditions, all drawn from `FR-05-050`, `NFR-SEC-006` and T-04:
 
@@ -32,7 +32,7 @@ Nothing in the first class is approved by this ADR. One item in the second class
 3. The tunnel forwards to the HTTP transport bound to `127.0.0.1`; the server never changes its bind address. Every request through the tunnel needs the workspace bearer token, checked by the same constant-time comparison, failed-attempt limit (10 per minute) and `Origin` refusal as local HTTP ([PRD 22 §3](../prd/22-security-and-threat-model.md#3-security-requirements-by-component), `NFR-SEC-001`). A per-token request rate limit applies to tunnelled traffic (T-04); the PRD fixes no number, so the v0.5 PR sets one, tests it and states it on the connector page.
 4. The public URL, connection status, a request log and a Stop button are visible while the tunnel runs; the child process is terminated when the author stops it and when the app quits, including abnormal exits. The e2e suite verifies this with a local HTTPS stand-in (`FR-05-050` verification), and the manual G5 step verifies it with ChatGPT.
 5. The connector page states the ChatGPT plan matrix and labels the connector read-mostly where write-capable connectors are not available (`FR-05-052`, D-038).
-6. The tunnel binary's own connection to its provider is the provider's traffic, not the app's: it is outside the `NFR-SEC-004` allow-list and the recording-proxy test, and the connector page says so. Threat row T-04 is re-reviewed at G5 (`PR-SEC-005`).
+6. `NFR-SEC-004`'s allow-list and the recording-proxy test cover the application's own HTTP client, and both keep holding while the tunnel runs: the app itself opens no connection to the tunnel provider. The tunnel binary's connection to its provider is that process's traffic, started by the author's action, disclosed in the Agents panel while the tunnel runs, and recorded as decision D-065 (pull request 52). The v0.5 verification runs the recording-proxy test with the tunnel off and, with it on, asserts that the app's own requests still reach only allow-listed hosts and that the only other connecting process is the tunnel binary. Threat row T-04 is re-reviewed at G5 (`PR-SEC-005`).
 
 **Future sidecars.** Each needs its own ADR under the bars above, opened as a `gate`-labelled issue. Tools that run only in CI (LibreOffice headless for the docx repair check, a TeX container for `latexmk`; [PRD 34 §3](../prd/34-testing.md#3-what-to-test-by-component), [PRD 33 §1](../prd/33-ci-cd.md#1-workflow-inventory)) are not sidecars: the app never launches them.
 
@@ -40,7 +40,7 @@ Nothing in the first class is approved by this ADR. One item in the second class
 
 ### Positive
 
-- One unsigned binary stays one artifact: checksums and attestations cover everything users run (D-026, `NFR-SEC-007`).
+- The project's own binaries are the only executables shipped: checksums and attestations cover everything users run (D-026, `NFR-SEC-007`).
 - Installer size and reproducibility are protected (`NFR-PERF-010`, D-037), and there is no third-party binary provenance to track.
 - ChatGPT users reach their own machine without Tlilli hosting anything (non-goal "not a cloud service", `INV-08`).
 
@@ -67,6 +67,6 @@ Nothing in the first class is approved by this ADR. One item in the second class
 ## References
 
 - Concept document: "What it is not", "Architecture", "Skill pack and agent integration" (ChatGPT row and caveats).
-- PRD: [21](../prd/21-architecture-and-tech-stack.md) §3, §5 (`PR-ARCH-002..004`), §6; [22](../prd/22-security-and-threat-model.md) §1–§3; [14](../prd/14-fr-v0.5-beyond-the-article.md) §14.6; [20](../prd/20-non-functional-requirements.md) NFR-SEC, `NFR-PERF-010`; [40](../prd/40-roadmap-and-gates.md) §1 (v0.5 deliverable "tunnel ADR exception"), G5 step 5.
+- PRD: [21](../prd/21-architecture-and-tech-stack.md) §1, §3, §5 (`PR-ARCH-002..004`), §6; [22](../prd/22-security-and-threat-model.md) §1–§3; [14](../prd/14-fr-v0.5-beyond-the-article.md) §14.6; [20](../prd/20-non-functional-requirements.md) NFR-SEC, `NFR-PERF-010`; [40](../prd/40-roadmap-and-gates.md) §1 (v0.5 deliverable "tunnel ADR exception"), G5 step 5.
 - Requirements: `INV-08`; `FR-03-062`, `FR-05-041`, `FR-05-050..052`; `NFR-SEC-001`, `NFR-SEC-004`, `NFR-SEC-006`, `NFR-SEC-007`; `NFR-PERF-010`; `NFR-PRIV-001`; `PR-ARCH-002`, `PR-ARCH-003`, `PR-ARCH-004`; `PR-SEC-005`.
-- Decisions, risks, threats: D-026, D-037, D-038; R-08, R-16; T-03, T-04, T-12, T-14; ADR-0002, ADR-0004, ADR-0007 (reserved).
+- Decisions, risks, threats: D-026, D-037, D-038, D-065 (pull request 52); R-08, R-16; T-03, T-04, T-12, T-14; ADR-0001, ADR-0002, ADR-0004, ADR-0007 (reserved).
