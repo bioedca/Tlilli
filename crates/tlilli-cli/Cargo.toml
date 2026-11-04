@@ -1,0 +1,18 @@
+[package]
+name = "tlilli-cli"
+description = "The tlilli command: export, import, skills install, mcp proxy, doctor and schema generators"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "tlilli"
+path = "src/main.rs"
+
+[dependencies]
+clap.workspace = true
+
+[lints]
+workspace = true

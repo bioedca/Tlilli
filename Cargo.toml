@@ -1,7 +1,7 @@
 # Tlilli Cargo workspace. Layout, technology and dependency policy: docs/prd/21-architecture-and-tech-stack.md.
 [workspace]
 resolver = "2"
-members = ["crates/tlilli-core", "crates/tlilli-mcp"]
+members = ["crates/tlilli-core", "crates/tlilli-mcp", "crates/tlilli-cli"]
 
 [workspace.package]
 # One version for every crate; release-plz bumps it (docs/prd/37-releases-and-packaging.md).

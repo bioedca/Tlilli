@@ -152,6 +152,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "tlilli-cli"
+version = "0.0.0"
+dependencies = [
+ "clap",
+]
+
+[[package]]
 name = "tlilli-core"
 version = "0.0.0"
 
