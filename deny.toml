@@ -26,6 +26,7 @@ db-path = "$CARGO_HOME/advisory-dbs"
 db-urls = ["https://github.com/rustsec/advisory-db"]
 yanked = "deny"
 unmaintained = "all"
+unsound = "all" # every unsound advisory fails, transitive ones included (cargo-deny >= 0.19)
 ignore = []
 
 # Licenses: allow-list (PR-ARCH-003). A crate under any other license fails until an ADR adds it.
