@@ -3,11 +3,13 @@
 # pull_request_target runs in the base-branch context so the token may write labels on fork PRs; the
 # job never checks out or executes PR code (PR-CI-006): actions/labeler reads the configuration from
 # the base branch through the API and only lists the PR's changed files.
+# Labels are only added here (sync-labels: false, PR-PRQ-030/033). A gate label that no longer matches any gated path
+# is removed by gate.yml, which recomputes the gated paths from the diff on every push (PR-REV-010, bootstrap task 19).
 name: labeler
 
 on:
   pull_request_target: # zizmor: ignore[dangerous-triggers] no checkout, no PR code is run
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review, edited] # edited: a retargeted PR (new base) changes its file set
 
 permissions: read-all
 
