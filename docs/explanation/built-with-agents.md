@@ -10,7 +10,7 @@ The project's own development runs on a similar split. AI coding agents write mo
 
 ## Who proposes
 
-Two agent families author pull requests: Claude Code and Codex, each in local and cloud sessions (D-002). The PRD binds their work exactly as it binds a person's. [`AGENTS.md`](https://github.com/bioedca/Tlilli/blob/main/AGENTS.md) and `CLAUDE.md` restate the rules where agents read them, and the repository enforces most of them ([30 Git workflow](../prd/30-git-workflow.md) §4). An agent works on one issue, on one branch named after its platform (`claude/<slug>` or `codex/<slug>`), and opens a Draft pull request early (`PR-GIT-003`, `PR-GIT-051`).
+Two agent families author pull requests: Claude Code and Codex, each in local and cloud sessions (D-002). The PRD binds their work exactly as it binds a person's. [`AGENTS.md`](https://github.com/bioedca/Tlilli/blob/main/AGENTS.md) and `CLAUDE.md` restate the rules where agents read them, and the repository is set up to enforce most of them ([30 Git workflow](../prd/30-git-workflow.md) §4), fully once the `main` ruleset exists (bootstrap task 27). An agent works on one issue, on one branch named after its platform (`claude/<slug>` or `codex/<slug>`), and opens a Draft pull request early (`PR-GIT-003`, `PR-GIT-051`).
 
 Three AI reviewers then propose changes to the pull request, each in its own lane ([32 Code review](../prd/32-code-review.md) §1–2):
 
