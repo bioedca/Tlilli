@@ -16,7 +16,7 @@ What an agent session cannot read, and therefore records as Maintainer: Actions 
 | Two-factor authentication | Enabled | Maintainer, 2026-11-04 |
 | Account successor | Designated in Settings → Account → Successor settings | **Not yet designated** (2026-11-04): no GitHub account the maintainer trusts with this yet. Revisit before v1.0; Gate G6 requires GOVERNANCE to name a successor and a backup admin |
 | Backup admin | Admin collaborator before v1.0 ([PRD 38 §8](../prd/38-maintenance-and-support.md#8-continuity-bus-factor)) | Later (before v1.0); the same person can be the successor |
-| GitHub Pro (Student Developer Pack) | Active; re-verification date recorded here | Maintainer: active. **Re-verification date: to record** |
+| GitHub Pro (Student Developer Pack) | Active; re-verification date recorded here | Maintainer, 2026-11-04: active with about two years remaining (re-verification around 2028-11; the exact date is shown on education.github.com/pack). Review at the yearly maintenance pass |
 | Sponsors profile | Personal Sponsors profile; `FUNDING.yml` points to it | Request submitted 2026-11-04, awaiting GitHub approval; `FUNDING.yml` (bootstrap task 10) points at `github.com/sponsors/bioedca` and goes live when the profile does |
 
 ## 2. Repository settings (`bioedca/Tlilli`)
@@ -67,15 +67,15 @@ Target column: [PRD 39 §2](../prd/39-github-configuration.md#2-repository-setti
 
 ## 5. Secrets and tokens inventory
 
-All tokens are issued by the maintainer's account and rotated yearly ([PRD 38 §9](../prd/38-maintenance-and-support.md#9-maintenance-cadence-after-v10)). Values are never recorded here; names, scopes and expiry dates are. **Expiry dates: to record** for every token created on 2026-11-04 (one year from creation unless chosen otherwise).
+All tokens are issued by the maintainer's account and rotated yearly ([PRD 38 §9](../prd/38-maintenance-and-support.md#9-maintenance-cadence-after-v10)). Values are never recorded here; names, scopes and expiry dates are. The three tokens created on 2026-11-04 expire on **2027-11-03**; the rotation task is due in the last week of October 2027, together with the key restore drill (issue #5).
 
 | Secret | Environment | Kind and scope | Created | Expires | State |
 | --- | --- | --- | --- | --- | --- |
 | `TAURI_SIGNING_PRIVATE_KEY` | `release` | Updater minisign private key (contents of the key file), key ID `B83A0AA7DD3EDF35` | 2026-11-04 | n/a (custody per `PR-REL-034`) | Maintainer: stored |
 | `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | `release` | Passphrase of the key above | 2026-11-04 | n/a | Maintainer: stored |
-| `RELEASE_PLZ_TOKEN` | `automation` | Fine-grained PAT `tlilli-release-plz`: repository `bioedca/Tlilli`; Contents read/write, Pull requests read/write | 2026-11-04 | to record | Maintainer: stored |
-| `PROJECT_TOKEN` | `automation` | Fine-grained PAT `tlilli-project`: repository `bioedca/Tlilli`; Issues read, Pull requests read; account permission Projects read/write | 2026-11-04 | to record | Maintainer: stored |
-| `HOMEBREW_TAP_TOKEN` | `release` | Fine-grained PAT `tlilli-homebrew-tap`: repository `bioedca/homebrew-tlilli`; Contents read/write, Pull requests read/write | 2026-11-04 | to record | Maintainer: stored |
+| `RELEASE_PLZ_TOKEN` | `automation` | Fine-grained PAT `tlilli-release-plz`: repository `bioedca/Tlilli`; Contents read/write, Pull requests read/write | 2026-11-04 | 2027-11-03 | Maintainer: stored |
+| `PROJECT_TOKEN` | `automation` | Fine-grained PAT `tlilli-project`: repository `bioedca/Tlilli`; Issues read, Pull requests read; account permission Projects read/write | 2026-11-04 | 2027-11-03 | Maintainer: stored |
+| `HOMEBREW_TAP_TOKEN` | `release` | Fine-grained PAT `tlilli-homebrew-tap`: repository `bioedca/homebrew-tlilli`; Contents read/write, Pull requests read/write | 2026-11-04 | 2027-11-03 | Maintainer: stored |
 | `WINGET_TOKEN` | `release` | **Classic** PAT `tlilli-winget`, scope `public_repo` only (D-061) | — | — | Later (task 26, after forking `microsoft/winget-pkgs`) |
 | crates.io | n/a | Trusted publishing (OIDC) per crate for `release-plz.yml`, environment `automation`; first publish of each crate is manual with a short-lived crates.io API token named `tlilli-<crate>-first-publish` (scopes `publish-new` + `publish-update`, 7-day expiry, revoked after use) | — | — | Later (v0.1 for `tlilli-core`; v0.2 for `tlilli-mcp`, `tlilli-cli`) |
 | Codecov | n/a | No token: `codecov/codecov-action` with `use_oidc: true` and `id-token: write` (D-061) | — | — | Later (task 20) |
@@ -132,11 +132,12 @@ None exist (observed 2026-11-04). The `main` and `tags v*` rulesets are created 
 
 ## 11. Name clearance (D-035, R-07)
 
-Trademark searches (USPTO, EUIPO, TMview, WIPO Global Brand Database; classes 9 and 42) run by the maintainer on 2026-11-04 per the runbook. **Verdict and evidence: to record** in the bootstrap task 8 issue and as the closure of D-035 in the decision log. Package names observed free on 2026-11-04: `tlilli`, `tlilli-core`, `tlilli-mcp`, `tlilli-cli` on crates.io; `tlilli` on npm and PyPI.
+Not yet run. The maintainer scoped the trademark searches (USPTO, EUIPO, TMview, WIPO Global Brand Database; classes 9 and 42) as later agent work before `v0.1.0`, per D-035; issue #16 tracks it in milestone `v0.1 Black ink`. The verdict and screenshots are recorded there and as the closure of D-035 in the decision log. Package names observed free on 2026-11-04: `tlilli`, `tlilli-core`, `tlilli-mcp`, `tlilli-cli` on crates.io; `tlilli` on npm and PyPI.
 
 ## 12. Change log
 
 | Date | Change | By |
 | --- | --- | --- |
 | 2026-11-04 | Page created from the bootstrap walkthrough; updater key generated and public key recorded; successor recorded as not yet designated; Sponsors request submitted; milestones 1–8 created; restore-drill issue #5 opened; DCO app observed installed; SHA-pinning setting enabled and `ci.yml` pinned (pull request 7); CodeRabbit plan recorded as Team | maintainer and agent |
-| 2026-11-04 | Full refresh after runbook sessions A–F: observed states re-read through the API; maintainer-reported states for environments, tokens, Actions permissions, apps, Project and companion repositories; full label scheme created; remaining items: merge methods and branch-update suggestion (two clicks), Pro re-verification date, token expiry dates, Project URL, trademark verdict | maintainer and agent |
+| 2026-11-04 | Full refresh after runbook sessions A–F: observed states re-read through the API; maintainer-reported states for environments, tokens, Actions permissions, apps, Project and companion repositories; full label scheme created; remaining items: merge methods and branch-update suggestion (two clicks), Project URL | maintainer and agent |
+| 2026-11-04 | Pro horizon (about two years), token expiry 2027-11-03 and the deferral of the trademark search to an agent task before v0.1.0 recorded from the maintainer's notes | maintainer and agent |
