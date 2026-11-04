@@ -1,0 +1,120 @@
+---
+# Bug report. Fields and labels: docs/prd/36-issues-labels-and-projects.md §1.
+name: Bug report
+description: >-
+  A crash, a wrong result, or an agent that did something it must not.
+  One problem per issue.
+title: "[bug]: "
+labels:
+  - type/bug
+  - status/triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        One problem per issue; bundles are split at triage. A good report
+        has a specific title, numbered steps, expected versus actual
+        behaviour, and the environment.
+
+        Security issues never go through this form. Use private
+        vulnerability reporting instead:
+        <https://github.com/bioedca/Tlilli/security/advisories/new>
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: A short description of the problem, in your own words.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Numbered, from a fresh start, so that someone else can
+        follow them.
+      placeholder: |
+        1. Open the manuscript ...
+        2. Ask the agent to ...
+        3. Accept the second alternative ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: What happened instead, including any error message.
+    validations:
+      required: true
+  - type: dropdown
+    id: version
+    attributes:
+      label: Tlilli version
+      description: Shown in Help › About.
+      # Releases are appended to this list by post-release.yml on each
+      # `release: published` event; "main build" stays the last option.
+      options:
+        - main build
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS and version
+      placeholder: "macOS 15.1 · Windows 11 24H2 · Ubuntu 24.04"
+    validations:
+      required: true
+  - type: dropdown
+    id: agent
+    attributes:
+      label: Agent and client
+      description: The agent that was driving Tlilli when it happened, if any.
+      options:
+        - No agent (editor only)
+        - Claude Code
+        - Codex
+        - ChatGPT (connector)
+        - Other (name it in the version field)
+  - type: input
+    id: agent-version
+    attributes:
+      label: Agent and client version
+      placeholder: "Claude Code 2.1.3 · claude-opus-4-1"
+  - type: input
+    id: manuscript-size
+    attributes:
+      label: Manuscript size
+      description: Words and number of sources, roughly.
+      placeholder: "about 6,000 words, 45 sources"
+  - type: checkboxes
+    id: diagnostics
+    attributes:
+      label: Diagnostics bundle
+      description: >-
+        Settings › Copy diagnostics produces a redacted bundle (versions, OS,
+        log tail, schema version, run summaries). Redaction removes manuscript
+        text, source full text and paths under your home directory, and the
+        bundle is shown before it is copied. Read it once more before you
+        attach it.
+      options:
+        - label: I attached the diagnostics bundle to this issue.
+  - type: input
+    id: requirements
+    attributes:
+      label: Requirement IDs
+      description: If you know them, from docs/prd (FR-, NFR-, PR-).
+      placeholder: "FR-02-031, NFR-PERF-005"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs excerpt
+      description: >-
+        The relevant lines from the log tail or from a crash report
+        (`crashes/<timestamp>.txt`). Logs never carry manuscript text at
+        `info`, but check before pasting.
+      render: shell
