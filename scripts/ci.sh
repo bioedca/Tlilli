@@ -1,0 +1,181 @@
+#!/bin/bash
+# Run the CI jobs locally with the commands CI runs (PR-CI-010, PR-TST-018, PRD 33 §2).
+#   scripts/ci.sh <job>...   run the named jobs in the order given; `all` runs every job in CI order
+#   scripts/ci.sh --help     list the jobs and their commands
+# The first failing command stops the run, and the script exits with that command's status.
+# The commands are today's: the `rust` and `ui` jobs of .github/workflows/ci.yml, the build of
+# docs.yml, and `reuse lint` from docs/dev/licensing.md. The ci.yml rewrite (bootstrap task 20)
+# fills in the pending jobs and moves reuse into `all` once CI runs it. No toolchain is
+# installed: rustup, pnpm, Node 22 and python3 must be on PATH, as in the cloud sandbox and the
+# devcontainer.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+# Installed into .cache/ on first use; task 20 installs the same release in CI.
+REUSE_VERSION=6.3.0
+
+# Both lists follow the PRD 33 §2 table. A job moves from PENDING to JOBS when its commands exist.
+# EXTRA jobs run only when named: they are not in CI yet (reuse has no row in the table).
+JOBS="rust-lint rust-test ui docs-build"
+EXTRA="reuse"
+PENDING="commits size/limit docs/contract-sync protocol-ref/drift workflows/zizmor tauri/linux e2e/smoke"
+
+usage() {
+  cat <<'EOF'
+Usage: scripts/ci.sh <job>... | all | --help
+
+Jobs, in CI order (docs/prd/33-ci-cd.md §2):
+  rust-lint           cargo fmt --all --check; cargo clippy --workspace --all-targets -- -D warnings
+  rust-test           cargo test --workspace
+  ui                  pnpm -C ui install --frozen-lockfile; pnpm -C ui lint, typecheck, test, build
+  docs-build          scripts/docs.sh (mkdocs build --strict); cargo doc --workspace --no-deps
+  rust                alias: rust-lint, then rust-test (the `rust` job of today's ci.yml)
+  all                 alias: every job above, in that order
+
+Runs only when named, until CI runs it (bootstrap task 20):
+  reuse               reuse lint (docs/dev/licensing.md)
+
+Pending until bootstrap task 20 (`all` skips them; naming one exits with status 2):
+  commits             commitlint on the commits and the PR title, commit count, branch name
+  size/limit          hand-written changed lines and file-size caps
+  docs/contract-sync  a change to a contract path also changes docs/
+  protocol-ref/drift  regenerate docs/reference/mcp/ and the schemas, then git diff --exit-code
+  workflows/zizmor    zizmor and actionlint on .github/workflows
+  tauri/linux         pnpm -C ui tauri build --no-bundle (needs src-tauri/, task 14)
+  e2e/smoke           xvfb-run -a pnpm -C ui test:e2e:desktop (needs src-tauri/, task 14)
+
+Not mirrored: the build/* matrix (run on Ready) and codecov/patch/* (the Codecov service).
+A Rust or UI job is skipped when Cargo.toml or ui/package.json is missing, as in ci.yml.
+EOF
+}
+
+job=""
+status=""
+summary=""
+
+# Print a command, run it, and stop the whole run with its status if it fails.
+run() {
+  printf '\n==> %s\n' "$*"
+  "$@" || fail "$?" "$*"
+}
+
+fail() {
+  printf '\nci.sh: job %s failed (exit %s): %s\n' "$job" "$1" "$2" >&2
+  exit "$1"
+}
+
+need() {
+  command -v "$1" >/dev/null 2>&1 || {
+    printf 'ci.sh: job %s needs %s on PATH (%s)\n' "$job" "$1" "$2" >&2
+    exit 1
+  }
+}
+
+skip() {
+  printf 'ci.sh: no %s, so %s is skipped (as by the detect job of ci.yml)\n' "$1" "$job"
+  status=skipped
+}
+
+job_rust_lint() {
+  [ -f Cargo.toml ] || { skip Cargo.toml; return 0; }
+  need cargo "rustup; rust-toolchain.toml picks the channel"
+  run cargo fmt --all --check
+  run cargo clippy --workspace --all-targets -- -D warnings
+}
+
+job_rust_test() {
+  [ -f Cargo.toml ] || { skip Cargo.toml; return 0; }
+  need cargo "rustup; rust-toolchain.toml picks the channel"
+  run cargo test --workspace
+}
+
+job_ui() {
+  [ -f ui/package.json ] || { skip ui/package.json; return 0; }
+  need pnpm "the version in the packageManager field of ui/package.json"
+  run pnpm -C ui install --frozen-lockfile
+  run pnpm -C ui lint
+  run pnpm -C ui typecheck
+  run pnpm -C ui test
+  run pnpm -C ui build
+}
+
+# docs.yml: the strict MkDocs build, then rustdoc once the workspace exists.
+job_docs_build() {
+  need python3 "3.13, the version docs/requirements.txt was compiled with"
+  run scripts/docs.sh
+  if [ -f Cargo.toml ]; then
+    need cargo "rustup; rust-toolchain.toml picks the channel"
+    run cargo doc --workspace --no-deps
+  fi
+}
+
+job_reuse() {
+  need python3 "for the reuse virtual environment"
+  local venv=".cache/venv-reuse-$REUSE_VERSION"
+  if [ ! -x "$venv/bin/reuse" ]; then
+    rm -rf "$venv"
+    run python3 -m venv "$venv"
+    run "$venv/bin/pip" install --quiet "reuse==$REUSE_VERSION"
+  fi
+  run "$venv/bin/reuse" lint
+}
+
+run_job() {
+  job=$1
+  status=passed
+  local start=$SECONDS
+  printf '\n=== %s\n' "$job"
+  case $job in
+    rust-lint) job_rust_lint ;;
+    rust-test) job_rust_test ;;
+    ui) job_ui ;;
+    docs-build) job_docs_build ;;
+    reuse) job_reuse ;;
+    *) fail 2 "no such job" ;;
+  esac
+  printf '=== %s %s in %ss\n' "$job" "$status" "$((SECONDS - start))"
+  summary="$summary $job:$status"
+}
+
+if [ "$#" -eq 0 ]; then
+  usage >&2
+  exit 2
+fi
+
+# Expand the aliases and check every name before running anything.
+selected=""
+for arg in "$@"; do
+  case $arg in
+    -h | --help | help)
+      usage
+      exit 0
+      ;;
+    all) selected="$selected $JOBS" ;;
+    rust) selected="$selected rust-lint rust-test" ;;
+    *)
+      # The JOBS names stand before the bar, the PENDING names after it.
+      case " $JOBS $EXTRA | $PENDING " in
+        *" $arg "*"|"*) selected="$selected $arg" ;;
+        *"|"*" $arg "*)
+          printf 'ci.sh: job %s has no commands yet; it arrives with bootstrap task 20\n' "$arg" >&2
+          exit 2
+          ;;
+        *)
+          printf 'ci.sh: unknown job %s (scripts/ci.sh --help lists the jobs)\n' "$arg" >&2
+          exit 2
+          ;;
+      esac
+      ;;
+  esac
+done
+
+for name in $selected; do
+  run_job "$name"
+done
+
+printf '\nci.sh: done:%s\n' "$summary"
+case " $* " in
+  *" all "*) printf 'ci.sh: not run: %s (only when named), %s (pending)\n' "$EXTRA" "$PENDING" ;;
+  *) ;;
+esac

@@ -8,6 +8,7 @@
 /src-tauri/target
 # Local caches and workspaces
 .cache/
+__pycache__/
 *.tlilli/
 # Never commit these
 .env
