@@ -1,7 +1,7 @@
 # Tlilli Cargo workspace. Layout, technology and dependency policy: docs/prd/21-architecture-and-tech-stack.md.
 [workspace]
 resolver = "2"
-members = ["crates/tlilli-core"]
+members = ["crates/tlilli-core", "crates/tlilli-mcp"]
 
 [workspace.package]
 # One version for every crate; release-plz bumps it (docs/prd/37-releases-and-packaging.md).
@@ -14,6 +14,7 @@ repository = "https://github.com/bioedca/Tlilli"
 rust-version = "1.97"
 
 [workspace.dependencies]
+clap = { version = "4.6.7", features = ["derive"] }
 
 # PR-ARCH-005: no unsafe code. Every crate also carries `#![forbid(unsafe_code)]` so the rule
 # survives being compiled outside this workspace.
