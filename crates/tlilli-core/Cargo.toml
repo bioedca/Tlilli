@@ -1,0 +1,13 @@
+[package]
+name = "tlilli-core"
+description = "Tlilli document model, event log, ledger, style sheet, provenance and export: the only source of truth"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+
+[lints]
+workspace = true
