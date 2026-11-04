@@ -1,0 +1,168 @@
+# Path labeler for pull requests (actions/labeler configuration, v5+ format), applied by
+# .github/workflows/labeler.yml on every push to a PR. Globs are matched against repository-relative
+# paths with `dot: true`, so `.github/**` matches. Labels must exist in .github/labels.yml.
+#
+# - area/*  mirrors the repository layout (docs/prd/36-issues-labels-and-projects.md §2). A PR may
+#           carry several; authors may add `area/*` corrections (PR-PRQ-030).
+# - gate    mirrors the gated paths of docs/prd/32-code-review.md §3, the same list that
+#           .github/CODEOWNERS carries (bootstrap task 19). Only automation applies it (PR-PRQ-032,
+#           PR-REV-014); the gate/maintainer check decides from the files, the label routes the PR
+#           to Greptile and to the maintainer.
+# - review:deep  marks the cross-cutting behaviour docs/prd/32-code-review.md §2 names
+#           (segmentation, export fidelity, UI state model); authors may also add it by hand.
+#
+# `sync-labels: true` in the workflow removes a label listed here when no matching file is left in the
+# PR; labels not listed here (type/*, priority/*, size/*, ...) are never touched.
+
+area/core:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'crates/tlilli-core/**'
+
+area/mcp:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'crates/tlilli-mcp/**'
+
+area/cli:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'crates/tlilli-cli/**'
+
+area/tauri:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src-tauri/**'
+
+area/ui:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'ui/**'
+
+area/skills:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'skills/**'
+
+area/docs:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'docs/**'
+          - 'mkdocs.yml'
+
+area/ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.github/**'
+          - 'scripts/ci.sh'
+          - 'commitlint.config.mjs'
+          - 'lefthook.yml'
+
+area/release:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'release-plz.toml'
+          - 'cliff.toml'
+          - 'CHANGELOG.md'
+          - '.github/workflows/release*.yml'
+          - '.github/workflows/prerelease.yml'
+          - '.github/workflows/post-release.yml'
+
+area/deps:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'Cargo.lock'
+          - 'ui/pnpm-lock.yaml'
+          - 'deny.toml'
+          - '.github/dependabot.yml'
+
+area/fixtures:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'tests/fixtures/**'
+          - 'scripts/gen_fixtures.py'
+
+# Root governance files, agent instructions, reviewer configuration and the GitHub settings record.
+area/repo:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'LICENSE*'
+          - 'NOTICE'
+          - 'README.md'
+          - 'SECURITY.md'
+          - 'SUPPORT.md'
+          - 'GOVERNANCE.md'
+          - 'CITATION.cff'
+          - 'CODE_OF_CONDUCT.md'
+          - 'CONTRIBUTING.md'
+          - 'AGENTS.md'
+          - 'CLAUDE.md'
+          - '.coderabbit.yaml'
+          - 'greptile.json'
+          - 'codecov.yml'
+          - '.gitignore'
+          - '.editorconfig'
+          - '.mcp.json'
+          - '.claude/**'
+          - '.github/CODEOWNERS'
+          - '.github/FUNDING.yml'
+          - '.github/ISSUE_TEMPLATE/**'
+          - '.github/PULL_REQUEST_TEMPLATE.md'
+          - 'docs/dev/github-settings.md'
+
+# Gated paths, copied from docs/prd/32-code-review.md §3 in table order. "Workspace folder layout" is
+# not a path; it is covered by crates/tlilli-core/src/storage/**. `migrations/**` is listed both where
+# tlilli-core keeps its SQL migrations and at the root, as the PRD row reads.
+gate:
+  - changed-files:
+      - any-glob-to-any-file:
+          # The source of truth: ID stability, event semantics and provenance
+          - 'crates/tlilli-core/src/model/**'
+          - 'crates/tlilli-core/src/event/**'
+          - 'crates/tlilli-core/src/segment/**'
+          - 'crates/tlilli-core/src/provenance/**'
+          # Users' data durability and forward compatibility
+          - 'crates/tlilli-core/src/storage/**'
+          - 'crates/tlilli-core/migrations/**'
+          - 'migrations/**'
+          # The only door for agents
+          - 'crates/tlilli-mcp/**'
+          # App permissions and updater configuration
+          - 'src-tauri/tauri.conf.json'
+          - 'src-tauri/capabilities/**'
+          # The behaviour contract agents learn; MIT-licensed public text
+          - 'skills/**'
+          # Supply chain, CI, review and release machinery
+          - '.github/**'
+          - '.coderabbit.yaml'
+          - 'greptile.json'
+          - 'AGENTS.md'
+          - 'CLAUDE.md'
+          - 'deny.toml'
+          - 'release-plz.toml'
+          - 'cliff.toml'
+          - 'codecov.yml'
+          # The project's word to the public
+          - 'LICENSE*'
+          - 'NOTICE'
+          - 'SECURITY.md'
+          - 'GOVERNANCE.md'
+          - 'CITATION.cff'
+          - 'CODE_OF_CONDUCT.md'
+          - 'CONTRIBUTING.md'
+          # Requirements and decisions
+          - 'docs/prd/**'
+          - 'docs/adr/**'
+          - 'docs/gates/**'
+          # Licensing of vendored texts
+          - 'tests/fixtures/LICENSES.md'
+
+# Cross-cutting behaviour (docs/prd/32-code-review.md §2): segmentation, export fidelity and the UI
+# state model (the Zustand store, docs/prd/21-architecture-and-tech-stack.md). Adjust the UI path when
+# the ui/ layout lands.
+review:deep:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'crates/tlilli-core/src/segment/**'
+          - 'crates/tlilli-core/src/export/**'
+          - 'ui/src/store/**'
