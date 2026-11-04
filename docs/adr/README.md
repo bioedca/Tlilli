@@ -16,15 +16,15 @@ MADR, one file per decision at `docs/adr/NNNN-short-title.md` (lower-case, hyphe
 Proposed ──▶ Accepted ──▶ Superseded by ADR-mmmm
 ```
 
-- **Proposed.** The ADR is drafted in a pull request, by an agent or a person ([PRD 21 §6](../prd/21-architecture-and-tech-stack.md#6-architecture-decision-records): "an agent drafts; the maintainer accepts"). `docs/adr/**` is a gated path, so the path labeler applies `gate` and the PR cannot merge without the maintainer's approval (`PR-PRQ-006`, `PR-DOC-017`).
-- **Accepted.** The maintainer's approval and merge of the pull request records acceptance; nothing else does. The merged file still reads `Proposed`; a follow-up editorial commit (`docs(docs): mark ADR-nnnn accepted`, gated like any change under `docs/adr/`) sets `**Status:** Accepted` and the acceptance date. After that the ADR is immutable: typo fixes are the only other edit it receives.
+- **Proposed.** The ADR is drafted in a pull request, by an agent or a person ([PRD 21 §6](../prd/21-architecture-and-tech-stack.md#6-architecture-decision-records): "an agent drafts; the maintainer accepts"). `docs/adr/**` is a gated path ([PRD 32 §3](../prd/32-code-review.md#3-human-review-scoped-gates)), so the PR needs the maintainer's approval to merge (`PR-PRQ-006`, `PR-DOC-017`). The rule is enforced once the path labeler (pull request 44) and the `gate/maintainer` check with `CODEOWNERS` (pull request 54) are on `main`; until then it is kept by hand.
+- **Accepted.** The maintainer's approval and merge of the pull request records acceptance; nothing else does. The merged file still reads `Proposed`; a follow-up editorial commit (`docs(docs): mark ADR-nnnn accepted`, gated like any change under `docs/adr/`) sets `**Status:** Accepted` and the acceptance date. From then on the ADR is immutable ([PRD 21 §6](../prd/21-architecture-and-tech-stack.md#6-architecture-decision-records), `PR-DOC-009`): its text never changes again, the status line changes only for the Superseded step below, and any correction is a new ADR.
 - **Superseded.** A later ADR replaces it. The old file gets `**Status:** Superseded by ADR-mmmm` and no other change; the new ADR names what it supersedes and why.
 
-A draft the maintainer declines is closed with its pull request; nothing is merged and its number becomes free again.
+A draft the maintainer declines is closed with its pull request, and nothing is merged.
 
 ## Numbering
 
-Four digits, sequential, never reused. The next number is the highest in the index plus one. ADR-0007 is reserved for the PDF extraction strategy, which the PRD decides at gate G3 ([PRD 21 §6](../prd/21-architecture-and-tech-stack.md#6-architecture-decision-records), R-16).
+Four digits, sequential. A number that appears in the index or in a merged ADR is never reused; a number held only by a declined, unmerged draft may be reused. The next number is the highest in the index plus one. ADR-0007 is reserved for the PDF extraction strategy, which the PRD decides at gate G3 ([PRD 21 §6](../prd/21-architecture-and-tech-stack.md#6-architecture-decision-records), R-16).
 
 ## Index
 
