@@ -64,7 +64,7 @@ Signed-off-by: bioedca <131809205+bioedca@users.noreply.github.com>
 | `PR-GIT-046` | **Emergency lane.** A P0 fix follows the same path with the `priority/P0` label: the author adds `ci:full` so the matrix runs on the Draft, requests reviews immediately, and the maintainer approves the gate at once. The lane changes urgency, never the checks (INTERSECT: human review is most needed under deadline pressure). |
 | `PR-GIT-047` | Reverting a bad landing is a `revert:` PR through the same lane; `main` is never force-pushed. |
 
-## 4. Agent operating rules for git (PR-GIT-050 … 058)
+## 4. Agent operating rules for git (PR-GIT-050 … 059)
 
 These are restated in `CLAUDE.md` and `AGENTS.md` (kept in step with each other), which point to this file (INTERSECT Collaborative Git: agent configuration files are context, not enforcement; the rules must be written where agents read them and enforced by the repository).
 
@@ -79,7 +79,7 @@ These are restated in `CLAUDE.md` and `AGENTS.md` (kept in step with each other)
 | `PR-GIT-056` | Respect the WIP limit (`PR-GIT-012`); if the limit is reached, leave an Agent-session report issue instead of opening a fourth PR. |
 | `PR-GIT-057` | When a session ends with unfinished work: push, leave the PR as Draft, and file or update an Agent-session report issue naming the branch, what is done, what is blocked, and the next step. |
 | `PR-GIT-058` | Agents do not merge, approve, close others' PRs, delete branches, edit rulesets, or manage secrets. They enable auto-merge on their own PRs when the PR is Ready ([31](31-pull-requests.md)). |
-| `PR-GIT-059` | **No session URLs on GitHub.** The cloud integration appends a footer with a `claude.ai/code/session_…` link to every PR description it creates, and the `attribution` keys in `.claude/settings.json` do not reach that server-side footer. After opening or editing a PR, the agent re-reads the description and removes any line containing a session URL (an edit is not re-appended). Session URLs never appear in commit messages, PR bodies or comments; one found in a comment the agent posted is edited out. Stated in `CLAUDE.md` and `AGENTS.md` (D-059). |
+| `PR-GIT-059` | **No session URLs on GitHub.** The cloud integration appends a footer with a `claude.ai/code/session_…` link to every PR description it creates, and the `attribution` keys in `.claude/settings.json` do not reach that server-side footer. After opening or editing a PR, the agent re-reads the description and removes any line containing a session URL (an edit is not re-appended). Session URLs never appear in commit messages, PR bodies or comments; one found in a comment the agent posted is edited out. Mirrored in `CLAUDE.md` and `AGENTS.md` by pull request #3; until that lands, bootstrap task 11 carries the requirement (D-059). |
 
 ## 5. Local setup for humans
 

@@ -12,7 +12,7 @@ The first issues to open, in dependency order. Each becomes a `type/task` issue 
 | 4 | Create environment `release` with required reviewers (maintainer; backup admin once named); create fine-grained PATs `RELEASE_PLZ_TOKEN`, `PROJECT_TOKEN`; crates.io trusted-publisher entries (after first crate exists) | `area/release`, `gate` | `PR-CI-007`, [39](39-github-configuration.md) §5 | S |
 | 5 | Generate the updater minisign keypair offline; store per `PR-REL-034`; add public key to `tauri.conf.json` (task 14) and private key to `release` | `area/release`, `gate` | `PR-REL-034`, T-09 | XS |
 | 6 | Create the Project "Tlilli roadmap" with fields and views; create milestones `0 Foundation` … `v1.0 Public`, `post-1.0` | `area/repo` | [36](36-issues-labels-and-projects.md) §3–4 | S |
-| 7 | Create the private companion repo `bioedca/tlilli-release-rehearsal` (user-owned) and the `bioedca/homebrew-tlilli` tap repo (empty cask skeleton) | `area/release` | [39](39-github-configuration.md) §6, `PR-REL-021` | XS |
+| 7 | Create the private companion repo `bioedca/tlilli-release-rehearsal` (user-owned) and the `bioedca/homebrew-tlilli` tap repo (empty cask skeleton); grant the backup admin admin access to both once named | `area/release` | [39](39-github-configuration.md) §6, `PR-REL-021` | XS |
 | 8 | Start the trademark search (USPTO, EUIPO, WIPO GBD; classes 9, 42); record result in the decision log before `v0.1.0`; prepare `scripts/rename.sh` | `area/repo`, `gate` | D-035, R-07 | S |
 
 ## B. Legal and project files
@@ -21,7 +21,7 @@ The first issues to open, in dependency order. Each becomes a `type/task` issue 
 | --- | --- | --- | --- | --- |
 | 9 | Replace root `LICENSE` with Apache-2.0; add `skills/LICENSE` (MIT), `NOTICE`, SPDX headers policy and a `reuse`-style check in CI; license roadmap paragraph in README | `area/repo`, `gate` | D-003, `PR-ARCH-003` | S |
 | 10 | Add `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), `SECURITY.md`, `SUPPORT.md`, `GOVERNANCE.md`, `CITATION.cff` (validated), `.github/FUNDING.yml`; README per `PR-DOC-006` | `area/docs`, `gate` | [35](35-documentation.md) §4, `PR-SEC-001` | M |
-| 11 | Rewrite `CLAUDE.md` and add `AGENTS.md`: layout incl. `tlilli-cli`, commands, pointer to CONTRIBUTING and this PRD, agent git rules (`PR-GIT-050..059`, incl. the no-session-URL rule already present in both files), `## Code Review Rules` for Codex; set the agent git identity instructions; keep the two files in step | `area/repo`, `gate` | D-002, D-014, D-055, [30](30-git-workflow.md) §4 | S |
+| 11 | Rewrite `CLAUDE.md` and add `AGENTS.md`: layout incl. `tlilli-cli`, commands, pointer to CONTRIBUTING and this PRD, agent git rules (`PR-GIT-050..059`; the no-session-URL rule is added to both files by pull request #3, so verify it is present and in step), `## Code Review Rules` for Codex; set the agent git identity instructions; keep the two files in step | `area/repo`, `gate` | D-002, D-014, D-055, [30](30-git-workflow.md) §4 | S |
 
 ## C. Workspace skeleton
 
@@ -69,4 +69,4 @@ Run [G0](40-roadmap-and-gates.md#gate-g0-phase-0-foundation): audit checklist pa
 - CODEOWNERS names `@bioedca`; there are no teams.
 - Succession uses GitHub's account-successor setting plus a backup admin on the repository ([38](38-maintenance-and-support.md) §8).
 - Channel identifiers follow the account: `bioedca/homebrew-tlilli`, `io.github.bioedca.Tlilli`, attestations against `bioedca/Tlilli` (D-058).
-- An organization move is reconsidered only when contributions or funding cover an organization plan; if it happens, D-013 is reinstated as a new decision and the merge queue replaces the up-to-date rule.
+- An organization move is reconsidered only when contributions or funding cover an organization plan; if it happens, a new decision records the move with its own timing (D-013's "before v0.1" condition stays superseded) and the merge queue replaces the up-to-date rule.

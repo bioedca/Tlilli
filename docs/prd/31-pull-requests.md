@@ -2,7 +2,7 @@
 
 INTERSECT (Making Good PRs): a good PR makes **one cohesive change**, stays a **reasonable size**, and describes **what, how (including side effects) and why**; GenAI may draft the description but only the author knows the why and must verify it; the human owns the merge decision. This section turns that into rules an agent can follow and CI can check.
 
-## 1. Lifecycle (PR-PRQ-001 … 012)
+## 1. Lifecycle (PR-PRQ-001 … 013)
 
 ```
 branch pushed ──▶ Draft PR ──▶ (Linux lane CI, Codex local rounds done, Codex cloud round, CodeRabbit round)
