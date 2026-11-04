@@ -10,7 +10,7 @@
 
 - `PR-ARCH-002`: a dependency with native code (C or C++ builds, bundled binaries) or more than 200 transitive crates requires an ADR.
 - `PR-ARCH-003`: licenses outside the allow-list in `deny.toml` need an ADR.
-- `PR-CI-012` and `PR-MNT-011`: `cargo deny check` runs on every pull request and nightly, with advisories set to deny; `deny.toml` asks every ignore entry for a reason.
+- `PR-CI-012` and `PR-MNT-011`: `cargo deny check` is to run on every pull request and nightly, with advisories set to deny; `deny.toml` asks every ignore entry for a reason.
 
 Locking Tauri fixes the choice of shell but records neither its size nor its native code. ADR-0002 set the pattern for `rmcp`: the pull request that first adds a dependency reports the crate count and cites an ADR when the count is above 200. Pull request 69 adds Tauri, and this ADR is that record.
 
@@ -51,11 +51,11 @@ The older "gtk-rs GTK3 bindings - no longer maintained" advisories (RUSTSEC-2024
 **Two advisory ignores, each with an exit condition.** `deny.toml` gains two `ignore` entries whose `reason` cites this ADR:
 
 - **RUSTSEC-2024-0370 (`proc-macro-error`, unmaintained).** Tolerable: it is a procedural-macro dependency that runs only at build time on gtk-rs macro input, and "unmaintained" reports no vulnerability. Exit: the Linux stack no longer uses `glib-macros` 0.18, that is, Tauri leaves gtk-rs 0.18.
-- **RUSTSEC-2024-0429 (`glib` 0.18, unsound `VariantStrIter`).** Tolerable: only the iterator implementations of `VariantStrIter` are affected. At `78a8f97`, no crate in the Linux tree other than `glib` references `VariantStrIter` or `Variant::iter_str_array`, the call that produces one (checked against the crate sources). Tlilli code must not call them either. The macOS and Windows builds contain no `glib`. Exit: Tauri's Linux backend moves to `glib` 0.20 or later.
+- **RUSTSEC-2024-0429 (`glib` 0.18, unsound `VariantStrIter`).** Tolerable: only the iterator implementations of `VariantStrIter` are affected. At `c98948d`, no crate in the Linux tree other than `glib` references `VariantStrIter` or `Variant::array_iter_str`, the method that returns one (checked against the sources of all 304 crates). Tlilli code must not call them either. The macOS and Windows builds contain no `glib`. Exit: Tauri's Linux backend moves to `glib` 0.20 or later.
 
 When an exit condition is met, `cargo deny` reports the ignore entry as unused. The pull request that brings the change (a Dependabot update or a Tauri upgrade) removes the entry. This ADR approves no other advisory: any other advisory in the tree still fails the check.
 
-**Enforcement.** The exception and the ignores live in `deny.toml`, a gated path ([PRD 32 §3](../prd/32-code-review.md#3-human-review-scoped-gates)), so changing them needs the maintainer's approval. `cargo deny check` (advisories, licenses, bans, sources) runs on every pull request in the `rust-lint` job that bootstrap task 20 adds (`PR-CI-012`, [PRD 33 §2](../prd/33-ci-cd.md)), and `cargo deny check advisories` runs nightly (`PR-MNT-011`). The graph covers the four release targets with all features, so platform-specific crates are checked as well. Until task 20 lands, authors run the check locally before a pull request.
+**Enforcement.** The exception and the ignores live in `deny.toml`, a gated path ([PRD 32 §3](../prd/32-code-review.md#3-human-review-scoped-gates)), so changing them needs the maintainer's approval. `cargo deny check` (advisories, licenses, bans, sources) runs on every pull request in the `rust-lint` job that bootstrap task 20 adds (`PR-CI-012`, [PRD 33 §2](../prd/33-ci-cd.md)), and `cargo deny check advisories` is to run nightly in `nightly.yml`, which bootstrap task 22 adds (`PR-MNT-011`). The graph covers the four release targets with all features, so platform-specific crates are checked as well. Neither workflow exists yet: until task 20 lands, authors run the check locally before a pull request, and until task 22 lands nothing checks for new advisories between pull requests.
 
 **PRD.** No PRD text changes. The decision uses the ADR route that `PR-ARCH-002` and `PR-ARCH-003` provide, and the reasoned ignore entry that `deny.toml` already documents for `PR-CI-012`. No row is added under "PRD changes pending" in the [index](README.md).
 
@@ -74,7 +74,7 @@ When an exit condition is met, `cargo deny` reports the ignore entry as unused. 
 
 ### Risks
 
-- The gtk-rs 0.18 GTK 3 bindings are frozen, so a new `glib` 0.18 advisory may never get a patched 0.18 release. The nightly advisory run (`PR-MNT-011`) raises it, and the answer is then a decision about the Tauri version, not another silent ignore.
+- The gtk-rs 0.18 GTK 3 bindings are frozen, so a new `glib` 0.18 advisory may never get a patched 0.18 release. Once task 22 lands, the nightly advisory run (`PR-MNT-011`) raises it; before that, the next `cargo deny check` on a pull request does, and the answer is then a decision about the Tauri version, not another silent ignore.
 - A Tauri minor or patch update can add a native-code crate that cargo-deny does not flag. Dependabot pull requests show the `Cargo.lock` diff to the reviewer, and the counts above are the baseline to re-measure against whenever the tree is questioned.
 
 ## Alternatives considered
