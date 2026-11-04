@@ -38,7 +38,7 @@ The first issues to open, in dependency order. Each becomes a `type/task` issue 
 | # | Task | Labels | Refs | Size |
 | --- | --- | --- | --- | --- |
 | 17 | `.github/labels.yml` + `labels-sync.yml`; `.github/labeler.yml` (area, gate, review:deep) + `labeler.yml` workflow; prune default labels | `area/ci`, `gate` | D-040, `PR-REV-014` | S |
-| 18 | Issue forms (nine) + `config.yml`; `PULL_REQUEST_TEMPLATE.md` | `area/ci`, `gate` | D-041, [31](31-pull-requests.md) §3 | M |
+| 18 | Issue forms (ten) + `config.yml`; `PULL_REQUEST_TEMPLATE.md` | `area/ci`, `gate` | D-041, [31](31-pull-requests.md) §3 | M |
 | 19 | `CODEOWNERS` with the gated paths (owners: `@bioedca`, plus the backup admin once named); `gate.yml` implementing `gate/maintainer` (approval or `gate:approved` by the maintainer, or by the backup admin only while the `HANDOFF_ACTIVE` variable is `true`; reset on push; actor check); the backup admin's CODEOWNERS entry lands in this same PR, never before the check | `area/ci`, `gate` | D-022, D-053, `PR-REV-010..015` | M |
 | 20 | `ci.yml` rewrite: Linux lane jobs (`rust-lint`, `rust-test` with llvm-cov, `ui`, `docs-build`, `commits`, `size/limit`, `docs/contract-sync`, `protocol-ref/drift`, `workflows/zizmor`, `tauri/linux`, `e2e/smoke`) and the Draft-gated matrix (`build/*`); `commitlint.config.mjs`; `codecov.yml`; all actions SHA-pinned | `area/ci`, `gate` | [33](33-ci-cd.md) §2, D-050 | L (split: lint/test; ui/docs; commits/size/sync; matrix) |
 | 21 | `codeql.yml`, `scorecard.yml`, `dependabot.yml` (grouped), `dependabot-automerge.yml` | `area/ci`, `gate` | D-051, `PR-MNT-010` | S |
