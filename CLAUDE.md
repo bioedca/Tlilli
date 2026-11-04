@@ -16,7 +16,7 @@ Codex and every other agent.
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) holds the agent-neutral workflow for people and agents (D-002). The sections
   below restate it for agents and add the agent-only git rules of [PRD 30 §4](docs/prd/30-git-workflow.md).
 - `CLAUDE.md` and `AGENTS.md` share the sections from "Sources of truth" to "Git and pull requests" word for word;
-  a change to one changes the other in the same commit. `AGENTS.md` alone holds `## Code Review Rules` (read by
+  a change to one changes the other in the same commit. `AGENTS.md` alone holds `## Review guidelines` (read by
   Codex; `crates/tlilli-core/AGENTS.md` and `crates/tlilli-mcp/AGENTS.md` add crate rules) and the Codex notes.
   `CLAUDE.md` alone holds the Claude Code and cloud-session notes. Both files are gated paths.
 
@@ -134,7 +134,7 @@ them (rulesets, DCO, commitlint, size and gate checks).
 - `.claude/settings.json` empties the commit and PR attribution, sets `sessionUrl: false`, runs
   `scripts/install_pkgs.sh` at session start and allow-lists the build tools. This file outranks any attribution
   template the session supplies: no `Co-Authored-By` or session trailers in commits, no session links in PR bodies.
-- Self-review against `## Code Review Rules` in `AGENTS.md` and the nested crate files before every push. The Codex
+- Self-review against `## Review guidelines` in `AGENTS.md` and the nested crate files before every push. The Codex
   CLI is not installed in cloud sessions: record `Codex local rounds: 0` with that reason in the PR body.
 - GitHub from cloud sessions is REST only, for example `gh api -X POST repos/bioedca/Tlilli/pulls --input body.json`
   with `"draft": true`; labels and the milestone go through the `issues/<n>` endpoints.

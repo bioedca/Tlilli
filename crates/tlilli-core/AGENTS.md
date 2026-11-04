@@ -3,7 +3,7 @@
 Adds to the root [`AGENTS.md`](../../AGENTS.md), which applies here in full. `tlilli-core` is the only source of
 truth ([PRD 21 §4](../../docs/prd/21-architecture-and-tech-stack.md)).
 
-## Code Review Rules
+## Review guidelines
 
 In addition to the root rules and severities:
 
