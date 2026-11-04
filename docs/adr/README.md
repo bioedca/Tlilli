@@ -4,7 +4,7 @@ This folder holds Tlilli's architecture decision records (ADRs): the decisions t
 
 ## When an ADR is required
 
-[PRD 21 §6](../prd/21-architecture-and-tech-stack.md#6-architecture-decision-records) requires an ADR for: a new native or binary dependency (`PR-ARCH-002`); a sidecar (`PR-ARCH-004`); a storage schema change that is not purely additive; a breaking MCP change; a deviation from the PRD; a change to the trust boundary. Anything the PRD marks **locked** changes only through an ADR plus a decision-log entry ([PRD 41 §2](../prd/41-risks-and-decision-log.md#2-decision-log)). An ADR that changes what the PRD says appends its `D-nnn` entry and updates the PRD text in the same pull request ([PRD README](../prd/README.md), "Deviations are decisions").
+[PRD 21 §6](../prd/21-architecture-and-tech-stack.md#6-architecture-decision-records) requires an ADR for: a new native or binary dependency (`PR-ARCH-002`); a sidecar (`PR-ARCH-004`); a storage schema change that is not purely additive; a breaking MCP change; a deviation from the PRD; a change to the trust boundary. Anything the PRD marks **locked** changes only through an ADR plus a decision-log entry ([PRD 41 §2](../prd/41-risks-and-decision-log.md#2-decision-log)). An ADR that changes what the PRD says needs a `D-nnn` entry and matching PRD text. The [PRD README](../prd/README.md) ("Deviations are decisions") says that a deviation "is recorded as a dated entry in the decision log before or with the change, and the PRD text is updated in the same PR": the entry and the PRD text land in one pull request. The change is the ADR's acceptance, not its draft: a Proposed ADR decides nothing yet (Status lifecycle below), so it does not yet deviate from the PRD. A Proposed ADR therefore lists each PRD change it needs, with the issue or pull request that carries it, under [PRD changes pending](#prd-changes-pending). The PRD amendment and its `D-nnn` entry merge before, or in the same pull request as, the commit that marks the ADR Accepted; no ADR is marked Accepted while a change it lists is unmerged.
 
 ## Format
 
@@ -17,7 +17,7 @@ Proposed ──▶ Accepted ──▶ Superseded by ADR-mmmm
 ```
 
 - **Proposed.** The ADR is drafted in a pull request, by an agent or a person ([PRD 21 §6](../prd/21-architecture-and-tech-stack.md#6-architecture-decision-records): "an agent drafts; the maintainer accepts"). `docs/adr/**` is a gated path ([PRD 32 §3](../prd/32-code-review.md#3-human-review-scoped-gates)), so the PR needs the maintainer's approval to merge (`PR-PRQ-006`, `PR-DOC-017`). The rule is enforced once the path labeler (pull request 44) and the `gate/maintainer` check with `CODEOWNERS` (pull request 54) are on `main`; until then it is kept by hand.
-- **Accepted.** The maintainer's approval and merge of the pull request records acceptance; nothing else does. The `Accepted` status is written before the merge: the last commit of the pull request (`docs(docs): mark ADR-nnnn accepted`, made by the maintainer or by the drafting agent at the maintainer's request) sets `**Status:** Accepted` and the acceptance date in the ADR and in the index, and the maintainer approves the head that carries it. No ADR is merged reading `Proposed`. From the merge on, the ADR is immutable ([PRD 21 §6](../prd/21-architecture-and-tech-stack.md#6-architecture-decision-records), `PR-DOC-009`): its text never changes again, the status line changes only for the Superseded step below, and any correction is a new ADR.
+- **Accepted.** The maintainer's approval and merge of the pull request records acceptance; nothing else does. The `Accepted` status is written before the merge: the last commit of the pull request (`docs(docs): mark ADR-nnnn accepted`, made by the maintainer or by the drafting agent at the maintainer's request) sets `**Status:** Accepted` and the acceptance date in the ADR and in the index, and the maintainer approves the head that carries it. That commit is made only when every PRD change the ADR lists under [PRD changes pending](#prd-changes-pending) has merged or is in the same pull request, and it removes the ADR's rows from that table. No ADR is merged reading `Proposed`. From the merge on, the ADR is immutable ([PRD 21 §6](../prd/21-architecture-and-tech-stack.md#6-architecture-decision-records), `PR-DOC-009`): its text never changes again, the status line changes only for the Superseded step below, and any correction is a new ADR.
 - **Superseded.** A later ADR replaces it. The old file gets `**Status:** Superseded by ADR-mmmm` and no other change; the new ADR names what it supersedes and why.
 
 A draft the maintainer declines is closed with its pull request, and nothing is merged.
@@ -25,6 +25,21 @@ A draft the maintainer declines is closed with its pull request, and nothing is 
 ## Numbering
 
 Four digits, sequential. A number that appears in the index or in a merged ADR is never reused; a number held only by a declined, unmerged draft may be reused. The next number is the highest in the index plus one. ADR-0007 is reserved for the PDF extraction strategy, which the PRD decides at gate G3 ([PRD 21 §6](../prd/21-architecture-and-tech-stack.md#6-architecture-decision-records), R-16).
+
+## PRD changes pending
+
+The PRD changes that the Proposed records need, each with the pull request or issue that carries it. A row leaves the table when its change merges, or with the commit that marks the ADR Accepted when the change travels in the ADR's own pull request. The pull request that adds ADR-0001 to ADR-0006 therefore merges after pull request 52 and after the PRD round-3 amendment for issue 55, unless it carries that amendment itself.
+
+| ADR | PRD change | Carried by |
+| --- | --- | --- |
+| ADR-0001 | [PRD 37 §2](../prd/37-releases-and-packaging.md#2-release-flow-stable) sample `release-plz.toml` and [PRD 21 §2](../prd/21-architecture-and-tech-stack.md#2-repository-layout-locked): `tlilli-mcp` and `tlilli-cli` carry `publish = false` until v0.2 (`PR-REL-024`) | issue 55 |
+| ADR-0003 | [PRD 21 §3](../prd/21-architecture-and-tech-stack.md#3-technology-decisions) Citations and LaTeX rows and [PRD 13](../prd/13-fr-v0.4-sweep-and-style.md) `FR-04-041`: BibTeX export through a Tlilli-owned mapping and the `biblatex` crate's writer, not `hayagriva`; a new `D-nnn` entry | issue 55 |
+| ADR-0004, ADR-0006 | [PRD 20](../prd/20-non-functional-requirements.md) `NFR-REL-001`: `synchronous=FULL` for the workspace database (D-066) | pull request 52 |
+| ADR-0004, ADR-0006 | [PRD 10](../prd/10-fr-v0.1-black-ink.md) `FR-01-030`: permanent deletion removes a manuscript's whole chain in one transaction and is recorded in the workspace chain | issue 55 |
+| ADR-0005 | Tunnel provider traffic outside `NFR-SEC-004` (D-065) | pull request 52 |
+| ADR-0005 | [PRD 22](../prd/22-security-and-threat-model.md) tunnel threat (T-04 extended, or a new T-16) and `NFR-SEC-006`: the tunnel program is a trust boundary; its path, SHA-256 and version are confirmed before it runs, and again on any change | issue 55 |
+| ADR-0006 | [PRD 10](../prd/10-fr-v0.1-black-ink.md) `FR-01-012`: a locked span keeps its ID through any author edit confined to it | issue 55 |
+| ADR-0006 | [PRD 21 §3](../prd/21-architecture-and-tech-stack.md#3-technology-decisions) Editor row: "transactions map 1:1 to core events" becomes one commit group of one or more events per transaction (`FR-01-020`) | issue 55 |
 
 ## Index
 
