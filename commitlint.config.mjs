@@ -34,6 +34,18 @@ const scopes = [
 ];
 
 export default {
+  // commitlint splits a scope on `/`, `\\` and `,` before scope-enum runs, so `core/ui` would pass as
+  // two listed scopes. PR-GIT-020 allows exactly one scope from the closed list.
+  plugins: [
+    {
+      rules: {
+        "scope-single": ({ scope }) => [
+          !scope || !/[/\\,]/.test(scope),
+          `use exactly one scope from the closed list, not "${scope}"`,
+        ],
+      },
+    },
+  ],
   // The default parser does not know the `!` breaking-change marker of Conventional Commits 1.0.
   parserPreset: {
     parserOpts: {
@@ -46,6 +58,7 @@ export default {
     "type-case": [2, "always", "lower-case"],
     "type-empty": [2, "never"],
     "scope-enum": [2, "always", scopes],
+    "scope-single": [2, "always"],
     "scope-case": [2, "always", "lower-case"],
     "scope-empty": [2, "never"],
     "subject-empty": [2, "never"],
