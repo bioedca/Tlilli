@@ -1,0 +1,8 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main",
+  "description": "The main window. Only the updater's check, download and install (PR-REL-030); every other permission arrives with the command or plugin that needs it (PRD 22 §3).",
+  "windows": ["main"],
+  "platforms": ["linux", "macOS", "windows"],
+  "permissions": ["updater:default"]
+}
