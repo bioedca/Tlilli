@@ -19,7 +19,7 @@ For contributors and agents who need a Linux environment with a display. The `.d
 ### In a local dev container
 
 1. Clone the repository and open the folder.
-2. In VS Code, run **Dev Containers: Reopen in Container**. With the CLI, run `devcontainer up --workspace-folder .` and then `devcontainer exec --workspace-folder . bash` for a shell inside the container.
+2. In VS Code, run **Dev Containers: Reopen in Container**. With the CLI, run `devcontainer up --workspace-folder .` and then `devcontainer exec --workspace-folder . bash` for a shell inside the container. The CLI has no port forwarding, so the configuration also publishes the noVNC port on the loopback interface of the Docker host (`appPort`); the desktop is then at <http://127.0.0.1:6080> on that machine and nowhere else.
 3. Wait for the post-create step as above.
 
 ## Run the checks
@@ -41,7 +41,7 @@ xvfb-run -a pnpm -C ui test:e2e
 ## See the Tauri window
 
 1. In a terminal inside the container, start the app: `pnpm -C ui tauri dev`. `DISPLAY` is `:1`, so the window opens on the container's desktop, not in the editor.
-2. Open the **Ports** view (in Codespaces the **Ports** tab next to the terminal; in VS Code the command **Ports: Focus on Ports View**).
+2. Open the **Ports** view (in Codespaces the **Ports** tab next to the terminal; in VS Code the command **Ports: Focus on Ports View**). With the CLI there is no Ports view: open <http://127.0.0.1:6080> in a browser on the Docker host and skip the next step.
 3. In the row labelled **noVNC desktop** (port 6080), click the globe icon. A browser tab opens on the noVNC page.
 4. Click **Connect** and enter the password `vscode`.
 5. The desktop appears with the Tauri window. Right-click the desktop background for the window manager's menu.
@@ -72,6 +72,7 @@ command -v xvfb-run                        # /usr/bin/xvfb-run
 | Symptom | What to do |
 | --- | --- |
 | Port 6080 is missing from the **Ports** view | Choose **Forward a Port** in that view and enter `6080`. |
+| With the CLI, <http://127.0.0.1:6080> does not answer | `docker ps` should list `127.0.0.1:6080->6080/tcp` for the container. `appPort` takes effect when the container is created, so run `devcontainer up --workspace-folder . --remove-existing-container` after changing the configuration. |
 | The noVNC page shows **Failed to connect to server** | The desktop starts with the container. Run **Codespaces: Rebuild Container** (or **Dev Containers: Rebuild Container**) and reconnect. |
 | A graphical program reports `cannot open display` | Run `echo "$DISPLAY"`. If it is empty, run `export DISPLAY=:1` in that terminal or open a new terminal. |
 | The first start printed errors from `post-create.sh` | Run `bash .devcontainer/post-create.sh` again in a terminal; the script is idempotent. |
