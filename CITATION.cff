@@ -1,0 +1,29 @@
+# Citation metadata (Citation File Format 1.2.0). `version` and `date-released` are
+# updated by the release PR script, and the Zenodo concept DOI is added with the first
+# archived release (PRD 37 §8). The repository's skill sources under skills/ are MIT.
+cff-version: 1.2.0
+message: "If you use Tlilli in your work, please cite it with this metadata."
+type: software
+title: Tlilli
+abstract: >-
+  A local-first desktop editor for scientific manuscripts that turns any MCP-capable
+  coding agent into a disciplined co-editor. The author writes in black ink; the agent,
+  connected over the Model Context Protocol, may only propose suggestions, comments,
+  verified citations and allow-listed mechanical fixes, and every sentence keeps its
+  provenance.
+authors:
+  - name: bioedca
+    website: https://github.com/bioedca
+version: 0.0.0
+license: Apache-2.0
+repository-code: https://github.com/bioedca/Tlilli
+url: https://bioedca.github.io/Tlilli/
+keywords:
+  - scientific writing
+  - manuscript editor
+  - model context protocol
+  - provenance
+  - citations
+  - local-first
+  - tauri
+  - rust
