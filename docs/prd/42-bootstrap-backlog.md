@@ -61,7 +61,7 @@ The first issues to open, in dependency order. Each becomes a `type/task` issue 
 
 ## F. Phase 0 exit (Gate G0)
 
-Run [G0](40-roadmap-and-gates.md#gate-g0-phase-0-foundation): audit checklist passes; an agent PR on an ungated path merges with zero human clicks; a gated PR is blocked until `gate:approved`; release workflows rehearsed; docs site deployed; all required checks reporting. File the Gate test report; open milestone `v0.1 Black ink` with its epics (one per FR group in [10](10-fr-v0.1-black-ink.md)).
+Run [G0](40-roadmap-and-gates.md#gate-g0-phase-0-foundation): audit checklist passes; an agent PR on an ungated path merges with zero human clicks; a gated PR is blocked until `gate:approved` (without the label, only the admin bypass on a relayed authorization recorded in the PR body merges it, `PR-GIT-058`); release workflows rehearsed; docs site deployed; all required checks reporting. File the Gate test report; open milestone `v0.1 Black ink` with its epics (one per FR group in [10](10-fr-v0.1-black-ink.md)).
 
 ## G. Rules that follow from staying on the personal account (D-057)
 
