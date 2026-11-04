@@ -105,7 +105,7 @@ RWQ13z7dpwo6uBQdPodpTHXEOZvsUigbLQazAdqMlIKpnChWQnpUjQr1
 | OpenAI Codex | Installed; Code review on; **Automatic reviews off** (repository and personal default) | Pending |
 | Greptile | Installed; one Base-tier seat; triggers only labels `gate` and `review:deep`; trigger on updates off; T-Rex when offered | Pending. T-Rex environment: configure once a buildable workspace exists (tasks 12–14); the cloud sandbox cannot reach `api.greptile.com` or `app.greptile.com` under the current network policy |
 | Codecov | App installed; OIDC uploads, no token | Pending |
-| DCO | App installed; status check `DCO` | Pending |
+| DCO | App installed; status check `DCO` | Done (check `DCO` reported success on PR 6, 2026-11-04) |
 | Zenodo | GitHub integration switched on for `bioedca/Tlilli` | Pending |
 | Dependabot | Alerts and security updates on; version updates via `dependabot.yml` (task 21) | Pending |
 
@@ -131,4 +131,4 @@ None exist yet (observed 2026-11-04). The `main` and `tags v*` rulesets are crea
 
 | Date | Change | By |
 | --- | --- | --- |
-| 2026-11-04 | Page created from the bootstrap walkthrough; updater key generated and public key recorded; successor recorded as not yet designated; Sponsors request submitted; milestones 1–8 and four labels created; restore-drill issue #5 opened | maintainer and agent |
+| 2026-11-04 | Page created from the bootstrap walkthrough; updater key generated and public key recorded; successor recorded as not yet designated; Sponsors request submitted; milestones 1–8 and four labels created; restore-drill issue #5 opened; DCO app observed installed | maintainer and agent |
