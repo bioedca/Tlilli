@@ -71,8 +71,14 @@ updates:
     commit-message:
       prefix: chore(deps)
     ignore:
-      # Held at 1.2.2: 1.2.3 depends on the `properdocs` fork (D-063, docs/requirements.in).
+      # Held at 1.2.2: 1.2.3 depends on the `properdocs` fork (D-063, docs/requirements.in). The rule names
+      # the update types so that it holds version updates only: an ignore rule with just a dependency name
+      # also blocks security updates, and those must still come through for review.
       - dependency-name: mkdocs-redirects
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+          - version-update:semver-patch
     groups:
       patch-minor:
         applies-to: version-updates
