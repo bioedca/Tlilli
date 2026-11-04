@@ -62,7 +62,8 @@ and ADRs).
 - Browser end-to-end tests (Playwright, headless, against `vite preview`): `pnpm -C ui test:e2e`; where Playwright
   cannot download a browser, set `TLILLI_PW_CHROMIUM` to a local Chromium.
 - Tauri compile check with no display and no bundling: `pnpm -C ui tauri build --no-bundle` (from task 14). The
-  desktop smoke suite (`tauri-driver`, WebDriver) needs a fake display: run it under `xvfb-run -a`.
+  desktop smoke suite (`tauri-driver`, WebDriver) needs a fake display:
+  `xvfb-run -a pnpm -C ui test:e2e:desktop` (script from task 14).
 - Docs: `scripts/docs.sh` (`mkdocs build --strict`, hash-pinned toolchain), `scripts/docs.sh serve` for a preview,
   `cargo doc --workspace --no-deps` for rustdoc. Licensing: `reuse lint` (`docs/dev/licensing.md`).
 - Git hooks (lefthook): pre-commit runs rustfmt, clippy and Biome on staged files; commit-msg runs commitlint with
@@ -105,12 +106,14 @@ them (rulesets, DCO, commitlint, size and gate checks).
   `commitlint.config.mjs` (`core mcp cli tauri ui skills docs prd ci release deps repo fixtures`); imperative,
   lower-case subject, no trailing period, ≤ 72 characters; the body says what and why and cites requirement IDs
   and issues. Every commit builds on its own; no secrets, credentials or model identifiers in messages. Push review
-  fixes as new commits and squash fix-ups before Ready (`git commit --fixup <sha>`, then
-  `GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash origin/main`); at most 10 commits per PR.
+  fixes as new commits; at most 10 commits per PR. A local session squashes fix-ups before Ready
+  (`git commit --fixup <sha>`, then `GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash origin/main`); a cloud session
+  never rewrites history it has pushed and leaves its fix commits as they are (D-076).
 - **Rebase (`PR-GIT-053`).** Rebase onto `origin/main` before Ready and whenever the PR shows conflicts; never merge
-  `main` into the branch. Resolve conflicts on your own branch only, and never discard others' changes without
-  saying so in the PR.
-- **Push (`PR-GIT-054`).** Never `git push --force`; force-push only your own branch, with `--force-with-lease`.
+  `main` into the branch. From a cloud session that rebase is the maintainer's "Update branch → rebase" (D-076).
+  Resolve conflicts on your own branch only, and never discard others' changes without saying so in the PR.
+- **Push (`PR-GIT-054`).** Never `git push --force`. A local session force-pushes only its own branch, with
+  `--force-with-lease`; a cloud session never force-pushes (D-076).
   Never push to `main`, `release/*`, tags or another agent's branch.
 - **Content (`PR-GIT-055`).** No secrets, `.env` files or keys; no files over 2 MB outside `tests/fixtures/` and
   `docs/assets/`; no `git =` dependencies.
