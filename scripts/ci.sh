@@ -16,8 +16,9 @@ cd "$(dirname "$0")/.."
 REUSE_VERSION=6.3.0
 
 # Both lists follow the PRD 33 §2 table. A job moves from PENDING to JOBS when its commands exist.
-# EXTRA jobs run only when named: they are not in CI yet (reuse has no row in the table).
-JOBS="rust-lint rust-test ui docs-build"
+# scripts (the tests of these dev scripts) has no row there and runs last. EXTRA jobs run only when
+# named: they are not in CI yet (reuse has no row in the table either).
+JOBS="rust-lint rust-test ui docs-build scripts"
 EXTRA="reuse"
 PENDING="commits size/limit docs/contract-sync protocol-ref/drift workflows/zizmor tauri/linux e2e/smoke"
 
@@ -30,6 +31,7 @@ Jobs, in CI order (docs/prd/33-ci-cd.md §2):
   rust-test           cargo test --workspace
   ui                  pnpm -C ui install --frozen-lockfile; pnpm -C ui lint, typecheck, test, build
   docs-build          scripts/docs.sh (mkdocs build --strict); cargo doc --workspace --no-deps
+  scripts             the tests of ci.sh and gen_fixtures.py under scripts/tests (not in ci.yml yet)
   rust                alias: rust-lint, then rust-test (the `rust` job of today's ci.yml)
   all                 alias: every job above, in that order
 
@@ -110,6 +112,13 @@ job_docs_build() {
   fi
 }
 
+# The dev scripts' own tests: bash and python3 only, no network.
+job_scripts() {
+  need python3 "for the gen_fixtures.py tests"
+  run python3 -B -m unittest discover -s scripts/tests -p 'test_*.py'
+  run scripts/tests/test_ci.sh
+}
+
 job_reuse() {
   need python3 "for the reuse virtual environment"
   local venv=".cache/venv-reuse-$REUSE_VERSION"
@@ -131,6 +140,7 @@ run_job() {
     rust-test) job_rust_test ;;
     ui) job_ui ;;
     docs-build) job_docs_build ;;
+    scripts) job_scripts ;;
     reuse) job_reuse ;;
     *) fail 2 "no such job" ;;
   esac
