@@ -112,8 +112,8 @@ them (rulesets, DCO, commitlint, size and gate checks).
 - **Rebase (`PR-GIT-053`, `PR-GIT-054`).** Rebase onto `origin/main` before Ready and whenever the PR shows
   conflicts; never merge `main` into the branch. A cloud session opens a replacement PR instead (D-078): a new branch
   from `origin/main` with the PR's commits cherry-picked in order, `git range-diff` against the reviewed head to show
-  which commits changed (only those repeat the review rounds), the review record carried into the new body, and the
-  old PR closed with a link. The maintainer's "Update branch → rebase" also works.
+  which commits changed (only those repeat the review rounds), the review record and any relayed authorization
+  carried into the new body, and the old PR closed with a link. The maintainer's "Update branch → rebase" also works.
   Resolve conflicts on your own branch only, and never discard others' changes without saying so in the PR.
 - **Push (`PR-GIT-054`).** Never `git push --force`. A local session force-pushes only its own branch, with
   `--force-with-lease`; a cloud session never force-pushes (D-076).

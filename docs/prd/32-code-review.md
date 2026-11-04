@@ -22,7 +22,7 @@
 | 2 | **CodeRabbit** | Author comments `@coderabbitai review` after step 1 is clean **and** the quota ledger allows it | All actionable findings fixed or declined with reason; threads resolved via `@coderabbitai resolve`. A second round only if the first caused code changes (D-019) |
 | 3 | **Greptile deep review** | Automatic on PRs with the `gate` label; on demand with `review:deep` | Findings handled like CodeRabbit's; budget ≈ 15–20 per month (one paid seat, D-021) tracked in the triage ledger. Base tier with T-Rex runtime validation enabled where Greptile supports it |
 | 4 | **Human gate** | PR has `gate` label and is Ready | Maintainer approval (review approval, or `gate:approved` label when the maintainer is the PR author of record) — see §5 — or the maintainer's authorization relayed in the agent session, recorded in the PR body and merged through the ruleset's admin bypass (`PR-GIT-058`, D-078) |
-| 5 | **Merge** | Author enables auto-merge at Ready, or merges a mergeable PR (`PR-PRQ-003`) | The PR lands (rebase) once the branch is up to date with `main` and all required checks pass; an agent merges only with no maintainer decision open, or on the maintainer's authorization (`PR-GIT-058`) |
+| 5 | **Merge** | Author enables auto-merge at Ready, or merges a mergeable PR (`PR-PRQ-003`) | The PR lands (rebase) once the branch is up to date with `main` and all required checks pass; an agent merges only with no maintainer decision open, or on the maintainer's authorization (`PR-GIT-058`). On a relayed authorization every required check except `gate/maintainer` passes, and the ruleset's admin bypass covers that one status (`PR-REV-012`) |
 
 Rules:
 

@@ -32,7 +32,7 @@ Concept rule kept: **a phase ends when its test passes on a real manuscript, not
 
 ### Gate G0 (Phase 0 Foundation)
 1. Account and repository settings per [39](39-github-configuration.md) (2FA, successor, Actions allow-list, rulesets, labels, forms, templates present); the audit checklist passes.
-2. A hello-world workspace (`crates/*` skeletons, `src-tauri`, `ui`) builds; `ci.yml` green with every required check reporting; a Draft PR by an agent (local or cloud session, D-078) goes through Codex → CodeRabbit → Ready → auto-merge or the agent's merge (branch up to date) → `main` with zero human clicks (ungated path), and a second PR touching a gated path is blocked until `gate:approved`.
+2. A hello-world workspace (`crates/*` skeletons, `src-tauri`, `ui`) builds; `ci.yml` green with every required check reporting; a Draft PR by an agent (local or cloud session, D-078) goes through Codex → CodeRabbit → Ready → auto-merge or the agent's merge (branch up to date) → `main` with zero human clicks (ungated path), and a second PR touching a gated path is blocked until `gate:approved` (without the label, only the admin bypass on a relayed authorization recorded in the PR body can merge it, `PR-GIT-058`).
 3. `release.yml` rehearsed in the companion repo with `dry_run=true`; `docs.yml` deploys the skeleton site.
 4. DCO, commitlint, size, docs-sync, zizmor, Scorecard all report.
 
