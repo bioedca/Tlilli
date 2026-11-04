@@ -71,8 +71,9 @@ fn main_capability_grants_only_the_updater() {
     assert_eq!(capability["permissions"], json!(["updater:default"]));
 }
 
-/// PRD 22 §3: a CSP is set, loads nothing remote, allows no wildcard source and no inline or
-/// evaluated code.
+/// PRD 22 §3: a CSP is set and every source it allows is local: no remote host (bare or with a
+/// scheme), no wildcard, and no inline or evaluated code. `data:` is allowed only for images and
+/// the IPC origins only for `connect-src`.
 #[test]
 fn csp_allows_only_local_content() {
     let conf = read_json("tauri.conf.json");
@@ -80,12 +81,17 @@ fn csp_allows_only_local_content() {
         .as_str()
         .expect("app.security.csp is a string");
     assert!(csp.contains("default-src 'self'"), "csp was {csp}");
-    assert!(!csp.contains("'unsafe-"), "csp was {csp}");
-    let remote = csp
-        .split([' ', ';'])
-        .filter(|source| source.starts_with("http") || source.starts_with("ws"))
-        .find(|source| *source != "http://ipc.localhost");
-    assert_eq!(remote, None, "csp was {csp}");
-    let wildcard = csp.split([' ', ';']).find(|source| source.contains('*'));
-    assert_eq!(wildcard, None, "csp was {csp}");
+    for directive in csp.split(';').map(str::trim).filter(|d| !d.is_empty()) {
+        let mut tokens = directive.split_whitespace();
+        let name = tokens.next().unwrap_or_default();
+        for source in tokens {
+            let allowed = match source {
+                "'self'" | "'none'" => true,
+                "data:" => name == "img-src",
+                "ipc:" | "http://ipc.localhost" => name == "connect-src",
+                _ => false,
+            };
+            assert!(allowed, "{name} allows {source}; csp was {csp}");
+        }
+    }
 }
