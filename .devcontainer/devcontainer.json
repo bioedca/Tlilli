@@ -60,6 +60,10 @@
   // in ui/playwright.config.ts) and 5901 (VNC) are only labelled and kept quiet, so a test run
   // does not pop up a notification.
   "forwardPorts": [6080, 5173],
+  // The devcontainer CLI has no port forwarding (that is an editor feature), so the noVNC port is
+  // also published with Docker, bound to the loopback interface only, as the desktop-lite README
+  // advises for CLI users. VS Code uses forwardPorts as well; Codespaces ignores appPort.
+  "appPort": ["127.0.0.1:6080:6080"],
   "portsAttributes": {
     "6080": {
       "label": "noVNC desktop",
