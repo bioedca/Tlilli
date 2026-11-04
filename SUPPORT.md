@@ -6,7 +6,8 @@ Tlilli is pre-alpha (Phase 0): there is no release to install yet, and one maint
 
 | Need | Channel |
 | --- | --- |
-| A question about using Tlilli or connecting an agent | GitHub Discussions, Q&A category, once Discussions open at v0.2; until then an issue labelled `type/question` |
+| A question about using Tlilli or connecting an agent | GitHub Discussions, Q&A category, once Discussions open at v0.2; until then the **Question** form in the [issue chooser](https://github.com/bioedca/Tlilli/issues/new/choose), which labels the issue `type/question` (blank issues are off) |
+| A gap, error or unclear page in the documentation | The **Documentation** form in the issue chooser |
 | A bug | The bug report form under Issues; one problem per issue |
 | A feature, or a change to the agent protocol or a skill | The feature, protocol-change or skill-change form |
 | A security problem | Never an issue: see [SECURITY.md](SECURITY.md) |
