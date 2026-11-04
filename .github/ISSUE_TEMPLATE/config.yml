@@ -1,6 +1,6 @@
 ---
 # Issue chooser configuration: docs/prd/36-issues-labels-and-projects.md §1.
-# Blank issues are off; every issue goes through one of the nine forms.
+# Blank issues are off; every issue goes through one of the ten forms.
 blank_issues_enabled: false
 contact_links:
   - name: Report a security issue

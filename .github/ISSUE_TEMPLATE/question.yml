@@ -1,7 +1,11 @@
-# Question form (PRD 36 §1, D-064): the support route for questions until Discussions open at v0.2
-# (D-042). Blank issues are disabled, so this form is the only way to open a question issue.
+---
+# Question form (PRD 36 §1, D-064): the support route for questions until
+# Discussions open at v0.2 (D-042). Blank issues are disabled, so this form
+# is the only way to open a question issue.
 name: Question
-description: Ask how to do something or whether a behaviour is intended. Bugs and feature requests have their own forms.
+description: >-
+  Ask how to do something or whether a behaviour is intended. Bugs and
+  feature requests have their own forms.
 title: "[question]: "
 labels:
   - type/question
@@ -10,33 +14,39 @@ body:
   - type: markdown
     attributes:
       value: |
-        Questions become a `type/question` issue until Discussions open at v0.2. Do not report
-        security problems here; use private vulnerability reporting (see SECURITY.md).
+        Questions become a `type/question` issue until Discussions open at
+        v0.2. Do not report security problems here; use private
+        vulnerability reporting instead:
+        <https://github.com/bioedca/Tlilli/security/advisories/new>
   - type: textarea
     id: question
     attributes:
       label: Question
-      description: What do you want to know or achieve? One question per issue.
+      description: What do you want to know or achieve? One question per
+        issue.
     validations:
       required: true
   - type: textarea
     id: tried
     attributes:
       label: What you tried or where you looked
-      description: Docs pages, commands, settings or agents you already consulted, and what happened.
+      description: Docs pages, commands, settings or agents you already
+        consulted, and what happened.
     validations:
       required: false
   - type: input
     id: version
     attributes:
       label: Tlilli version
-      description: From About, or "main build". Leave empty if the question is not about a running build.
+      description: From About, or "main build". Leave empty if the question
+        is not about a running build.
     validations:
       required: false
   - type: input
     id: context
     attributes:
       label: Operating system and agent client
-      description: For example "macOS 14, Claude Code 2.x" or "not applicable".
+      description: For example "macOS 14, Claude Code 2.x" or "not
+        applicable".
     validations:
       required: false
