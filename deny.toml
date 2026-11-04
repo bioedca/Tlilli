@@ -27,7 +27,12 @@ db-urls = ["https://github.com/rustsec/advisory-db"]
 yanked = "deny"
 unmaintained = "all"
 unsound = "all" # every unsound advisory fails, transitive ones included (cargo-deny >= 0.19)
-ignore = []
+# Both entries come from the gtk-rs 0.18 (GTK 3) bindings that Tauri 2 uses on Linux. cargo-deny
+# reports an entry as unused once its exit condition in ADR-0008 holds; remove it then.
+ignore = [
+  { id = "RUSTSEC-2024-0370", reason = "proc-macro-error is unmaintained; a build-time proc-macro dependency of glib-macros 0.18 in Tauri 2's Linux stack. Accepted by ADR-0008 until Tauri leaves gtk-rs 0.18." },
+  { id = "RUSTSEC-2024-0429", reason = "glib 0.18 VariantStrIter is unsound; no crate in the tlilli-app tree and no Tlilli code calls it, and only Linux builds contain glib. Accepted by ADR-0008 until Tauri's Linux backend uses glib >= 0.20." },
+]
 
 # Licenses: allow-list (PR-ARCH-003). A crate under any other license fails until an ADR adds it.
 [licenses]
@@ -43,7 +48,11 @@ allow = [
   "CC0-1.0",
 ]
 confidence-threshold = 0.8
-exceptions = []
+# Crate-scoped, so the allow-list above stays the policy: target-lexicon is a build-only
+# dependency of the gtk-rs -sys build scripts in Tauri 2's Linux stack (ADR-0008).
+exceptions = [
+  { crate = "target-lexicon", allow = ["Apache-2.0 WITH LLVM-exception"] },
+]
 # The allow-list is the policy, not a record of the graph: entries no crate uses yet are fine.
 unused-allowed-license = "allow"
 
