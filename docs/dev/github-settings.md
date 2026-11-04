@@ -101,7 +101,7 @@ RWQ13z7dpwo6uBQdPodpTHXEOZvsUigbLQazAdqMlIKpnChWQnpUjQr1
 | Integration | Required configuration | State |
 | --- | --- | --- |
 | Claude (GitHub App) | Installed on `Tlilli`; extend to the companion repositories when agents work there | Done |
-| CodeRabbit | Installed; Open Source plan; automatic reviews disabled by `.coderabbit.yaml` | Done (reviewed PRs 1–3; "Review skipped" on PR 3 after the config landed) |
+| CodeRabbit | Installed; **Team plan** (one seat). The Open Source plan was not available at bootstrap because the repository does not yet meet CodeRabbit's popularity threshold; revisit when stars grow. Automatic reviews disabled by `.coderabbit.yaml`; the request ledger uses the Team plan's published refill rate, not Open Source figures | Done (status comments on PRs 3, 6 and 7 report "Plan: Team" and "Review skipped") |
 | OpenAI Codex | Installed; Code review on; **Automatic reviews off** (repository and personal default) | Pending |
 | Greptile | Installed; one Base-tier seat; triggers only labels `gate` and `review:deep`; trigger on updates off; T-Rex when offered | Pending. T-Rex environment: configure once a buildable workspace exists (tasks 12–14); the cloud sandbox cannot reach `api.greptile.com` or `app.greptile.com` under the current network policy |
 | Codecov | App installed; OIDC uploads, no token | Pending |
@@ -131,4 +131,4 @@ None exist yet (observed 2026-11-04). The `main` and `tags v*` rulesets are crea
 
 | Date | Change | By |
 | --- | --- | --- |
-| 2026-11-04 | Page created from the bootstrap walkthrough; updater key generated and public key recorded; successor recorded as not yet designated; Sponsors request submitted; milestones 1–8 and four labels created; restore-drill issue #5 opened; DCO app observed installed; SHA-pinning setting enabled and `ci.yml` pinned (pull request 7) | maintainer and agent |
+| 2026-11-04 | Page created from the bootstrap walkthrough; updater key generated and public key recorded; successor recorded as not yet designated; Sponsors request submitted; milestones 1–8 and four labels created; restore-drill issue #5 opened; DCO app observed installed; SHA-pinning setting enabled and `ci.yml` pinned (pull request 7); CodeRabbit plan recorded as Team | maintainer and agent |
