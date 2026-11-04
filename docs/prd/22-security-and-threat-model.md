@@ -9,7 +9,7 @@ Method: INTERSECT Threat Assessment ("Who might do what bad thing to whom?"): id
 | Author text and provenance | `workspace.sqlite`, exports | Agents (write), anyone remote |
 | Unpublished results, figures, protocols | `figures/`, `sources/`, manuscript | Anyone remote; AI services the author did not choose |
 | Source PDFs and full text (often licensed) | `sources/` | Redistribution |
-| Workspace MCP token | SQLite `settings`, shown once in UI | Any process other than the author's agent |
+| Workspace MCP token | SQLite `settings`, shown once in UI | Any process other than the author's agent and, in v0.5, the user-installed tunnel program (T-16) |
 | Updater private key (minisign) | Maintainer offline backup + sealed offline copy held by the backup admin once named + GitHub Actions secret | Everyone else |
 | Release pipeline tokens (release-plz, project, tap, winget) | GitHub Actions `release` environment | Workflows outside the environment, forks |
 | Repository history and `main` | GitHub | Unreviewed changes |
