@@ -2,6 +2,9 @@
 [workspace]
 resolver = "2"
 members = ["crates/tlilli-core", "crates/tlilli-mcp", "crates/tlilli-cli"]
+# fuzz/ is its own cargo-fuzz workspace: it links libFuzzer and runs only on nightly, so stable
+# `cargo build --workspace` must not see it (fuzz/README.md).
+exclude = ["fuzz"]
 
 [workspace.package]
 # One version for every crate; release-plz bumps it (docs/prd/37-releases-and-packaging.md).
