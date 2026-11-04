@@ -9,11 +9,12 @@
 #
 # Trust: `pull_request`, not `pull_request_target`. For a Dependabot PR, GitHub gives the token only the
 # scopes declared below and no Actions secrets; no PR code is checked out or run. The job runs only for PRs
-# authored by Dependabot (the PR author, which cannot be spoofed, not the triggering actor), and
-# fetch-metadata fails unless the head commit is Dependabot's own, with a verified signature. The mutation
-# names that head commit (`expectedHeadOid`), so nothing is enabled if another commit landed after the check.
-# Only collaborators with write access can push to Dependabot's branches; such a push fails the check on its
-# `synchronize` run and leaves an auto-merge enabled earlier in place.
+# authored by Dependabot (the PR author, which cannot be spoofed, not the triggering actor) and only while the
+# PR has exactly one commit. fetch-metadata verifies the PR's first commit (Dependabot's author and a
+# verified signature), so with one commit that is the head; the mutation names that head
+# (`expectedHeadOid`), so nothing is enabled if another commit landed after the event. A commit that a
+# collaborator with write access appends makes the count two, and its `synchronize` run enables nothing;
+# an auto-merge enabled earlier stays in place, which such a collaborator could do by hand anyway.
 # The GraphQL mutation is used instead of `gh pr merge --auto`, which merges at once, without waiting for
 # any check, when the PR is already mergeable (for example before the `main` ruleset exists); the mutation
 # fails instead, and the PR waits for triage.
@@ -32,7 +33,10 @@ concurrency:
 jobs:
   enable:
     name: enable auto-merge
-    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'bioedca/Tlilli'
+    if: >-
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.commits == 1 &&
+      github.repository == 'bioedca/Tlilli'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
