@@ -1,0 +1,30 @@
+# Tlilli Cargo workspace. Layout, technology and dependency policy: docs/prd/21-architecture-and-tech-stack.md.
+[workspace]
+resolver = "2"
+members = ["crates/tlilli-core"]
+
+[workspace.package]
+# One version for every crate; release-plz bumps it (docs/prd/37-releases-and-packaging.md).
+version = "0.0.0"
+edition = "2024"
+# Apache-2.0 for crates and app, MIT for skills/ (D-003). The root LICENSE file follows in bootstrap task 9.
+license = "Apache-2.0"
+repository = "https://github.com/bioedca/Tlilli"
+# MSRV = the stable release current at each minor release (D-031, PR-MNT-013); CI tests it.
+rust-version = "1.97"
+
+[workspace.dependencies]
+
+# PR-ARCH-005: no unsafe code. Every crate also carries `#![forbid(unsafe_code)]` so the rule
+# survives being compiled outside this workspace.
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+# PR-ARCH-006: clippy pedantic on every crate under `-D warnings`, with a short allow-list.
+# Each entry says why it is allowed; add to the list only with the same justification.
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+# No `unwrap` outside tests (docs/prd/21 §7). clippy.toml allows it in test code.
+unwrap_used = "deny"
+# The PRD names types after their modules (`event::EventLog`, `model::ModelError`, ...).
+module_name_repetitions = "allow"

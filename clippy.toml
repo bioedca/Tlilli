@@ -1,0 +1,5 @@
+# Clippy configuration for the lints declared in [workspace.lints.clippy] of Cargo.toml.
+# `unwrap_used` is denied in production code (docs/prd/21-architecture-and-tech-stack.md §7);
+# tests may unwrap and expect.
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
