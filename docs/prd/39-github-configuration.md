@@ -12,7 +12,7 @@ Everything the project relies on in GitHub, as a checklist that can be audited. 
 | Teams | None (personal accounts have no teams); CODEOWNERS names `@bioedca` |
 | Actions (per repository) | "Allow select actions and reusable workflows": GitHub-owned, verified creators, plus the allow-list in `PR-CI-019`; default workflow permissions **read**; "Allow GitHub Actions to create and approve pull requests" **off** (release-plz uses its own token) |
 | Fork PR workflows | Require approval for all outside collaborators |
-| Secrets | Repository environment `release` only; no account-level secrets |
+| Secrets | Two repository environments: `release` (signing keys, packaging tokens; required reviewers) and `automation` (`RELEASE_PLZ_TOKEN`, `PROJECT_TOKEN`; no reviewer, `main` only). No repository-level or account-level secrets |
 | Sponsors | Personal Sponsors profile; `FUNDING.yml` points to it |
 | Projects | "Tlilli roadmap" owned by the user account |
 | Discussions | Enabled at v0.2 |
@@ -82,28 +82,28 @@ Everything the project relies on in GitHub, as a checklist that can be audited. 
 | DCO | GitHub App (probot) | statuses | required check `DCO` |
 | Zenodo | webhook | releases read | archives on publish |
 | Dependabot | native | — | grouped weekly |
-| release-plz | Action + token | `RELEASE_PLZ_TOKEN`: fine-grained PAT (or a GitHub App if a second maintainer joins) with contents write, pull requests write, workflows read; expires yearly | needed so tags trigger workflows |
+| release-plz | Action + token | `RELEASE_PLZ_TOKEN`: fine-grained PAT (or a GitHub App if a second maintainer joins) with contents write, pull requests write, workflows read; expires yearly | environment `automation`; needed so tags trigger workflows |
 | crates.io | trusted publishing (OIDC) | per-crate trusted publisher config for the `release-plz.yml` workflow | no long-lived token |
 | GitHub Pages | OIDC | `pages: write`, `id-token: write` | — |
-| Projects | token | `PROJECT_TOKEN`: fine-grained PAT with project write | `project.yml` |
+| Projects | token | `PROJECT_TOKEN`: fine-grained PAT with project write | `project.yml` (environment `automation`) |
 | Homebrew tap | token | `HOMEBREW_TAP_TOKEN`: fine-grained PAT scoped to `bioedca/homebrew-tlilli` contents+PRs | `release` environment |
 | winget | token | `WINGET_TOKEN`: PAT for the fork of `microsoft/winget-pkgs` | `release` environment |
 | Updater | secret | `TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | `release` environment; offline backups |
 
-Environment `release`: required reviewers bioedca and the backup admin once named (any one approves); deployment branches and tags limited to `v*` tags and `main`; secrets listed above; wait timer 0. All PATs are fine-grained, scoped to the minimum repositories, and tracked in `docs/dev/github-settings.md` with expiry dates; a yearly rotation task is scheduled.
+Environment `release`: required reviewers bioedca and the backup admin once named (any one approves); deployment branches and tags limited to `v*` tags and `main`; holds `TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`, `HOMEBREW_TAP_TOKEN`, `WINGET_TOKEN`; wait timer 0. Environment `automation`: no required reviewer; deployment branches limited to `main`; holds `RELEASE_PLZ_TOKEN` and `PROJECT_TOKEN`; declared by the `release-plz.yml`, `prerelease.yml` (tag push) and `project.yml` jobs, which run on `main` or in base-branch context, so a PR workflow can never read them. All PATs are fine-grained, scoped to the minimum repositories, and tracked in `docs/dev/github-settings.md` with expiry dates; a yearly rotation task is scheduled.
 
 ## 6. GitHub Pro perks and platform extras in use (D-044)
 
 | Perk / feature | Use |
 | --- | --- |
 | **Codespaces** (Pro via the Student Developer Pack includes 180 core-hours and 20 GB per month; 120 core-hours and 15 GB if Pro lapses) | `.devcontainer/devcontainer.json`: Ubuntu 24.04 image with Rust, Node 22, pnpm, Tauri Linux prerequisites, `xvfb`, the `desktop-lite` feature (noVNC on a forwarded port) so a Tauri window can be seen in a browser; prebuilds off (cost); used for visual checks the cloud sandbox cannot do and as a second environment for agents |
-| **Private companion repository** `bioedca/tlilli-release-rehearsal` (user-owned so Pro's 3,000 private Actions minutes and private branch protection apply) | Mirror of `.github/workflows/release*.yml`, `post-release.yml`, `release-plz.yml` with dummy secrets; every change to those workflows is rehearsed there with `dry_run=true` before landing (INTERSECT: test publishing first) |
+| **Private companion repository** `bioedca/tlilli-release-rehearsal` (user-owned so Pro's 3,000 private Actions minutes and private branch protection apply; made public with dummy secrets if Pro lapses, see the Student Developer Pack row) | Mirror of `.github/workflows/release*.yml`, `post-release.yml`, `release-plz.yml` with dummy secrets; every change to those workflows is rehearsed there with `dry_run=true` before landing (INTERSECT: test publishing first). Disposable: recreated from `main` on any ownership change ([38](38-maintenance-and-support.md) §8) |
 | **Repository insights** (pulse, contributors, traffic, dependency graph) | Reviewed at monthly metrics; traffic informs docs priorities |
 | **Sponsors** | `FUNDING.yml`; income earmarked first for Apple notarization (USD 99/yr) and then Windows signing if SignPath is not granted |
 | **Private vulnerability reporting + security advisories** | Disclosure channel and CVE issuance |
 | **Artifact attestations** | Free on public repos; used for every release asset |
 | **Rulesets, code owners, auto-merge, environments, Pages, attestations** | Available on personal public repositories on every plan, so none of them depends on Pro. Merge queue is organization-only and is replaced by the up-to-date rule (D-057) |
-| **Student Developer Pack** | Source of the Pro upgrade (time-limited to student status; Pro only enlarges quotas: 3,000 instead of 2,000 private Actions minutes per month for the rehearsal repository and 180 instead of 120 Codespaces core-hours; if it lapses, the rehearsal repository stays within the free minutes or becomes a public repository with dummy secrets); its one-year free domain offers are a candidate for the docs custom domain after D-035; Copilot Pro is included but is not a review lane (D-015) |
+| **Student Developer Pack** | Source of the Pro upgrade (time-limited to student status; Pro only enlarges quotas: 3,000 instead of 2,000 private Actions minutes per month for the rehearsal repository and 180 instead of 120 Codespaces core-hours; if it lapses, the rehearsal repository is made public with dummy secrets, which is mandatory because a private repository on the free plan loses rulesets and branch protection, and public Actions minutes are unlimited); its one-year free domain offers are a candidate for the docs custom domain after D-035; Copilot Pro is included but is not a review lane (D-015) |
 | **GitHub Pages** | Docs site and updater manifests |
 | **Projects v2** | Roadmap board |
 | **Discussions** | Community from v0.2 |

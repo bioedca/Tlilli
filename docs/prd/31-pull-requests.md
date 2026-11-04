@@ -91,7 +91,7 @@ AI assistance: <!-- tools used, e.g. "Claude Code (cloud) wrote the implementati
 | --- | --- |
 | `PR-PRQ-030` | Agents MAY apply freely: `ci:full` (run the matrix on a Draft), `review:deep` (request a Greptile review), `needs-tests` (declares tests are missing with the reason and a follow-up issue; blocks auto-merge until removed by the maintainer or replaced by tests), `stacked`, `area/*` corrections. |
 | `PR-PRQ-031` | Agents MAY apply with a written reason in the PR body: `docs:not-needed` (`Docs not needed because:` line) and `size:override` (`Size override:` line). Both are listed in the weekly audit report and may be reverted by the maintainer. |
-| `PR-PRQ-032` | Only automation applies `gate` (from CODEOWNERS paths) and `size/*`; only the maintainer applies `gate:approved`, `priority/P0`, `breaking-change` (after confirming), `backport`. |
+| `PR-PRQ-032` | Only automation applies `gate` (from CODEOWNERS paths) and `size/*`; only the maintainer applies `gate:approved` (or the backup admin while the handoff state is active, `PR-REV-010`, `PR-REV-012`), `priority/P0`, `breaking-change` (after confirming), `backport`. |
 | `PR-PRQ-033` | Removing a label that automation applied is forbidden; the automation re-applies it and posts a comment. |
 | `PR-PRQ-034` | Label definitions and colours live in `.github/labels.yml` ([36](36-issues-labels-and-projects.md)). |
 

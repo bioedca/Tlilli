@@ -98,7 +98,7 @@ Linux arm64 is built as `experimental` (not required, not gate-tested) from v0.4
 
 No Apple Developer ID, no notarization, no Windows Authenticode certificate can be afforded. The project therefore:
 
-1. **Signs updates** with the Tauri updater's minisign key (free; `cargo tauri signer generate -w ~/.tauri/tlilli.key`; public key in `tauri.conf.json`; private key only in the `release` environment and the maintainer's offline backups, T-09).
+1. **Signs updates** with the Tauri updater's minisign key (free; `cargo tauri signer generate -w ~/.tauri/tlilli.key`; public key in `tauri.conf.json`; private key only in the `release` environment, the maintainer's password manager, and the sealed offline copy held by the backup admin once named, T-09).
 2. **Attests provenance** of every asset with GitHub artifact attestations (free for public repos; Sigstore public-good; transparency log). Users verify with `gh attestation verify tlilli-<v>-<platform>.<ext> --repo bioedca/Tlilli`.
 3. **Publishes checksums** (`SHA256SUMS`) and shows them on the download page.
 4. **Documents the OS prompts honestly:** macOS Gatekeeper ("App is damaged / cannot be opened": right-click → Open, or `xattr -dr com.apple.quarantine /Applications/Tlilli.app`); Windows SmartScreen ("More info → Run anyway"); Linux AppImage `chmod +x`. The app never tells users to disable security settings globally.
