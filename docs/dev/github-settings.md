@@ -63,6 +63,7 @@ Target column: [PRD 39 §2](../prd/39-github-configuration.md#2-repository-setti
 | Environment `release` | Required reviewer `bioedca` (backup admin once named); admin bypass off; deployment refs: branch `main`, tag `v*`; wait timer 0 | Maintainer, 2026-11-04 |
 | Environment `automation` | No reviewer; deployment ref: branch `main` | Maintainer, 2026-11-04 |
 | Repository variable `HANDOFF_ACTIVE` | `false` | Maintainer, 2026-11-04 |
+| Repository variable `BACKUP_ADMIN` | Not created. Holds the backup admin's login without `@`, empty until one is named; `gate.yml` (pull request #54) accepts that login as a gate authority only while `HANDOFF_ACTIVE` is `true` and the login is also listed in `CODEOWNERS` (PRD 32 §3, D-053) | Pending: create together with the CODEOWNERS entry (task 1) |
 | Repository-level secrets | None | Maintainer: none |
 
 ## 5. Secrets and tokens inventory
