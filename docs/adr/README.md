@@ -54,6 +54,7 @@ The PRD plans a generated index page (`PR-DOC-009`); until that generator exists
 | [ADR-0005](0005-sidecar-policy-and-tunnel-exception.md) | Sidecar policy and the tunnel exception | Proposed | 2026-11-04 |
 | [ADR-0006](0006-event-log-hash-chain-and-snapshot-cadence.md) | Event-log hash chain and snapshot cadence | Proposed | 2026-11-04 |
 | ADR-0007 | PDF extraction strategy | Reserved; decided at gate G3 | — |
+| [ADR-0008](0008-tauri-dependency-footprint.md) | The Tauri 2 dependency footprint of the desktop shell | Proposed | 2026-11-04 |
 
 ## Template
 
