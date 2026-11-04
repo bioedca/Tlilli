@@ -2,54 +2,60 @@
 # rules PR-REV-010..012). Agent pull requests are authored by the maintainer's own account (D-014), so
 # "require a code-owner approval" cannot express the gate; this workflow can.
 #
-# The verdict is the commit status `gate/maintainer` on the PR's current head; the `main` ruleset
-# (bootstrap task 27) requires that status context, not a check run. Every evaluation first sets it to
-# `pending` ("evaluating"), then to `success` or `failure` with a short reason, or `error` if the
-# evaluator throws, so a crashed run leaves `pending`, which blocks the merge: the gate fails closed and
-# never leaves a stale success. The job's own check run (`gate / evaluate`) fails only on evaluator
-# errors. A status belongs to a commit, not to a PR, so when several open PRs share a head the status on
-# it is the conjunction of their verdicts. Each verdict's details are in the run's job summary, linked
-# from the status.
+# The verdict is the commit status `gate/maintainer`; the `main` ruleset (bootstrap task 27) requires that
+# status context, not a check run. A status belongs to a commit, not to a PR, so each run owns exactly
+# one SHA, its key: the PR head in the event payload (for a relay run, the relay's head SHA). It sets the
+# key to `pending` ("evaluating") with its first API call, evaluates every open PR whose current head is
+# the key, and writes the conjunction as `success` or `failure` with a short reason, or `error` if the
+# evaluator throws; a crashed run leaves `pending`, which blocks the merge. If no open PR has the key as
+# its head any more, the key gets `failure` ("not the head of an open pull request"), so no stale
+# `success` survives on a SHA that a later push could restore; the restore's own `synchronize` run then
+# evaluates it. A run never writes any other SHA. The job's own check run (`gate / evaluate`) fails only
+# on evaluator errors. Each verdict's details are in the run's job summary, linked from the status.
 #
 # Triggers. Both run the default branch's copy of this file with the base repository's token, and the job
 # never checks out or executes PR code (PR-CI-006); it only calls the API.
 # - `pull_request_target` for PR changes. Events that cannot change a verdict (labels other than `gate`
-#   and `gate:approved`, `edited` without a base change) skip the job, so they never queue in the
-#   concurrency group and never supersede a queued evaluation.
+#   and `gate:approved`, `edited` without a base change) skip the job, so they never enter a concurrency
+#   group and never supersede a queued evaluation.
 # - `workflow_run` of `gate relay` (gate-relay.yml) for review events: no `pull_request_target` type
 #   covers a review or its dismissal, and `pull_request_review` runs the PR's own copy of a workflow, which
 #   a PR editing it could turn into a no-op success. The relay runs on `pull_request_review` and does
-#   nothing; its completion makes GitHub start this trusted copy. Its conclusion and content are ignored,
-#   only its PR identity is used, and the PR's current head is always evaluated. `workflow_run` fires only
-#   once this file is on the default branch, so the PR that adds it sees `pull_request_target` runs only.
+#   nothing; its completion makes GitHub start this trusted copy. Its conclusion and content are ignored:
+#   only its head SHA (the key) and PR numbers are used. `workflow_run` fires only once this file is on
+#   the default branch, so the PR that adds it sees `pull_request_target` runs only.
 # Re-evaluation routes: a review, an edit or a dismissal re-evaluates automatically through the relay; for
 # anything without an event (a variable, or CODEOWNERS on the base, changed) use "Re-run all jobs" on the
 # latest gate run, or (re-)apply `gate:approved`. The `push` to `main` trigger in PR-REV-010 is omitted:
 # the ruleset's "require branches to be up to date" re-runs the evaluation through `synchronize`.
 #
-# Verdict, computed from the API on every run, never from a previous run:
+# Verdict for one PR with head X, computed from fresh API reads on every run:
 # - Changed files (new and previous names) are matched against .github/CODEOWNERS as it stands on the
 #   PR's current base. No match: success. The `gate` label is routing only (labeler.yml), reconciled here
 #   from the same files: re-applied when removed from a gated PR (PR-PRQ-033), removed when no gated file
 #   is left.
-# - A gated PR succeeds when a gate authority approved the current head against the current base, by:
-#   * a review in state APPROVED on the head SHA, submitted after the last base change; or
-#   * the `gate:approved` label, whose latest `labeled` event is by a gate authority in person (its
-#     `performed_via_github_app` is null) and later than the last base change, with its approval record:
-#     when an authority applies the label in person, that `labeled` run writes the commit status
-#     `gate/approval-record` ("approved-by:<login> base:<ref>") on the PR head of the event. The record counts only on the current head, written by github-actions[bot],
-#     naming a gate authority and the current base, and created after the last base change. A new push
-#     has no record, so an approval never carries over to new commits (PR-REV-011).
+# - A gated PR succeeds when a gate authority approved X against the current base, by:
+#   * a review in state APPROVED on X, submitted after the last base change; or
+#   * the `gate:approved` label, whose latest timeline event is a `labeled` event by a gate authority in
+#     person (`performed_via_github_app` null) after the last base change, together with an approval
+#     record on X: the commit status `gate/approval-record` ("approved-by:<login> base:<ref>"), written
+#     by github-actions[bot], naming that actor and the current base, newer than both the last base
+#     change and the label's `labeled` event. A new push has no record (PR-REV-011).
 #   The last base change is the newest `base_ref_changed` timeline event, or the PR's creation. Every time
 #   compared is a GitHub server time.
+# - The record is written only by the run of the `labeled` event that applied the label, on that event's
+#   head X, and only when the run can prove the association: the timeline holds exactly one `gate:approved`
+#   `labeled` event within 5 seconds of the payload's `pull_request.updated_at` (a label change updates
+#   it; the payload carries no event id), by the payload's sender, in person, with no later label event
+#   for `gate:approved`, while X is still the PR's head. Otherwise no record is written and the status
+#   says to re-apply the label in person, so a delayed or ambiguous run fails closed.
 # - Gate authorities: the maintainer always; the backup admin only while the repository Actions variable
 #   HANDOFF_ACTIVE is `true` AND the variable BACKUP_ADMIN names their login AND that login is listed in
 #   CODEOWNERS (PRD 32 §3: never on the CODEOWNERS entry alone; PRD 38 §8).
-# - Courtesy steps the verdict never depends on: on `synchronize` a `gate:approved` label older than the
-#   push is removed with "gate approval reset by new commits"; on a base change, or when the label
-#   predates the last base change, with "gate approval reset: base changed". A label applied by anyone
-#   else (PR-REV-012), or through any GitHub App, is removed with a comment and never gets a record. An authority's label without a valid record is left in
-#   place, because its `labeled` run may still be queued; the status then says to remove and re-apply it.
+# - Courtesy steps the verdict never depends on, decided from the latest timeline event: a `gate:approved`
+#   label applied by anyone else (PR-REV-012), or through any GitHub App, is removed with a comment; one
+#   that predates the last base change is removed with "gate approval reset: base changed"; on
+#   `synchronize`, one older than the push is removed with "gate approval reset by new commits".
 #
 # Agent sessions act as the maintainer's account through the Claude GitHub App (D-014). A label applied
 # that way carries `performed_via_github_app` in the timeline, so the gate refuses it: `gate:approved`
@@ -91,14 +97,14 @@ jobs:
       contains(fromJSON('["gate","gate:approved"]'), github.event.label.name)
     runs-on: ubuntu-24.04
     timeout-minutes: 5
-    # One group per PR head (head repository and branch), shared by both triggers so evaluations of a PR
-    # never run concurrently: a relay run's payload has no PR number for fork PRs, but it has the head
-    # repository and branch. Never cancel an in-progress run: runs are a few idempotent API calls, and a
-    # cancelled `labeled` run would lose its approval record. A queued run superseded by a newer event is
-    # replaced by that event's run, which re-evaluates everything. Two open PRs from one head branch
-    # share a group; both are evaluated together because they share the head commit.
+    # One group per key SHA, the only SHA a run writes, so every writer of a verdict is serialised: each
+    # event that can change X's verdict carries X as the head in its payload (`synchronize` to X; label,
+    # edit and ready events while X is the head; reviews on X reach the relay as its head SHA), including
+    # events of other PRs that share X. Never cancel an in-progress run: a cancelled `labeled` run would
+    # lose its approval record. A queued run replaced by a newer one loses nothing, because each run reads
+    # all of X's state afresh.
     concurrency:
-      group: gate-${{ github.event.pull_request.head.repo.full_name || github.event.workflow_run.head_repository.full_name }}-${{ github.event.pull_request.head.ref || github.event.workflow_run.head_branch }}
+      group: gate-${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
       cancel-in-progress: false
     permissions:
       contents: read # read .github/CODEOWNERS from the base branch through the API
@@ -119,6 +125,7 @@ jobs:
             const VERDICT = 'gate/maintainer';
             const RECORD = 'gate/approval-record';
             const BOT = 'github-actions[bot]';
+            const MATCH_MS = 5000; // a labeled event's created_at vs the webhook's pull_request.updated_at
             const { owner, repo } = context.repo;
             const ev = context.payload;
             const isPrt = context.eventName === 'pull_request_target';
@@ -128,12 +135,14 @@ jobs:
             const clip = (s) => (s.length > 140 ? `${s.slice(0, 139)}…` : s);
             const iso = (d) => (d ? d.toISOString() : 'never');
             const runUrl = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
-            const setStatus = (sha, state, description, ctx = VERDICT) => github.rest.repos.createCommitStatus({
-              owner, repo, sha, state, context: ctx, description: clip(description), target_url: runUrl,
-            });
             const maintainer = lower(process.env.MAINTAINER);
             const backupAdmin = lower(process.env.BACKUP_ADMIN);
             const handoffActive = lower(process.env.HANDOFF_ACTIVE) === 'true';
+            // The key: the only SHA this run writes (it is also the concurrency group).
+            const X = isPrt ? ev.pull_request.head.sha : ev.workflow_run.head_sha;
+            const setStatus = (state, description, ctx = VERDICT) => github.rest.repos.createCommitStatus({
+              owner, repo, sha: X, state, context: ctx, description: clip(description), target_url: runUrl,
+            });
 
             // CODEOWNERS pattern → RegExp over repository-relative paths (gitignore-style subset).
             const toRegex = (pattern) => {
@@ -170,13 +179,12 @@ jobs:
               return rules;
             };
 
-            // One PR's verdict: { number, state: 'success' | 'failure', description }.
+            // One PR's verdict on X: { number, state: 'success' | 'failure', description }.
             const decide = async (pr) => {
               const { number } = pr;
-              const headSha = pr.head.sha;
               const baseRef = pr.base.ref;
               const trigger = isPrt && number === ev.pull_request.number;
-              const sum = core.summary.addHeading(`PR #${number}: head ${short(headSha)}, base ${baseRef}`, 3);
+              const sum = core.summary.addHeading(`PR #${number}: head ${short(X)}, base ${baseRef}`, 3);
               const rules = await loadRules(baseRef);
               if (!rules) return { number, state: 'failure', description: `no .github/CODEOWNERS on ${baseRef}: the gate cannot be evaluated` };
               // CODEOWNERS semantics: the last matching rule wins; a rule without owners clears ownership.
@@ -197,50 +205,67 @@ jobs:
                 catch (e) { if (e.status !== 404) throw e; }
                 labels.delete(name);
               };
-              const reapply = 'A gate authority re-applies it, or approves the head by review, after reviewing the change.';
-              const actorReset = (who) => comment(`\`${APPROVED}\` applied by ${who} was removed: only a gate authority may apply it (PR-REV-012). Gate authorities now: ${authorityList}.`);
+              const reapply = 'A gate authority re-applies it in person, or approves the head by review, after reviewing the change.';
 
-              // The timeline gives the last base change and the latest `gate:approved` label event, in server time.
+              // The timeline, in server time: the last base change, and every `gate:approved` label event.
               const timeline = await github.paginate(github.rest.issues.listEventsForTimeline, { owner, repo, issue_number: number, per_page: 100 });
               let lastBaseChange = new Date(pr.created_at);
-              let labelEvent = null;
+              const labelEvents = [];
               for (const t of timeline) {
-                const at = new Date(t.created_at);
-                if (t.event === 'base_ref_changed' && at > lastBaseChange) lastBaseChange = at;
-                if (['labeled', 'unlabeled'].includes(t.event) && t.label?.name === APPROVED && (!labelEvent || at >= new Date(labelEvent.created_at))) labelEvent = t;
+                if (t.event === 'base_ref_changed' && new Date(t.created_at) > lastBaseChange) lastBaseChange = new Date(t.created_at);
+                if (['labeled', 'unlabeled'].includes(t.event) && t.label?.name === APPROVED) labelEvents.push(t);
               }
+              labelEvents.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+              const labelEvent = labelEvents[labelEvents.length - 1] || null; // the latest, labeled or unlabeled
               const labelActor = labelEvent?.event === 'labeled' ? lower(labelEvent.actor?.login) : '';
-              const labeledAt = labelEvent ? new Date(labelEvent.created_at) : null;
+              const labeledAt = labelActor ? new Date(labelEvent.created_at) : null;
+              const via = labelActor ? labelEvent.performed_via_github_app : null;
+              const labelApp = via ? via.slug || 'unknown' : '';
               const who = labelActor ? `@${labelActor}` : 'an unknown actor';
-              // Non-empty when the latest label event was made through a GitHub App (an agent session acting as a user).
-              const via = labelEvent?.performed_via_github_app;
-              const labelApp = labelEvent?.event === 'labeled' && via ? via.slug || 'unknown' : '';
-              const appReset = (slug) => comment(`\`${APPROVED}\` applied through the GitHub App ${slug} was removed: the maintainer applies it in person (PR-PRQ-032).`);
 
-              // Handlers for the event of the triggering PR (pull_request_target only; courtesy and the record).
+              // Event handlers for the triggering PR (pull_request_target only).
               if (trigger && action === 'synchronize' && labels.has(APPROVED) && !(labeledAt > new Date(ev.pull_request.updated_at))) {
                 await removeLabel(APPROVED);
-                await comment(`gate approval reset by new commits: \`${APPROVED}\` was removed because ${short(headSha)} was pushed after it was applied (PR-REV-011). ${reapply}`);
+                await comment(`gate approval reset by new commits: \`${APPROVED}\` was removed because ${short(X)} was pushed after it was applied (PR-REV-011). ${reapply}`);
               }
               if (trigger && action === 'edited' && ev.changes?.base && labels.has(APPROVED)) {
                 await removeLabel(APPROVED);
                 await comment(`gate approval reset: base changed from \`${ev.changes.base.ref?.from}\` to \`${baseRef}\`, so \`${APPROVED}\` was removed. ${reapply}`);
               }
               if (trigger && action === 'labeled' && ev.label?.name === APPROVED) {
+                // Write the approval record only if this run can prove which timeline event it was started by.
                 const sender = lower(ev.sender?.login);
-                if (!authorities.has(sender)) {
-                  await removeLabel(APPROVED);
-                  await actorReset(`@${sender}`);
-                } else if (labelApp) {
-                  await removeLabel(APPROVED);
-                  await appReset(labelApp);
-                } else if (labelEvent?.event === 'labeled' && labelActor === sender) {
-                  // The approval record: this trusted run saw a gate authority apply the label in person while
-                  // the PR's head and base were those of the event payload. If the timeline does not show this
-                  // event as the latest one, no record is written and the evaluation below says to re-apply.
+                const updatedAt = new Date(ev.pull_request.updated_at);
+                const near = labelEvents.filter((t) => t.event === 'labeled' && Math.abs(new Date(t.created_at) - updatedAt) <= MATCH_MS);
+                const own = near.length === 1 ? near[0] : null;
+                if (own && own === labelEvent && lower(own.actor?.login) === sender && !own.performed_via_github_app
+                  && authorities.has(sender) && labels.has(APPROVED)) {
+                  // X is this PR's head: it was read from pulls.get in this run, and X is the event's head.
                   const record = `approved-by:${sender} base:${ev.pull_request.base.ref}`;
                   if (record.length > 140) throw new Error(`approval record longer than 140 characters: ${record}`);
-                  await setStatus(ev.pull_request.head.sha, 'success', record, RECORD);
+                  await setStatus('success', record, RECORD);
+                } else {
+                  notes.push(`no ${RECORD} written: this run could not show that it was started by an in-person \`${APPROVED}\` from a gate authority that is still the latest label event`);
+                }
+              }
+
+              // Label checks that hold whether or not the PR is gated (PR-REV-012), from the latest event.
+              const ignored = [];
+              if (labels.has(APPROVED)) {
+                if (!labelActor) {
+                  ignored.push(`label without a visible labeled event; re-apply ${APPROVED} in person`);
+                } else if (!authorities.has(labelActor)) {
+                  ignored.push(`label by ${who}: not a gate authority`);
+                  await removeLabel(APPROVED);
+                  await comment(`\`${APPROVED}\` applied by ${who} was removed: only a gate authority may apply it (PR-REV-012). Gate authorities now: ${authorityList}.`);
+                } else if (labelApp) {
+                  ignored.push(`label by ${who} through the GitHub App ${labelApp}, not in person`);
+                  await removeLabel(APPROVED);
+                  await comment(`\`${APPROVED}\` applied through the GitHub App ${labelApp} was removed: the maintainer applies it in person (PR-PRQ-032).`);
+                } else if (!(labeledAt > lastBaseChange)) {
+                  ignored.push(`label by ${who} predates the base change`);
+                  await removeLabel(APPROVED);
+                  await comment(`gate approval reset: base changed to \`${baseRef}\` at ${iso(lastBaseChange)}, after \`${APPROVED}\` was applied, so it was removed. ${reapply}`);
                 }
               }
 
@@ -270,9 +295,8 @@ jobs:
                 return { number, state: 'success', description: 'no gated path touched' };
               }
 
-              // Approvals of the current head against the current base.
+              // Approvals of X against the current base.
               const grants = [];
-              const ignored = [];
               const reviews = await github.paginate(github.rest.pulls.listReviews, { owner, repo, pull_number: number, per_page: 100 });
               const latest = new Map();
               for (const r of reviews) {
@@ -284,88 +308,65 @@ jobs:
               for (const [login, r] of latest) {
                 if (r.state !== 'APPROVED') continue;
                 if (!authorities.has(login)) ignored.push(`review by @${login}: not a gate authority`);
-                else if (r.commit_id !== headSha) ignored.push(`review by @${login} is for ${short(r.commit_id)}, not the head ${short(headSha)}`);
+                else if (r.commit_id !== X) ignored.push(`review by @${login} is for ${short(r.commit_id)}, not the head ${short(X)}`);
                 else if (!(new Date(r.submitted_at) > lastBaseChange)) ignored.push(`review by @${login} predates the base change`);
-                else grants.push(`review by @${login} on ${short(headSha)}`);
+                else grants.push(`review by @${login} on ${short(X)}`);
               }
-              if (labels.has(APPROVED)) {
-                if (!labelActor || !authorities.has(labelActor)) {
-                  ignored.push(`label by ${who}: not a gate authority`);
-                  await removeLabel(APPROVED);
-                  await actorReset(who);
-                } else if (labelApp) {
-                  ignored.push(`label by ${who} through the GitHub App ${labelApp}, not in person`);
-                  await removeLabel(APPROVED);
-                  await appReset(labelApp);
-                } else if (!(labeledAt > lastBaseChange)) {
-                  ignored.push(`label by ${who} predates the base change`);
-                  await removeLabel(APPROVED);
-                  await comment(`gate approval reset: base changed to \`${baseRef}\` at ${iso(lastBaseChange)}, after \`${APPROVED}\` was applied, so it was removed. ${reapply}`);
-                } else {
-                  // Newest first; the newest record for this base decides.
-                  const statuses = await github.paginate(github.rest.repos.listCommitStatusesForRef, { owner, repo, ref: headSha, per_page: 100 });
-                  const parse = (s) => (s.description || '').match(/^approved-by:(\S+) base:(\S+)$/);
-                  const record = statuses.find((s) => s.context === RECORD && parse(s)?.[2] === baseRef);
-                  const by = record ? lower(parse(record)[1]) : '';
-                  let invalid = '';
-                  if (!record) invalid = `no record for ${baseRef} on ${short(headSha)}`;
-                  else if (record.state !== 'success') invalid = `record is ${record.state}`;
-                  else if (lower(record.creator?.login) !== BOT) invalid = `record not written by ${BOT}`;
-                  else if (!authorities.has(by)) invalid = `record names @${by}, not a gate authority`;
-                  else if (!(new Date(record.created_at) > lastBaseChange)) invalid = `record predates the base change`;
-                  if (invalid) ignored.push(`label by ${who}: ${invalid}; re-apply it`);
-                  else grants.push(`${APPROVED} by ${who}, record on ${short(headSha)}`);
-                }
+              if (labels.has(APPROVED) && labelActor && authorities.has(labelActor) && !labelApp && labeledAt > lastBaseChange) {
+                // Newest first; the newest record for this base decides.
+                const statuses = await github.paginate(github.rest.repos.listCommitStatusesForRef, { owner, repo, ref: X, per_page: 100 });
+                const parse = (s) => (s.description || '').match(/^approved-by:(\S+) base:(\S+)$/);
+                const record = statuses.find((s) => s.context === RECORD && parse(s)?.[2] === baseRef);
+                const by = record ? lower(parse(record)[1]) : '';
+                const at = record ? new Date(record.created_at) : null;
+                let invalid = '';
+                if (!record) invalid = `no record for ${baseRef} on ${short(X)}`;
+                else if (record.state !== 'success') invalid = `record is ${record.state}`;
+                else if (lower(record.creator?.login) !== BOT) invalid = `record not written by ${BOT}`;
+                else if (by !== labelActor || !authorities.has(by)) invalid = `record names @${by}, not the label's gate authority`;
+                else if (!(at > lastBaseChange)) invalid = 'record predates the base change';
+                else if (!(at > labeledAt)) invalid = 'record predates the label';
+                if (invalid) ignored.push(`label by ${who}: ${invalid}; re-apply ${APPROVED} in person`);
+                else grants.push(`${APPROVED} by ${who}, record on ${short(X)}`);
               }
               sum.addRaw('Gated files:', true).addList(gated.map((p) => `\`${p}\``));
               if (grants.length) sum.addRaw('Approval:', true).addList(grants);
               if (ignored.length) sum.addRaw(`Ignored (re-apply a label by removing and adding it; last base change ${iso(lastBaseChange)}):`, true).addList(ignored);
               if (grants.length) return { number, state: 'success', description: `approved: ${grants[0]}` };
-              const why = `needs approval on ${short(headSha)} (${gated.length} gated file${gated.length === 1 ? '' : 's'})`;
-              sum.addRaw(`${why}: a review from a gate authority, or \`${APPROVED}\` applied by one (${authorityList}). The decision is recorded in a PR comment (PR-REV-013).`, true);
+              const why = `needs approval on ${short(X)} (${gated.length} gated file${gated.length === 1 ? '' : 's'})`;
+              sum.addRaw(`${why}: a review from a gate authority, or \`${APPROVED}\` applied in person by one (${authorityList}). The decision is recorded in a PR comment (PR-REV-013).`, true);
               return { number, state: 'failure', description: `${why}${ignored.length ? `; ignored: ${ignored[0]}` : ''}` };
             };
 
-            // Fail closed from the first API call: the head this event saw is `pending` until decided.
-            const eventSha = isPrt ? ev.pull_request.head.sha : ev.workflow_run.head_sha;
-            const undecided = new Set([eventSha]);
-            await setStatus(eventSha, 'pending', 'evaluating');
+            // Fail closed from the first API call: X is `pending` until this run decides it.
+            await setStatus('pending', 'evaluating');
             try {
-              // The PRs to evaluate. A relay run is trusted for its PR identity only.
+              // Every open PR whose current head is X, from fresh reads: the event's own PR, the relay's
+              // same-repository PR numbers, and every open PR listed with head X (fork PRs, shared heads).
+              const candidates = new Set();
+              if (isPrt) candidates.add(ev.pull_request.number);
+              else for (const p of ev.workflow_run.pull_requests || []) if (p.base?.repo?.id === ev.repository.id) candidates.add(p.number);
               const open = await github.paginate(github.rest.pulls.list, { owner, repo, state: 'open', per_page: 100 });
-              let numbers;
-              if (isPrt) numbers = [ev.pull_request.number];
-              else {
-                const wr = ev.workflow_run;
-                numbers = (wr.pull_requests || []).filter((p) => p.base?.repo?.id === ev.repository.id).map((p) => p.number);
-                if (!numbers.length) {
-                  numbers = open.filter((p) => p.head.repo?.full_name === wr.head_repository?.full_name
-                    && p.head.ref === wr.head_branch && p.head.sha === wr.head_sha).map((p) => p.number);
-                }
+              for (const p of open) if (p.head.sha === X) candidates.add(p.number);
+              const prs = [];
+              for (const n of [...candidates].sort((a, b) => a - b)) {
+                const { data } = await github.rest.pulls.get({ owner, repo, pull_number: n });
+                if (data.state === 'open' && data.head.sha === X) prs.push(data);
               }
-              // Group by current head: a status on a head is the conjunction over every open PR with that head.
-              const groups = new Map();
-              const add = (pr) => { if (!groups.has(pr.head.sha)) groups.set(pr.head.sha, new Map()); groups.get(pr.head.sha).set(pr.number, pr); };
-              for (const n of new Set(numbers)) add((await github.rest.pulls.get({ owner, repo, pull_number: n })).data);
-              for (const p of open) {
-                if (!groups.has(p.head.sha) || groups.get(p.head.sha).has(p.number)) continue;
-                const { data } = await github.rest.pulls.get({ owner, repo, pull_number: p.number });
-                if (data.head.sha === p.head.sha) add(data);
+              if (!prs.length) {
+                await setStatus('failure', 'not the head of an open pull request');
+                core.notice(`${short(X)} is not the head of an open pull request: marked failure`);
+                return;
               }
-              if (!groups.size) core.notice(`no open pull request with head ${short(eventSha)} to evaluate`);
-              for (const [sha, prs] of groups) {
-                if (!undecided.has(sha)) { await setStatus(sha, 'pending', 'evaluating'); undecided.add(sha); }
-                const results = [];
-                for (const pr of prs.values()) results.push(await decide(pr));
-                const bad = results.filter((r) => r.state !== 'success');
-                const description = results.length === 1 ? results[0].description
-                  : bad.length ? `#${bad[0].number}: ${bad[0].description}` : `all ${results.length} open PRs with this head pass`;
-                await setStatus(sha, bad.length ? 'failure' : 'success', description);
-                undecided.delete(sha);
-                core.info(`${short(sha)}: ${bad.length ? 'failure' : 'success'}: ${description}`);
-              }
+              const results = [];
+              for (const pr of prs) results.push(await decide(pr));
+              const bad = results.filter((r) => r.state !== 'success');
+              const description = results.length === 1 ? results[0].description
+                : bad.length ? `#${bad[0].number}: ${bad[0].description}` : `all ${results.length} open PRs with this head pass`;
+              await setStatus(bad.length ? 'failure' : 'success', description);
+              core.info(`${short(X)}: ${bad.length ? 'failure' : 'success'}: ${description}`);
             } catch (e) {
-              for (const sha of undecided) await setStatus(sha, 'error', `evaluator error: ${e.message}`).catch(() => {});
+              await setStatus('error', `evaluator error: ${e.message}`).catch(() => {});
               throw e;
             } finally {
               await core.summary.write();
