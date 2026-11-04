@@ -21,7 +21,7 @@ The first issues to open, in dependency order. Each becomes a `type/task` issue 
 | --- | --- | --- | --- | --- |
 | 9 | Replace root `LICENSE` with Apache-2.0; add `skills/LICENSE` (MIT), `NOTICE`, SPDX headers policy and a `reuse`-style check in CI; license roadmap paragraph in README | `area/repo`, `gate` | D-003, `PR-ARCH-003` | S |
 | 10 | Add `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), `SECURITY.md`, `SUPPORT.md`, `GOVERNANCE.md`, `CITATION.cff` (validated), `.github/FUNDING.yml`; README per `PR-DOC-006` | `area/docs`, `gate` | [35](35-documentation.md) §4, `PR-SEC-001` | M |
-| 11 | Rewrite `CLAUDE.md` and add `AGENTS.md`: layout incl. `tlilli-cli`, commands, pointer to CONTRIBUTING and this PRD, agent git rules (`PR-GIT-050..058`), `## Code Review Rules` for Codex; set the agent git identity instructions | `area/repo`, `gate` | D-002, D-014, D-055, [30](30-git-workflow.md) §4 | S |
+| 11 | Rewrite `CLAUDE.md` and add `AGENTS.md`: layout incl. `tlilli-cli`, commands, pointer to CONTRIBUTING and this PRD, agent git rules (`PR-GIT-050..059`, incl. the no-session-URL rule already present in both files), `## Code Review Rules` for Codex; set the agent git identity instructions; keep the two files in step | `area/repo`, `gate` | D-002, D-014, D-055, [30](30-git-workflow.md) §4 | S |
 
 ## C. Workspace skeleton
 

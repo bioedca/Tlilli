@@ -24,6 +24,7 @@ branch pushed ──▶ Draft PR ──▶ (Linux lane CI, Codex local rounds do
 | `PR-PRQ-010` | release-plz PRs (`chore(release): vX.Y.Z`) are gated (`CHANGELOG.md`, versions, `CITATION.cff`); the maintainer approves them as the release decision ([37](37-releases-and-packaging.md)). |
 | `PR-PRQ-011` | A PR description is written for a reader who was not in the session: no "as discussed", no session-only context. Agents include the issue text they worked from if it is short. |
 | `PR-PRQ-012` | Screenshots or short recordings are required for UI changes (Playwright-generated, committed under the PR as attachments, not in git). |
+| `PR-PRQ-013` | Immediately after creating or editing a PR, the author checks the description for an appended footer containing a session URL and removes it (`PR-GIT-059`). The PR template has no attribution section; AI assistance is declared in the `AI assistance:` line without links to sessions. |
 
 ## 2. Size (PR-PRQ-020 … 024)
 
