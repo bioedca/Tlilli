@@ -21,6 +21,6 @@ mod tests {
     #[test]
     fn version_is_the_workspace_version() {
         assert_eq!(version(), env!("CARGO_PKG_VERSION"));
-        assert!(!version().is_empty());
+        assert_ne!(version(), "");
     }
 }

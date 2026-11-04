@@ -11,7 +11,7 @@ fuzz_target!(|data: &[u8]| {
     // Until there is a parser to round-trip, the only public entry point is the version; it must
     // not depend on the input, so any divergence here is a harness bug.
     let version = tlilli_core::version();
-    assert!(!version.is_empty());
+    assert_ne!(version, "");
     assert_eq!(
         version,
         tlilli_core::version(),
