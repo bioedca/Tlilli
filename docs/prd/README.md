@@ -1,6 +1,6 @@
 # Tlilli Product Requirements Document (PRD)
 
-**Status:** Draft 1 (2026-11-03) · **Owner:** bioedca (sole maintainer) · **Governs:** build, release and maintenance of Tlilli from Phase 0 through v1.0 and the post-1.0 maintenance cycle.
+**Status:** Draft 2 (2026-11-03; D-057 keeps the repo on the personal account) · **Owner:** bioedca (sole maintainer) · **Governs:** build, release and maintenance of Tlilli from Phase 0 through v1.0 and the post-1.0 maintenance cycle.
 
 This PRD is the single tracking source for the project. The concept document ([Tlilli — Concept & Definition](../../Tlilli%20-%20Concept%20%26%20Definition.md)) states what Tlilli is and why; this PRD turns every statement in it into a numbered, testable requirement and adds the complete engineering process the project runs on: git workflow, pull requests, code review, CI/CD, testing, documentation, issue tracking, project management, packaging, releases, maintenance and GitHub configuration.
 
@@ -20,7 +20,7 @@ The process sections follow the [INTERSECT research-software curriculum](https:/
 | [20 Non-functional requirements](20-non-functional-requirements.md) | Performance, reliability, privacy, accessibility, portability, compatibility, observability |
 | [21 Architecture and tech stack](21-architecture-and-tech-stack.md) | Locked technology decisions, crate layout, dependency policy, ADR process |
 | [22 Security and threat model](22-security-and-threat-model.md) | Threat assessment (INTERSECT method), trust boundaries, mitigations, disclosure |
-| [30 Git workflow](30-git-workflow.md) | Branching, naming, commits, DCO, rebase-merge, rulesets, merge queue, agent rules |
+| [30 Git workflow](30-git-workflow.md) | Branching, naming, commits, DCO, rebase-merge, rulesets, up-to-date rule, agent rules |
 | [31 Pull requests](31-pull-requests.md) | Draft vs Ready, PR template, size cap, auto-merge, labels an agent may apply |
 | [32 Code review](32-code-review.md) | Codex → CodeRabbit → Greptile pipeline, human gates, CODEOWNERS, severity, etiquette |
 | [33 CI/CD](33-ci-cd.md) | Every workflow, job, trigger, required check, secret and schedule |
@@ -29,7 +29,7 @@ The process sections follow the [INTERSECT research-software curriculum](https:/
 | [36 Issues, labels and projects](36-issues-labels-and-projects.md) | Issue forms, label scheme, milestones, Projects board, triage, definitions of Ready and Done |
 | [37 Releases and packaging](37-releases-and-packaging.md) | Versioning, release-plz, tauri-action, artifacts, zero-cost trust posture, updater, channels |
 | [38 Maintenance and support](38-maintenance-and-support.md) | Support matrix, backports, security response, deprecation, diagnostics, bus factor |
-| [39 GitHub configuration](39-github-configuration.md) | Organization, repository settings, rulesets, apps, secrets inventory, GitHub Pro perks |
+| [39 GitHub configuration](39-github-configuration.md) | Account and repository settings, rulesets, apps, secrets inventory, GitHub Pro and Student Pack perks |
 | [40 Roadmap and gates](40-roadmap-and-gates.md) | Phases 0 to 1.0, exit criteria, gate test procedure, release mapping |
 | [41 Risks and decision log](41-risks-and-decision-log.md) | Risk register and every decision taken for this PRD, dated |
 | [42 Bootstrap backlog](42-bootstrap-backlog.md) | The first issues to open, in order, with labels and requirement references |

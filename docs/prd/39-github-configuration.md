@@ -2,19 +2,19 @@
 
 Everything the project relies on in GitHub, as a checklist that can be audited. Settings that cannot be expressed as files are exported to `docs/dev/github-settings.md` (rulesets as JSON, app list, environment protection) and reviewed at each gate.
 
-## 1. Organization (D-013)
+## 1. Account (D-057)
 
 | Setting | Value |
 | --- | --- |
-| Organization | `tlilli` (free plan), created and the repository transferred before `v0.1.0`; old URLs redirect. Owners: bioedca (+ a backup owner from v1.0, [38](38-maintenance-and-support.md) §8) |
-| Base permissions | Read |
-| 2FA | Required for all members |
-| Teams | `maintainers` (bioedca) used in CODEOWNERS; `contributors` dormant |
-| Actions | "Allow select actions and reusable workflows": GitHub-owned, verified creators, plus the allow-list in `PR-CI-019`; default workflow permissions **read**; "Allow GitHub Actions to create and approve pull requests" **off** (release-plz uses its own token) |
+| Owner | Personal account `bioedca`; repository stays `bioedca/Tlilli`. GitHub Pro comes from the Student Developer Pack and applies to the personal account only; no organization is created (an organization would not inherit Pro, and an organization plan cannot be afforded). Revisit only when contributions or funding cover it |
+| 2FA | Enabled on the account (required for Sponsors and recommended by the threat register) |
+| Successor and backup admin | A GitHub account successor designated in Settings → Account → Successor settings (ownership transfer on an authorized request after death or incapacity; not a temporary-absence mechanism). A trusted collaborator gets admin on the repository before v1.0, is listed in CODEOWNERS (gate authority, used only during a handoff) and is added as an allowed `release` environment reviewer, so gated merges, releases and secret rotation can continue during an absence ([38](38-maintenance-and-support.md) §8) |
+| Teams | None (personal accounts have no teams); CODEOWNERS names `@bioedca` |
+| Actions (per repository) | "Allow select actions and reusable workflows": GitHub-owned, verified creators, plus the allow-list in `PR-CI-019`; default workflow permissions **read**; "Allow GitHub Actions to create and approve pull requests" **off** (release-plz uses its own token) |
 | Fork PR workflows | Require approval for all outside collaborators |
-| Secrets | Organization-level: none. Repository environment `release` only |
-| Sponsors | Org Sponsors profile enabled; `FUNDING.yml` points to it (or to the personal profile until the org profile is approved) |
-| Projects | "Tlilli roadmap" owned by the org |
+| Secrets | Two repository environments: `release` (signing keys, packaging tokens; required reviewers) and `automation` (`RELEASE_PLZ_TOKEN`, `PROJECT_TOKEN`; no reviewer, `main` only). No repository-level or account-level secrets |
+| Sponsors | Personal Sponsors profile; `FUNDING.yml` points to it |
+| Projects | "Tlilli roadmap" owned by the user account |
 | Discussions | Enabled at v0.2 |
 
 ## 2. Repository settings
@@ -25,7 +25,7 @@ Everything the project relies on in GitHub, as a checklist that can be audited. 
 | Features | Issues on; Projects on; Discussions on from v0.2; Wiki **off** (docs site instead); Sponsorships on; Preserve this repository (Arctic Code Vault) default |
 | Default branch | `main` |
 | Pull requests | Allow **rebase merging only** (merge commits off, squash off); "Always suggest updating pull request branches" on; "Allow auto-merge" on; "Automatically delete head branches" on |
-| Merge queue | Enabled on `main` via the ruleset (§3) |
+| Merge queue | Not available on personal-account repositories (D-057); replaced by "require branches to be up to date before merging" in the ruleset (§3) |
 | Pages | Source: GitHub Actions; custom domain after D-035; HTTPS enforced |
 | Security | Dependabot alerts and security updates on; Dependabot version updates per `dependabot.yml`; secret scanning + push protection on (already); private vulnerability reporting on; code scanning (CodeQL) via workflow; dependency graph on |
 | Code review limits | "Limit to users explicitly granted access" on (only collaborators can approve/request changes) |
@@ -38,14 +38,13 @@ Everything the project relies on in GitHub, as a checklist that can be audited. 
 **Ruleset `main`** (target: `main`, enforcement: active, bypass list: **empty**)
 - Restrict deletions; block force pushes; require linear history.
 - Require a pull request before merging: required approvals **0** (the gate is a status check, [32](32-code-review.md) §5); dismiss stale approvals on push; require conversation resolution; require review from Code Owners **off** (cannot be satisfied by the author of record, D-014); allowed merge methods: rebase.
-- Require status checks to pass: strict mode off (the queue rebases); checks listed in `PR-GIT-043`.
-- Require merge queue: method rebase; build concurrency 5; min group 1; max group 5; wait 2 min; timeout 60 min; only merge non-failing entries.
+- Require status checks to pass: **strict** ("Require branches to be up to date before merging") on; checks listed in `PR-GIT-043`.
 - Require signed commits: off (D-012).
 - Require deployments to succeed: off.
 
-**Ruleset `release/*`** (post-1.0): same as `main` except merge queue optional and the `backport` label required by `gate.yml` logic.
+**Ruleset `release/*`** (post-1.0): same as `main`, with the `backport` label required by `gate.yml` logic.
 
-**Ruleset `tags v*`**: restrict creation to the `release-plz` app/token identity and org owners; block update and deletion.
+**Ruleset `tags v*`**: restrict creation to the `release-plz` token identity and the repository owner; block update and deletion.
 
 **Ruleset `all branches`**: block force pushes to any branch not owned by the pusher (GitHub cannot express this; approximated by `PR-GIT-005` and the one-writer rule) — recorded as a policy, not a technical rule.
 
@@ -53,7 +52,7 @@ Everything the project relies on in GitHub, as a checklist that can be audited. 
 
 | File | Content |
 | --- | --- |
-| `.github/CODEOWNERS` | gated paths → `@tlilli/maintainers` ([32](32-code-review.md) §3) |
+| `.github/CODEOWNERS` | gated paths → `@bioedca` and the backup admin once named ([32](32-code-review.md) §3; the backup admin uses gate authority only during a handoff) |
 | `.github/labels.yml` | label scheme ([36](36-issues-labels-and-projects.md) §2) |
 | `.github/labeler.yml` | path → `area/*`, `gate`, `review:deep` |
 | `.github/ISSUE_TEMPLATE/*.yml`, `config.yml` | nine forms, blank disabled, contact links |
@@ -83,27 +82,28 @@ Everything the project relies on in GitHub, as a checklist that can be audited. 
 | DCO | GitHub App (probot) | statuses | required check `DCO` |
 | Zenodo | webhook | releases read | archives on publish |
 | Dependabot | native | — | grouped weekly |
-| release-plz | Action + token | `RELEASE_PLZ_TOKEN`: fine-grained PAT (or org GitHub App) with contents write, pull requests write, workflows read; expires yearly | needed so tags trigger workflows |
+| release-plz | Action + token | `RELEASE_PLZ_TOKEN`: fine-grained PAT (or a GitHub App if a second maintainer joins) with contents write, pull requests write, workflows read; expires yearly | environment `automation`; needed so tags trigger workflows |
 | crates.io | trusted publishing (OIDC) | per-crate trusted publisher config for the `release-plz.yml` workflow | no long-lived token |
 | GitHub Pages | OIDC | `pages: write`, `id-token: write` | — |
-| Projects | token | `PROJECT_TOKEN`: fine-grained PAT with project write | `project.yml` |
-| Homebrew tap | token | `HOMEBREW_TAP_TOKEN`: fine-grained PAT scoped to `tlilli/homebrew-tap` contents+PRs | `release` environment |
+| Projects | token | `PROJECT_TOKEN`: fine-grained PAT with project write | `project.yml` (environment `automation`) |
+| Homebrew tap | token | `HOMEBREW_TAP_TOKEN`: fine-grained PAT scoped to `bioedca/homebrew-tlilli` contents+PRs | `release` environment |
 | winget | token | `WINGET_TOKEN`: PAT for the fork of `microsoft/winget-pkgs` | `release` environment |
 | Updater | secret | `TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | `release` environment; offline backups |
 
-Environment `release`: required reviewer bioedca; deployment branches and tags limited to `v*` tags and `main`; secrets listed above; wait timer 0. All PATs are fine-grained, scoped to the minimum repositories, and tracked in `docs/dev/github-settings.md` with expiry dates; a yearly rotation task is scheduled.
+Environment `release`: required reviewers bioedca and the backup admin once named (any one approves); deployment branches and tags limited to `v*` tags and `main`; holds `TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`, `HOMEBREW_TAP_TOKEN`, `WINGET_TOKEN`; wait timer 0. Environment `automation`: no required reviewer; deployment branches limited to `main`; holds `RELEASE_PLZ_TOKEN` and `PROJECT_TOKEN`; declared by the `release-plz.yml`, `prerelease.yml` (tag push) and `project.yml` jobs, which run on `main` or in base-branch context, so a PR workflow can never read them. All PATs are fine-grained, scoped to the minimum repositories, and tracked in `docs/dev/github-settings.md` with expiry dates; a yearly rotation task is scheduled.
 
 ## 6. GitHub Pro perks and platform extras in use (D-044)
 
 | Perk / feature | Use |
 | --- | --- |
-| **Codespaces** (Pro includes 180 core-hours and 20 GB per month, billed to the personal account for org repos on the free plan) | `.devcontainer/devcontainer.json`: Ubuntu 24.04 image with Rust, Node 22, pnpm, Tauri Linux prerequisites, `xvfb`, the `desktop-lite` feature (noVNC on a forwarded port) so a Tauri window can be seen in a browser; prebuilds off (cost); used for visual checks the cloud sandbox cannot do and as a second environment for agents |
-| **Private companion repository** `bioedca/tlilli-release-rehearsal` (user-owned so Pro's 3,000 private Actions minutes and private branch protection apply) | Mirror of `.github/workflows/release*.yml`, `post-release.yml`, `release-plz.yml` with dummy secrets; every change to those workflows is rehearsed there with `dry_run=true` before landing (INTERSECT: test publishing first) |
+| **Codespaces** (Pro via the Student Developer Pack includes 180 core-hours and 20 GB per month; 120 core-hours and 15 GB if Pro lapses) | `.devcontainer/devcontainer.json`: Ubuntu 24.04 image with Rust, Node 22, pnpm, Tauri Linux prerequisites, `xvfb`, the `desktop-lite` feature (noVNC on a forwarded port) so a Tauri window can be seen in a browser; prebuilds off (cost); used for visual checks the cloud sandbox cannot do and as a second environment for agents |
+| **Private companion repository** `bioedca/tlilli-release-rehearsal` (user-owned so Pro's 3,000 private Actions minutes and private branch protection apply; made public with dummy secrets if Pro lapses, see the Student Developer Pack row) | Mirror of `.github/workflows/release*.yml`, `post-release.yml`, `release-plz.yml` with dummy secrets; every change to those workflows is rehearsed there with `dry_run=true` before landing (INTERSECT: test publishing first). Disposable: recreated from `main` on any ownership change ([38](38-maintenance-and-support.md) §8) |
 | **Repository insights** (pulse, contributors, traffic, dependency graph) | Reviewed at monthly metrics; traffic informs docs priorities |
 | **Sponsors** | `FUNDING.yml`; income earmarked first for Apple notarization (USD 99/yr) and then Windows signing if SignPath is not granted |
 | **Private vulnerability reporting + security advisories** | Disclosure channel and CVE issuance |
 | **Artifact attestations** | Free on public repos; used for every release asset |
-| **Merge queue, rulesets, code owners** | Available on org-owned public repos (reason for the org move) |
+| **Rulesets, code owners, auto-merge, environments, Pages, attestations** | Available on personal public repositories on every plan, so none of them depends on Pro. Merge queue is organization-only and is replaced by the up-to-date rule (D-057) |
+| **Student Developer Pack** | Source of the Pro upgrade (time-limited to student status; Pro only enlarges quotas: 3,000 instead of 2,000 private Actions minutes per month for the rehearsal repository and 180 instead of 120 Codespaces core-hours; if it lapses, the rehearsal repository is made public with dummy secrets, which is mandatory because a private repository on the free plan loses rulesets and branch protection, and public Actions minutes are unlimited); its one-year free domain offers are a candidate for the docs custom domain after D-035; Copilot Pro is included but is not a review lane (D-015) |
 | **GitHub Pages** | Docs site and updater manifests |
 | **Projects v2** | Roadmap board |
 | **Discussions** | Community from v0.2 |

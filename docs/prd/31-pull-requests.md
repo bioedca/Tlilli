@@ -2,28 +2,29 @@
 
 INTERSECT (Making Good PRs): a good PR makes **one cohesive change**, stays a **reasonable size**, and describes **what, how (including side effects) and why**; GenAI may draft the description but only the author knows the why and must verify it; the human owns the merge decision. This section turns that into rules an agent can follow and CI can check.
 
-## 1. Lifecycle (PR-PRQ-001 … 012)
+## 1. Lifecycle (PR-PRQ-001 … 013)
 
 ```
 branch pushed ──▶ Draft PR ──▶ (Linux lane CI, Codex local rounds done, Codex cloud round, CodeRabbit round)
           ──▶ author marks Ready ──▶ full matrix + gate check + (Greptile if gated)
-          ──▶ author enables auto-merge ──▶ merge queue ──▶ main
+          ──▶ author enables auto-merge ──▶ branch up to date + checks green ──▶ main
 ```
 
 | ID | Rule |
 | --- | --- |
 | `PR-PRQ-001` | **Every PR opens as a Draft.** Draft means: work in progress, Linux lane CI runs on each push, AI reviewers are driven by the author, the maintainer does not look at it. |
 | `PR-PRQ-002` | **Ready for review** is asserted by the author (agent or human) only when all of: Linux lane green; Codex local rounds done and one Codex cloud round clean ([32](32-code-review.md)); CodeRabbit round done and threads resolved or answered; PR body complete per the template; commits squashed and conventional; branch rebased on `origin/main`; size within cap or `size:override` justified; docs updated or `docs:not-needed` justified; tests included or `needs-tests` explained. Marking Ready triggers the full matrix and, for gated PRs, Greptile and the maintainer's attention. |
-| `PR-PRQ-003` | **Auto-merge** is enabled by the author at Ready (`gh pr merge --auto --rebase <n>` or the UI). GitHub lands the PR through the merge queue when every required check passes, including `gate/maintainer` for gated PRs. Nobody presses Merge by hand except to clear a stuck queue. |
+| `PR-PRQ-003` | **Auto-merge** is enabled by the author at Ready (`gh pr merge --auto --rebase <n>` or the UI). GitHub lands the PR (rebase) when the branch is up to date with `main` and every required check passes, including `gate/maintainer` for gated PRs. Nobody presses Merge by hand except to recover from a stuck auto-merge. |
 | `PR-PRQ-004` | A Ready PR that receives new review findings goes back to work in place (not to Draft); the author fixes, pushes, resolves threads, re-requests review. Converting back to Draft is only for substantial rework and is announced in a comment. |
 | `PR-PRQ-005` | **Stale policy:** no activity for 14 days → `status/stale` label and a comment; 7 more days → closed with a comment naming the branch (recoverable). Gated PRs waiting on the maintainer are exempt. |
 | `PR-PRQ-006` | PRs that touch gated paths get the `gate` label automatically (path labeler) and cannot merge without maintainer approval ([32](32-code-review.md) §5). |
-| `PR-PRQ-007` | PR titles follow Conventional Commits (`type(scope): subject`) and are linted; with rebase-merge the title is not a commit, but it names the change in the queue, release notes drafts and notifications. |
+| `PR-PRQ-007` | PR titles follow Conventional Commits (`type(scope): subject`) and are linted; with rebase-merge the title is not a commit, but it names the change in the PR list, release-notes drafts and notifications. |
 | `PR-PRQ-008` | Link the issue with a closing keyword (`Closes #12`) in the body; a PR without an issue link is allowed only for `chore`/`docs` changes under 50 lines and says why. |
 | `PR-PRQ-009` | Dependabot PRs (grouped weekly) are Ready on open; the auto-merge workflow enables auto-merge for patch and minor groups after CI; majors and anything touching `.github/workflows` wait for the maintainer (gated). |
 | `PR-PRQ-010` | release-plz PRs (`chore(release): vX.Y.Z`) are gated (`CHANGELOG.md`, versions, `CITATION.cff`); the maintainer approves them as the release decision ([37](37-releases-and-packaging.md)). |
 | `PR-PRQ-011` | A PR description is written for a reader who was not in the session: no "as discussed", no session-only context. Agents include the issue text they worked from if it is short. |
 | `PR-PRQ-012` | Screenshots or short recordings are required for UI changes (Playwright-generated, committed under the PR as attachments, not in git). |
+| `PR-PRQ-013` | Immediately after creating or editing a PR, the author checks the description for an appended footer containing a session URL and removes it (`PR-GIT-059`). The PR template has no attribution section; AI assistance is declared in the `AI assistance:` line without links to sessions. |
 
 ## 2. Size (PR-PRQ-020 … 024)
 
@@ -90,7 +91,7 @@ AI assistance: <!-- tools used, e.g. "Claude Code (cloud) wrote the implementati
 | --- | --- |
 | `PR-PRQ-030` | Agents MAY apply freely: `ci:full` (run the matrix on a Draft), `review:deep` (request a Greptile review), `needs-tests` (declares tests are missing with the reason and a follow-up issue; blocks auto-merge until removed by the maintainer or replaced by tests), `stacked`, `area/*` corrections. |
 | `PR-PRQ-031` | Agents MAY apply with a written reason in the PR body: `docs:not-needed` (`Docs not needed because:` line) and `size:override` (`Size override:` line). Both are listed in the weekly audit report and may be reverted by the maintainer. |
-| `PR-PRQ-032` | Only automation applies `gate` (from CODEOWNERS paths) and `size/*`; only the maintainer applies `gate:approved`, `priority/P0`, `breaking-change` (after confirming), `backport`. |
+| `PR-PRQ-032` | Only automation applies `gate` (from CODEOWNERS paths) and `size/*`; only the maintainer applies `gate:approved` (or the backup admin while the handoff state is active, `PR-REV-010`, `PR-REV-012`), `priority/P0`, `breaking-change` (after confirming), `backport`. |
 | `PR-PRQ-033` | Removing a label that automation applied is forbidden; the automation re-applies it and posts a comment. |
 | `PR-PRQ-034` | Label definitions and colours live in `.github/labels.yml` ([36](36-issues-labels-and-projects.md)). |
 

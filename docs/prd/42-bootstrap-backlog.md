@@ -2,17 +2,17 @@
 
 The first issues to open, in dependency order. Each becomes a `type/task` issue (or an epic with sub-issues) with the labels shown, `phase/0-foundation`, milestone `0 Foundation`, and the requirement references. Items marked **H** need the maintainer's hands (GitHub settings, accounts, keys); everything else can be done by an agent in a PR. Sizes are T-shirt estimates for one PR each.
 
-## A. Organization and repository (H)
+## A. Account and repository (H)
 
 | # | Task | Labels | Refs | Size |
 | --- | --- | --- | --- | --- |
-| 1 | Create the `tlilli` GitHub organization (free), enable 2FA requirement, base permission read, Actions allow-list, fork-PR approval; transfer `bioedca/Tlilli` → `tlilli/tlilli`; verify redirects | `area/repo`, `gate` | D-013, [39](39-github-configuration.md) §1 | S |
+| 1 | Account settings: 2FA on; designate a GitHub account successor; confirm Pro (Student Developer Pack) status and note its expiry in `docs/dev/github-settings.md`. Repository settings: Actions allow-list, default workflow permissions read, fork-PR approval; add the backup admin collaborator before v1.0 (admin on the repository, CODEOWNERS entry, allowed `release` environment reviewer) | `area/repo`, `gate` | D-057, [39](39-github-configuration.md) §1 | S |
 | 2 | Repository settings: rebase-merge only, auto-delete branches, auto-merge, Discussions off until v0.2, Wiki off, topics, description, website | `area/repo`, `gate` | [39](39-github-configuration.md) §2 | XS |
 | 3 | Install apps: Codex (automatic reviews off), CodeRabbit (OSS plan), Greptile (label trigger), Codecov, DCO, Zenodo; record permissions in `docs/dev/github-settings.md` | `area/repo`, `gate` | [32](32-code-review.md) §2, [39](39-github-configuration.md) §5 | S |
-| 4 | Create environment `release` with required reviewer; create fine-grained PATs `RELEASE_PLZ_TOKEN`, `PROJECT_TOKEN`; crates.io trusted-publisher entries (after first crate exists) | `area/release`, `gate` | `PR-CI-007`, [39](39-github-configuration.md) §5 | S |
+| 4 | Create environment `release` (required reviewers: maintainer, backup admin once named; `v*` tags and `main`) for the signing keys and packaging tokens, and environment `automation` (no reviewer; `main` only) for `RELEASE_PLZ_TOKEN` and `PROJECT_TOKEN`; create those fine-grained PATs; create the repository Actions variable `HANDOFF_ACTIVE=false`; crates.io trusted-publisher entries (after first crate exists) | `area/release`, `gate` | `PR-CI-007`, [39](39-github-configuration.md) §5 | S |
 | 5 | Generate the updater minisign keypair offline; store per `PR-REL-034`; add public key to `tauri.conf.json` (task 14) and private key to `release` | `area/release`, `gate` | `PR-REL-034`, T-09 | XS |
 | 6 | Create the Project "Tlilli roadmap" with fields and views; create milestones `0 Foundation` … `v1.0 Public`, `post-1.0` | `area/repo` | [36](36-issues-labels-and-projects.md) §3–4 | S |
-| 7 | Create the private companion repo `bioedca/tlilli-release-rehearsal` (user-owned) and the `tlilli/homebrew-tap` repo (empty cask skeleton) | `area/release` | [39](39-github-configuration.md) §6, `PR-REL-021` | XS |
+| 7 | Create the private companion repo `bioedca/tlilli-release-rehearsal` (user-owned) and the `bioedca/homebrew-tlilli` tap repo (empty cask skeleton); grant the backup admin admin access to both once named | `area/release` | [39](39-github-configuration.md) §6, `PR-REL-021` | XS |
 | 8 | Start the trademark search (USPTO, EUIPO, WIPO GBD; classes 9, 42); record result in the decision log before `v0.1.0`; prepare `scripts/rename.sh` | `area/repo`, `gate` | D-035, R-07 | S |
 
 ## B. Legal and project files
@@ -21,7 +21,7 @@ The first issues to open, in dependency order. Each becomes a `type/task` issue 
 | --- | --- | --- | --- | --- |
 | 9 | Replace root `LICENSE` with Apache-2.0; add `skills/LICENSE` (MIT), `NOTICE`, SPDX headers policy and a `reuse`-style check in CI; license roadmap paragraph in README | `area/repo`, `gate` | D-003, `PR-ARCH-003` | S |
 | 10 | Add `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), `SECURITY.md`, `SUPPORT.md`, `GOVERNANCE.md`, `CITATION.cff` (validated), `.github/FUNDING.yml`; README per `PR-DOC-006` | `area/docs`, `gate` | [35](35-documentation.md) §4, `PR-SEC-001` | M |
-| 11 | Rewrite `CLAUDE.md` and add `AGENTS.md`: layout incl. `tlilli-cli`, commands, pointer to CONTRIBUTING and this PRD, agent git rules (`PR-GIT-050..058`), `## Code Review Rules` for Codex; set the agent git identity instructions | `area/repo`, `gate` | D-002, D-014, D-055, [30](30-git-workflow.md) §4 | S |
+| 11 | Rewrite `CLAUDE.md` and add `AGENTS.md`: layout incl. `tlilli-cli`, commands, pointer to CONTRIBUTING and this PRD, agent git rules (`PR-GIT-050..059`; the no-session-URL rule is added to both files by pull request #3, so verify it is present and in step), `## Code Review Rules` for Codex; set the agent git identity instructions; keep the two files in step | `area/repo`, `gate` | D-002, D-014, D-055, [30](30-git-workflow.md) §4 | S |
 
 ## C. Workspace skeleton
 
@@ -39,7 +39,7 @@ The first issues to open, in dependency order. Each becomes a `type/task` issue 
 | --- | --- | --- | --- | --- |
 | 17 | `.github/labels.yml` + `labels-sync.yml`; `.github/labeler.yml` (area, gate, review:deep) + `labeler.yml` workflow; prune default labels | `area/ci`, `gate` | D-040, `PR-REV-014` | S |
 | 18 | Issue forms (nine) + `config.yml`; `PULL_REQUEST_TEMPLATE.md` | `area/ci`, `gate` | D-041, [31](31-pull-requests.md) §3 | M |
-| 19 | `CODEOWNERS` with the gated paths; `gate.yml` implementing `gate/maintainer` (approval or `gate:approved`, reset on push, actor check) | `area/ci`, `gate` | D-022, D-053, `PR-REV-010..015` | M |
+| 19 | `CODEOWNERS` with the gated paths (owners: `@bioedca`, plus the backup admin once named); `gate.yml` implementing `gate/maintainer` (approval or `gate:approved` by the maintainer, or by the backup admin only while the `HANDOFF_ACTIVE` variable is `true`; reset on push; actor check); the backup admin's CODEOWNERS entry lands in this same PR, never before the check | `area/ci`, `gate` | D-022, D-053, `PR-REV-010..015` | M |
 | 20 | `ci.yml` rewrite: Linux lane jobs (`rust-lint`, `rust-test` with llvm-cov, `ui`, `docs-build`, `commits`, `size/limit`, `docs/contract-sync`, `protocol-ref/drift`, `workflows/zizmor`, `tauri/linux`, `e2e/smoke`) and the Draft-gated matrix (`build/*`); `commitlint.config.mjs`; `codecov.yml`; all actions SHA-pinned | `area/ci`, `gate` | [33](33-ci-cd.md) §2, D-050 | L (split: lint/test; ui/docs; commits/size/sync; matrix) |
 | 21 | `codeql.yml`, `scorecard.yml`, `dependabot.yml` (grouped), `dependabot-automerge.yml` | `area/ci`, `gate` | D-051, `PR-MNT-010` | S |
 | 22 | `nightly.yml` (fuzz skeleton, Playwright full, lychee, deny advisories, criterion) and `weekly.yml` (mutants, label audit, stale sweep, budget ledger summary) with tracking issues | `area/ci`, `gate` | [33](33-ci-cd.md) §1, `PR-CI-014` | M |
@@ -47,7 +47,7 @@ The first issues to open, in dependency order. Each becomes a `type/task` issue 
 | 24 | `release-plz.toml`, `cliff.toml`, `release-plz.yml` (release PR + tag + trusted publishing), `CITATION.cff` version script | `area/release`, `gate` | D-025, [37](37-releases-and-packaging.md) §2 | M |
 | 25 | `release.yml` (tauri-action matrix → draft release, SBOM, checksums, attestations, verify) and `prerelease.yml`; rehearse in the companion repo with `dry_run` | `area/release`, `gate` | [37](37-releases-and-packaging.md) §2, `PR-CI-018` | L (split: build; sbom/checksums; attest/verify; prerelease) |
 | 26 | `post-release.yml` (tap bump, winget, updates JSON, Zenodo check, announcement draft); Flathub manifest deferred to v1.0 | `area/release`, `gate` | `PR-REL-021..025` | M |
-| 27 | Ruleset `main` (no bypass, PR, linear, queue, conversation resolution, required checks from task 20), ruleset `tags v*`; export JSON to `docs/dev/github-settings.md` (H) | `area/repo`, `gate` | D-010, D-011, [39](39-github-configuration.md) §3 | S |
+| 27 | Ruleset `main` (no bypass, PR required, linear history, branch up to date before merging, conversation resolution, required checks from task 20), ruleset `tags v*`; export JSON to `docs/dev/github-settings.md` (H) | `area/repo`, `gate` | D-010, D-011, [39](39-github-configuration.md) §3 | S |
 
 ## E. Documentation and developer environment
 
@@ -63,8 +63,10 @@ The first issues to open, in dependency order. Each becomes a `type/task` issue 
 
 Run [G0](40-roadmap-and-gates.md#gate-g0-phase-0-foundation): audit checklist passes; an agent PR on an ungated path merges with zero human clicks; a gated PR is blocked until `gate:approved`; release workflows rehearsed; docs site deployed; all required checks reporting. File the Gate test report; open milestone `v0.1 Black ink` with its epics (one per FR group in [10](10-fr-v0.1-black-ink.md)).
 
-## G. Interim rules until the org move (task 1) completes
+## G. Rules that follow from staying on the personal account (D-057)
 
-- Merge queue cannot be enabled on a user-owned repo: the `main` ruleset uses "require branches to be up to date before merging" instead, and auto-merge still applies (R-14).
-- CODEOWNERS uses `@bioedca` until the `maintainers` team exists.
-- All other rules apply unchanged.
+- Merge queue is organization-only, so the `main` ruleset uses "require branches to be up to date before merging" with auto-merge; agents rebase their Ready PRs whenever `main` moves (`PR-GIT-042`, `PR-GIT-045`).
+- CODEOWNERS names `@bioedca`; there are no teams.
+- Succession uses GitHub's account-successor setting plus a backup admin on the repository ([38](38-maintenance-and-support.md) §8).
+- Channel identifiers follow the account: `bioedca/homebrew-tlilli`, `io.github.bioedca.Tlilli`, attestations against `bioedca/Tlilli` (D-058).
+- An organization move is reconsidered only when contributions or funding cover an organization plan; if it happens, a new decision records the move with its own timing (D-013's "before v0.1" condition stays superseded) and the merge queue replaces the up-to-date rule.
