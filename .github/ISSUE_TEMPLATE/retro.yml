@@ -1,0 +1,77 @@
+---
+# Retrospective. Fields and labels: docs/prd/36-issues-labels-and-projects.md
+# §1 and §5; review metrics: docs/prd/32-code-review.md §7.
+name: Retrospective
+description: >-
+  After each gate: what went well, what hurt, and what changes. Each change
+  becomes a decision entry or an issue.
+title: "[retro]: "
+labels:
+  - type/retro
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Filed after the gate report, pass or fail. Lessons that change the
+        process become decision-log entries in
+        `docs/prd/41-risks-and-decision-log.md` or issues; nothing stays
+        only in this thread.
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Phase
+      options:
+        - 0 Foundation
+        - v0.1 Black ink
+        - v0.2 Red ink
+        - v0.3 Ledger
+        - v0.4 Sweep and style
+        - v0.5 Beyond the article
+        - v1.0 Public
+        - post-1.0
+    validations:
+      required: true
+  - type: textarea
+    id: went-well
+    attributes:
+      label: What went well
+    validations:
+      required: true
+  - type: textarea
+    id: hurt
+    attributes:
+      label: What hurt
+      description: Friction, rework, waiting, surprises; name the cause.
+    validations:
+      required: true
+  - type: textarea
+    id: changes
+    attributes:
+      label: Process changes proposed
+      description: >-
+        One per line; each becomes a decision entry (D-nnn) or an issue, and
+        the retro links to it when filed.
+      placeholder: |
+        - ...
+        - ...
+    validations:
+      required: true
+  - type: textarea
+    id: review-metrics
+    attributes:
+      label: Review-lane metrics summary
+      description: >-
+        Rounds per PR per lane; findings per lane by severity and outcome
+        (fixed, declined, false positive); Draft-to-Ready and Ready-to-merged
+        times; share of zero-touch merges; gate turnaround.
+    validations:
+      required: true
+  - type: textarea
+    id: budget
+    attributes:
+      label: Budget use
+      description: >-
+        CodeRabbit requests, Greptile reviews, Codex cloud rounds and Actions
+        minutes used in the phase, against the plan limits.
+    validations:
+      required: true

@@ -1,0 +1,86 @@
+---
+# Task / chore. Fields and labels: docs/prd/36-issues-labels-and-projects.md §1;
+# Definition of Ready in §6.
+name: Task / chore
+description: >-
+  Scoped work with testable acceptance criteria, sized for one pull request.
+title: "[task]: "
+labels:
+  - type/task
+  - status/triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A task is Ready for an agent when it has type, area, priority, phase
+        and milestone, names requirement IDs, has acceptance criteria an
+        agent can test, and is sized at most M (about 400 changed lines).
+        Larger work is an epic with sub-issues sized to one PR each.
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What exists when this is done, and why it matters.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: A checklist an agent or reviewer can verify.
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+  - type: input
+    id: requirements
+    attributes:
+      label: Requirement IDs
+      description: >-
+        From docs/prd: FR-, NFR-, PR- rules or D- decisions this implements.
+      placeholder: "PR-CI-004, D-041"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: The area labels this touches; at least one.
+      multiple: true
+      options:
+        - core
+        - mcp
+        - cli
+        - tauri
+        - ui
+        - skills
+        - docs
+        - ci
+        - release
+        - deps
+        - fixtures
+        - repo
+    validations:
+      required: true
+  - type: dropdown
+    id: size
+    attributes:
+      label: Size estimate
+      description: >-
+        T-shirt size. XS ≤ 50 changed lines, S ≤ 150, M ≤ 400, L ≤ 800,
+        XL above that. Anything above M is split before it becomes Ready.
+      options:
+        - XS
+        - S
+        - M
+        - L
+        - XL
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Issues or PRs that must land first, as links.
+      placeholder: |
+        - #12
+        - #15

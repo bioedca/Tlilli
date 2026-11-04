@@ -1,0 +1,17 @@
+---
+# Issue chooser configuration: docs/prd/36-issues-labels-and-projects.md §1.
+# Blank issues are off; every issue goes through one of the nine forms.
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security issue
+    url: https://github.com/bioedca/Tlilli/security/advisories/new
+    about: >-
+      Vulnerabilities go through private vulnerability reporting, never
+      through a public issue (PR-SEC-004).
+  - name: Documentation
+    url: https://bioedca.github.io/Tlilli/
+    about: Tutorials, how-to guides, reference and explanation.
+# Added at v0.2 when Discussions are enabled (D-042, PRD 36 §8):
+#   - name: Questions
+#     url: https://github.com/bioedca/Tlilli/discussions/categories/q-a
+#     about: Ask in Discussions Q&A; questions are not issues.

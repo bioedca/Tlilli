@@ -1,0 +1,94 @@
+---
+# Protocol change. Fields and labels: docs/prd/36-issues-labels-and-projects.md
+# §1. The MCP surface is a gated path, hence the `gate` label.
+name: Protocol change
+description: >-
+  A change to an MCP tool, resource or prompt: its schema, its guardrails or
+  its behaviour. Gated.
+title: "[protocol]: "
+labels:
+  - type/protocol
+  - area/mcp
+  - gate
+  - status/triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The MCP server is the only door for agents, and every write tool
+        produces suggestions, comments or allow-listed mechanical edits; no
+        tool overwrites author text. A change that weakens that is declined.
+        Shape rules: `docs/prd/11-fr-v0.2-red-ink.md` §11.3 and §11.4,
+        and `docs/prd/22-security-and-threat-model.md`.
+  - type: input
+    id: affected
+    attributes:
+      label: Tool, resource or prompt affected
+      placeholder: >-
+        suggest_replace · tlilli://manuscript/{id}/section/{sid} · run
+    validations:
+      required: true
+  - type: textarea
+    id: schema
+    attributes:
+      label: Proposed schema
+      description: >-
+        The input and output JSON Schema after the change, or the new
+        resource or prompt definition.
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: guardrails
+    attributes:
+      label: Guardrail impact
+      description: >-
+        Scope (claimed sections, locked spans), allow-lists (edit kinds,
+        mechanical edits), limits (alternatives, budgets, timeouts) and
+        refusals: what changes and what stays.
+    validations:
+      required: true
+  - type: dropdown
+    id: compatibility
+    attributes:
+      label: Backwards compatibility
+      description: >-
+        Additive keeps every existing client working; deprecation keeps the
+        old shape for one minor with a warning; breaking requires clients to
+        change and a `BREAKING CHANGE:` footer.
+      options:
+        - Additive
+        - Deprecation
+        - Breaking
+    validations:
+      required: true
+  - type: textarea
+    id: docs-skills
+    attributes:
+      label: Docs and skills to update
+      description: >-
+        Reference pages (generated under docs/reference/mcp), how-tos, and
+        the skills or prompt mirrors that teach this tool.
+    validations:
+      required: true
+  - type: textarea
+    id: transcripts
+    attributes:
+      label: Transcripts to add
+      description: >-
+        Golden JSON-RPC transcripts under tests/fixtures/transcripts: one
+        success transcript and one per refusal for every tool or field added
+        or changed (PR-TST-017).
+    validations:
+      required: true
+  - type: dropdown
+    id: adr
+    attributes:
+      label: ADR needed?
+      description: >-
+        An architecture decision record is needed when the change picks
+        between alternatives that bind later phases.
+      options:
+        - "Yes: a new ADR"
+        - "No: covered by an existing ADR or decision entry"
+        - Unsure

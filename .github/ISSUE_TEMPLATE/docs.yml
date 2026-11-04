@@ -1,0 +1,49 @@
+---
+# Documentation. Fields and labels: docs/prd/36-issues-labels-and-projects.md
+# §1; structure: docs/prd/35-documentation.md §2.
+name: Documentation
+description: A page that is wrong, missing, unclear or out of date.
+title: "[docs]: "
+labels:
+  - type/docs
+  - area/docs
+  - status/triage
+body:
+  - type: input
+    id: page
+    attributes:
+      label: Page
+      description: >-
+        URL on https://bioedca.github.io/Tlilli/ or path under docs/. For a
+        missing page, the place where you looked for it.
+      placeholder: "https://bioedca.github.io/Tlilli/how-to/install-skills/"
+    validations:
+      required: true
+  - type: dropdown
+    id: problem
+    attributes:
+      label: Problem
+      options:
+        - wrong
+        - missing
+        - unclear
+        - out of date
+    validations:
+      required: true
+  - type: dropdown
+    id: quadrant
+    attributes:
+      label: Diátaxis quadrant
+      description: >-
+        Tutorials teach, how-tos guide a task, reference describes,
+        explanation discusses; a page does one of these.
+      options:
+        - Tutorial
+        - How-to guide
+        - Reference
+        - Explanation
+  - type: textarea
+    id: proposed
+    attributes:
+      label: Proposed text
+      description: What the page should say instead, if you have a draft.
