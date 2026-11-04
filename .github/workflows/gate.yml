@@ -34,10 +34,10 @@
 #   is left.
 # - A gated PR succeeds when a gate authority approved the current head against the current base, by:
 #   * a review in state APPROVED on the head SHA, submitted after the last base change; or
-#   * the `gate:approved` label, whose latest `labeled` event is by a gate authority and later than the
-#     last base change, with its approval record: when an authority applies the label, that `labeled`
-#     run writes the commit status `gate/approval-record` ("approved-by:<login> base:<ref>") on the PR
-#     head of the event. The record counts only on the current head, written by github-actions[bot],
+#   * the `gate:approved` label, whose latest `labeled` event is by a gate authority in person (its
+#     `performed_via_github_app` is null) and later than the last base change, with its approval record:
+#     when an authority applies the label in person, that `labeled` run writes the commit status
+#     `gate/approval-record` ("approved-by:<login> base:<ref>") on the PR head of the event. The record counts only on the current head, written by github-actions[bot],
 #     naming a gate authority and the current base, and created after the last base change. A new push
 #     has no record, so an approval never carries over to new commits (PR-REV-011).
 #   The last base change is the newest `base_ref_changed` timeline event, or the PR's creation. Every time
@@ -48,8 +48,16 @@
 # - Courtesy steps the verdict never depends on: on `synchronize` a `gate:approved` label older than the
 #   push is removed with "gate approval reset by new commits"; on a base change, or when the label
 #   predates the last base change, with "gate approval reset: base changed". A label applied by anyone
-#   else is removed with a comment (PR-REV-012). An authority's label without a valid record is left in
+#   else (PR-REV-012), or through any GitHub App, is removed with a comment and never gets a record. An authority's label without a valid record is left in
 #   place, because its `labeled` run may still be queued; the status then says to remove and re-apply it.
+#
+# Agent sessions act as the maintainer's account through the Claude GitHub App (D-014). A label applied
+# that way carries `performed_via_github_app` in the timeline, so the gate refuses it: `gate:approved`
+# counts only when a gate authority applies it in person (web, mobile, or `gh` with an OAuth token).
+# Reviews carry no such field (REST reviews, timeline `reviewed` events and GraphQL `PullRequestReview`
+# expose none), so an agent session could submit an APPROVED review as the maintainer on a PR the
+# maintainer did not author. Agent PRs are authored as `bioedca`, where GitHub already blocks
+# self-approval; the residual case is contributor PRs, covered only by PR-PRQ-032.
 #
 # Residual risk. On a personal account the ruleset rule "Require workflows to pass" is unavailable
 # (D-057), so a same-repository PR that adds or edits a workflow file could post a forged
@@ -204,6 +212,10 @@ jobs:
               const labelActor = labelEvent?.event === 'labeled' ? lower(labelEvent.actor?.login) : '';
               const labeledAt = labelEvent ? new Date(labelEvent.created_at) : null;
               const who = labelActor ? `@${labelActor}` : 'an unknown actor';
+              // Non-empty when the latest label event was made through a GitHub App (an agent session acting as a user).
+              const via = labelEvent?.performed_via_github_app;
+              const labelApp = labelEvent?.event === 'labeled' && via ? via.slug || 'unknown' : '';
+              const appReset = (slug) => comment(`\`${APPROVED}\` applied through the GitHub App ${slug} was removed: the maintainer applies it in person (PR-PRQ-032).`);
 
               // Handlers for the event of the triggering PR (pull_request_target only; courtesy and the record).
               if (trigger && action === 'synchronize' && labels.has(APPROVED) && !(labeledAt > new Date(ev.pull_request.updated_at))) {
@@ -219,9 +231,13 @@ jobs:
                 if (!authorities.has(sender)) {
                   await removeLabel(APPROVED);
                   await actorReset(`@${sender}`);
-                } else {
-                  // The approval record: this trusted run saw a gate authority apply the label while the PR's
-                  // head and base were those of the event payload.
+                } else if (labelApp) {
+                  await removeLabel(APPROVED);
+                  await appReset(labelApp);
+                } else if (labelEvent?.event === 'labeled' && labelActor === sender) {
+                  // The approval record: this trusted run saw a gate authority apply the label in person while
+                  // the PR's head and base were those of the event payload. If the timeline does not show this
+                  // event as the latest one, no record is written and the evaluation below says to re-apply.
                   const record = `approved-by:${sender} base:${ev.pull_request.base.ref}`;
                   if (record.length > 140) throw new Error(`approval record longer than 140 characters: ${record}`);
                   await setStatus(ev.pull_request.head.sha, 'success', record, RECORD);
@@ -277,6 +293,10 @@ jobs:
                   ignored.push(`label by ${who}: not a gate authority`);
                   await removeLabel(APPROVED);
                   await actorReset(who);
+                } else if (labelApp) {
+                  ignored.push(`label by ${who} through the GitHub App ${labelApp}, not in person`);
+                  await removeLabel(APPROVED);
+                  await appReset(labelApp);
                 } else if (!(labeledAt > lastBaseChange)) {
                   ignored.push(`label by ${who} predates the base change`);
                   await removeLabel(APPROVED);
