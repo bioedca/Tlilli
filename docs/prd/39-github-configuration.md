@@ -55,7 +55,7 @@ Everything the project relies on in GitHub, as a checklist that can be audited. 
 | `.github/CODEOWNERS` | gated paths → `@bioedca` and the backup admin once named ([32](32-code-review.md) §3; the backup admin uses gate authority only during a handoff) |
 | `.github/labels.yml` | label scheme ([36](36-issues-labels-and-projects.md) §2) |
 | `.github/labeler.yml` | path → `area/*`, `gate`, `review:deep` |
-| `.github/ISSUE_TEMPLATE/*.yml`, `config.yml` | nine forms, blank disabled, contact links |
+| `.github/ISSUE_TEMPLATE/*.yml`, `config.yml` | ten forms, blank disabled, contact links |
 | `.github/PULL_REQUEST_TEMPLATE.md` | [31](31-pull-requests.md) §3 |
 | `.github/dependabot.yml` | cargo, npm, github-actions, pip weekly, grouped `patch-minor` and `major`; `open-pull-requests-limit: 5` |
 | `.github/FUNDING.yml` | Sponsors |

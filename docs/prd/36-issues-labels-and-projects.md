@@ -17,6 +17,7 @@ Blank issues are disabled (`config.yml`: `blank_issues_enabled: false`); contact
 | Retrospective | `retro.yml` | `type/retro` | Phase*; What went well*; What hurt*; Process changes proposed* (each becomes a decision or an issue); Review-lane metrics summary*; Budget use* |
 | Documentation | `docs.yml` | `type/docs`, `area/docs`, `status/triage` | Page*; Problem* (wrong / missing / unclear / out of date); Diátaxis quadrant; Proposed text |
 | Agent-session report | `agent-report.yml` | `type/agent-report`, `status/triage` | Agent and session kind*; Branch and PR*; Issue worked*; Done*; Not done*; Blocked by*; Next step for the next session*; Review pipeline state*; Budget notes (CodeRabbit/Greptile requests made) |
+| Question | `question.yml` | `type/question`, `status/triage` | Title prefix `[question]`; Question*; What you tried or where you looked; Tlilli version; Operating system and agent client. The support route for questions until Discussions open at v0.2 (D-042, D-064) |
 
 Rules:
 
