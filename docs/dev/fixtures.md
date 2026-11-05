@@ -1,6 +1,6 @@
 # Fixtures
 
-Test fixtures live under `tests/fixtures/`. Most are synthetic and generated from a seed; a few are open-access papers, and the rest are recorded by the test suites themselves. The policy is `PR-TST-016` in [34 Testing](../prd/34-testing.md) and D-027.
+Test fixtures live under `tests/fixtures/`. Most are synthetic and generated from a seed; a few are open-access papers. The rest are recorded, by the test suites or by a dev script, or kept as one database per released schema version (the table below). The policy is `PR-TST-016` in [34 Testing](../prd/34-testing.md) and D-027.
 
 The file-by-file record of where each fixture comes from and under which license it is committed is [`tests/fixtures/LICENSES.md`](https://github.com/bioedca/Tlilli/blob/main/tests/fixtures/LICENSES.md). That file is a gated path, and it is the source of truth; this page explains how to work with it.
 
