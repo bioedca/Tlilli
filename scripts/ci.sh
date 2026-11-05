@@ -3,11 +3,11 @@
 #   scripts/ci.sh <job>...   run the named jobs in the order given; `all` runs every job in CI order
 #   scripts/ci.sh --help     list the jobs and their commands
 # The first failing command stops the run, and the script exits with that command's status.
-# The commands are today's: the `rust` and `ui` jobs of .github/workflows/ci.yml, the build of
-# docs.yml, and `reuse lint` from docs/dev/licensing.md. The ci.yml rewrite (bootstrap task 20)
-# fills in the pending jobs and moves reuse into `all` once CI runs it. No toolchain is
-# installed: rustup, pnpm, Node 22 and python3 must be on PATH, as in the cloud sandbox and the
-# devcontainer.
+# The commands are today's: the `rust`, `ui` and `tauri/linux` jobs of .github/workflows/ci.yml,
+# the build of docs.yml, and `reuse lint` from docs/dev/licensing.md. The ci.yml rewrite
+# (bootstrap task 20) fills in the pending jobs and moves reuse into `all` once CI runs it. No
+# toolchain is installed: rustup, pnpm, Node 22 and python3 must be on PATH, as in the cloud
+# sandbox and the devcontainer.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -18,9 +18,9 @@ REUSE_VERSION=6.3.0
 # Both lists follow the PRD 33 §2 table. A job moves from PENDING to JOBS when its commands exist.
 # scripts (the tests of these dev scripts) has no row there and runs last. EXTRA jobs run only when
 # named: they are not in CI yet (reuse has no row in the table either).
-JOBS="rust-lint rust-test ui docs-build scripts"
+JOBS="rust-lint rust-test ui docs-build tauri/linux scripts"
 EXTRA="reuse"
-PENDING="commits size/limit docs/contract-sync protocol-ref/drift workflows/zizmor tauri/linux e2e/smoke"
+PENDING="commits size/limit docs/contract-sync protocol-ref/drift workflows/zizmor e2e/smoke"
 
 usage() {
   cat <<'EOF'
@@ -31,6 +31,7 @@ Jobs, in CI order (docs/prd/33-ci-cd.md §2):
   rust-test           cargo test --workspace
   ui                  pnpm -C ui install --frozen-lockfile; pnpm -C ui lint, typecheck, test, build
   docs-build          scripts/docs.sh (mkdocs build --strict); cargo doc --workspace --no-deps
+  tauri/linux         pnpm -C ui install --frozen-lockfile; pnpm -C ui tauri build --no-bundle
   scripts             the tests of ci.sh and gen_fixtures.py under scripts/tests (not in ci.yml yet)
   rust                alias: rust-lint, then rust-test (the `rust` job of today's ci.yml)
   all                 alias: every job above, in that order
@@ -44,11 +45,11 @@ Pending until bootstrap task 20 (`all` skips them; naming one exits with status 
   docs/contract-sync  a change to a contract path also changes docs/
   protocol-ref/drift  regenerate docs/reference/mcp/ and the schemas, then git diff --exit-code
   workflows/zizmor    zizmor and actionlint on .github/workflows
-  tauri/linux         pnpm -C ui tauri build --no-bundle (needs src-tauri/, task 14)
   e2e/smoke           xvfb-run -a pnpm -C ui test:e2e:desktop (needs src-tauri/, task 14)
 
 Not mirrored: the build/* matrix (run on Ready) and codecov/patch/* (the Codecov service).
-A Rust or UI job is skipped when Cargo.toml or ui/package.json is missing, as in ci.yml.
+A Rust or UI job is skipped when Cargo.toml or ui/package.json is missing, as in ci.yml;
+tauri/linux needs both.
 EOF
 }
 
@@ -112,6 +113,17 @@ job_docs_build() {
   fi
 }
 
+# The compile check of the full app: the UI build, then the release shell with the UI embedded,
+# without bundling or signing.
+job_tauri_linux() {
+  [ -f Cargo.toml ] || { skip Cargo.toml; return 0; }
+  [ -f ui/package.json ] || { skip ui/package.json; return 0; }
+  need cargo "rustup; rust-toolchain.toml picks the channel"
+  need pnpm "the version in the packageManager field of ui/package.json"
+  run pnpm -C ui install --frozen-lockfile
+  run pnpm -C ui tauri build --no-bundle
+}
+
 # The dev scripts' own tests: bash and python3 only, no network.
 job_scripts() {
   need python3 "for the gen_fixtures.py tests"
@@ -140,6 +152,7 @@ run_job() {
     rust-test) job_rust_test ;;
     ui) job_ui ;;
     docs-build) job_docs_build ;;
+    tauri/linux) job_tauri_linux ;;
     scripts) job_scripts ;;
     reuse) job_reuse ;;
     *) fail 2 "no such job" ;;

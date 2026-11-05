@@ -62,6 +62,8 @@ pnpm -C ui lint
 pnpm -C ui typecheck
 pnpm -C ui test
 pnpm -C ui build"
+tauri_calls="pnpm -C ui install --frozen-lockfile
+pnpm -C ui tauri build --no-bundle"
 
 check "--help exits 0" "$tmp/full" 0 "" --help
 check "no arguments exit 2" "$tmp/full" 2 ""
@@ -69,7 +71,8 @@ check "an unknown job exits 2 and runs nothing" "$tmp/full" 2 "" rust no-such-jo
 check "a pending job exits 2 and runs nothing" "$tmp/full" 2 "" rust commits
 check "passing jobs run CI's commands in order" "$tmp/full" 0 "$rust_calls
 $ui_calls" rust ui
-check "missing manifests skip the jobs" "$tmp/bare" 0 "" rust-lint rust-test ui
+check "tauri/linux runs CI's no-bundle build" "$tmp/full" 0 "$tauri_calls" tauri/linux
+check "missing manifests skip the jobs" "$tmp/bare" 0 "" rust-lint rust-test ui tauri/linux
 
 fail_on="cargo clippy"
 check "the first failure stops the run with its status" "$tmp/full" 101 "cargo fmt --all --check
