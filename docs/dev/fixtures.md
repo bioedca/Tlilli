@@ -32,6 +32,7 @@ The output depends on the seed and the script alone: one seed gives byte-identic
 | `transcripts` | `tests/fixtures/transcripts/` | recorded by the MCP contract tests |
 | `http` | `tests/fixtures/http/` | recorded and redacted by a dev script (`PR-TST-006`) |
 | `db` | `tests/fixtures/db/` | one database per released schema version (ADR-0004) |
+| `histories` | not committed | private: the maintainer's own revision histories, used locally and at gates |
 
 No fixture is committed yet: each directory arrives with the first test that uses it. `--list` prints the same catalogue with licenses and descriptions.
 
@@ -40,8 +41,8 @@ No fixture is committed yet: each directory arrives with the first test that use
 Follow the steps under "Adding a paper" in `LICENSES.md`. In short:
 
 1. Confirm the license on the publisher's page; only CC-BY (any version) and CC0 are accepted.
-2. Add the files under `papers/<first-author>-<year>-<short-title>/`.
+2. Add the files under `tests/fixtures/papers/<first-author>-<year>-<short-title>/`.
 3. Add the paper's row to `LICENSES.md`, and an `[[annotations]]` table to `REUSE.toml`.
 4. Run `scripts/ci.sh reuse`.
 
-Both files are gated paths, so a pull request that adds a paper needs the maintainer's approval.
+`LICENSES.md` is a gated path, so a pull request that adds a paper needs the maintainer's approval.
