@@ -10,6 +10,16 @@ if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
 fi
 
 cd "${CLAUDE_PROJECT_DIR:-.}" || exit 1
+mkdir -p .cache
+
+# cargo-nextest runs the Rust tests (scripts/ci.sh rust-test), at the version ci.yml installs. Its
+# build takes minutes, so it runs in the background and the session starts at once; the output
+# goes to .cache/cargo-nextest.log. The check comes before the stamp's, so a session whose
+# lockfiles have not changed still gets it.
+NEXTEST_VERSION=0.9.150
+if [ -f Cargo.lock ] && ! command -v cargo-nextest >/dev/null 2>&1; then
+  nohup cargo install --locked "cargo-nextest@$NEXTEST_VERSION" >.cache/cargo-nextest.log 2>&1 &
+fi
 
 stamp=.cache/install_pkgs.sha256
 inputs="scripts/install_pkgs.sh"
@@ -22,7 +32,6 @@ fi
 
 # Delete the old stamp first, so a failed install runs again next session.
 rm -f "$stamp"
-mkdir -p .cache
 ok=1
 
 if [ -f ui/pnpm-lock.yaml ]; then

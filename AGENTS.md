@@ -52,8 +52,8 @@ and ADRs).
 
 - Rust: `cargo build --workspace`, `cargo fmt --all --check`,
   `cargo clippy --workspace --all-targets -- -D warnings` (pedantic subset in `[workspace.lints]` of `Cargo.toml`;
-  `unwrap` denied outside tests), `cargo nextest run --workspace` (`cargo install cargo-nextest --locked` if
-  missing; `ci.yml` runs `cargo test --workspace` until task 20), `cargo test --doc --workspace`.
+  `unwrap` denied outside tests), `cargo nextest run --workspace` (`scripts/install_pkgs.sh` installs it in
+  cloud sessions; elsewhere `cargo install cargo-nextest --locked`), `cargo test --doc --workspace`.
 - Fuzz targets: `cargo check --manifest-path fuzz/Cargo.toml` on stable; `cargo +nightly fuzz run <target>`.
 - CLI and MCP server: `cargo run -p tlilli-cli -- --help`; `cargo run -p tlilli-mcp -- stdio` for dogfooding (also
   registered in `.mcp.json`; until v0.2 it is a placeholder that exits at once).

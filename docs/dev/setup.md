@@ -9,7 +9,8 @@ Clone your own copy. Never share a clone or work in a folder that a sync service
 | Tool | Version | Notes |
 | --- | --- | --- |
 | Rust, through [rustup](https://rustup.rs/) | stable, at least the MSRV in `Cargo.toml` (`rust-version`) | `rust-toolchain.toml` selects stable with `rustfmt` and `clippy`, so rustup installs them on first use |
-| `cargo-nextest` | latest | `cargo install cargo-nextest --locked` |
+| `cargo-nextest` | the version in `ci.yml` | `cargo install cargo-nextest --locked`; runs the tests in `scripts/ci.sh rust-test` |
+| `cargo-deny` | the version in `ci.yml` | `cargo install cargo-deny --locked`; runs the dependency checks in `scripts/ci.sh rust-lint` |
 | Node.js | 22 | |
 | pnpm | the version in `ui/package.json` (`packageManager`) | `corepack enable` provides it |
 | Python | 3 | for `scripts/docs.sh`, which builds its hash-pinned toolchain in `.cache/`, and for `scripts/gen_fixtures.py` and the scripts' tests |
@@ -47,7 +48,7 @@ Install the Microsoft C++ Build Tools with the "Desktop development with C++" wo
 
 Claude Code cloud sessions run on Ubuntu 24.04 with no display. `CLAUDE.md` holds the notes that agents read; in short:
 
-- At session start, `scripts/install_pkgs.sh` installs the UI packages and fetches the crates. It skips the work when the lockfiles, `ui/package.json` and the script itself have not changed since the last successful run.
+- At session start, `scripts/install_pkgs.sh` installs the UI packages and fetches the crates. It skips the work when the lockfiles, `ui/package.json` and the script itself have not changed since the last successful run. When `cargo-nextest` is missing, the script builds it in the background, with the output in `.cache/cargo-nextest.log`.
 - Use `pnpm -C ui tauri build --no-bundle` for the Tauri compile check, and `xvfb-run -a` for WebDriver tests. Do not start `tauri dev`.
 - Playwright cannot download browsers there. Point the browser tests at the preinstalled Chromium:
 
