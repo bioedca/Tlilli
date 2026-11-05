@@ -6,7 +6,7 @@ INTERSECT (Making Good PRs): a good PR makes **one cohesive change**, stays a **
 
 ```
 branch pushed ──▶ Draft PR ──▶ (Linux lane CI, Codex local rounds done, Codex cloud round, CodeRabbit round)
-          ──▶ author marks Ready ──▶ full matrix + gate check + (Greptile if gated)
+          ──▶ author marks Ready ──▶ full matrix + gate check + (Greptile if gate or review:deep)
           ──▶ author enables auto-merge or merges ──▶ branch up to date + checks green ──▶ main
 ```
 
