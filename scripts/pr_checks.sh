@@ -54,6 +54,11 @@ listing() {
     path=${rest#*$'\t'} old=
     # A rename leaves the path empty and sends the old and the new path as the next two fields.
     [[ -n $path ]] || { IFS= read -r -d '' old && IFS= read -r -d '' path; }
+    # The lines below split on tabs and newlines, so a path that holds one cannot be counted.
+    if [[ $path$old == *[$'\t\n']* ]]; then
+      printf 'pr_checks.sh: rename %q: a path with a tab or a newline cannot be checked\n' "$path" >&2
+      exit 2
+    fi
     printf '%s\t%s\t%s\t%s\n' "${rec%%$'\t'*}" "${rest%%$'\t'*}" "$path" "$old"
   done
 }

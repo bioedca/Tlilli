@@ -73,6 +73,10 @@ expect "skips CHANGELOG.md in a release-plz pull request" 0 "size/L" size-label 
 printf '30\t20\tsrc/a.rs\n-\t-\tlogo.bin\n7\t0\tCargo.lock\n' >"$tmp/files.tsv"
 expect "reads a listing from PR_FILES" 0 "size/XS" size-label "PR_FILES=$tmp/files.tsv"
 expect "a missing base exits 2" 2 "no commit nope" size PR_BASE=nope
+commit_lines 1 $'src/tab\tname.rs'
+expect "a path with a tab exits 2" 2 "a path with a tab or a newline" size
+git_ rm -q $'src/tab\tname.rs'
+git_ commit -qm "drop the tab"
 
 # Zero-filled files: 26 of exactly 2 MiB in tests/fixtures/, under names git quotes unless told
 # not to, and one byte more for big.bin.
