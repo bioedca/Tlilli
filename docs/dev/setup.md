@@ -21,7 +21,7 @@ Then, from the repository root:
 pnpm -C ui install --frozen-lockfile
 ```
 
-This installs the UI packages and the lefthook git hooks. On commit, the hooks run rustfmt, clippy and Biome on the staged files, and commitlint on the message. CI runs the same checks in full. `scripts/ci.sh all` runs the CI jobs locally ([Running CI locally](ci.md)).
+This installs the UI packages and the lefthook git hooks. On commit, when Rust files are staged, rustfmt and clippy check the whole workspace; Biome checks only the staged UI files; commitlint checks the message. CI runs rustfmt, clippy and Biome in full; commitlint joins CI with the `commits` job (bootstrap task 20). `scripts/ci.sh all` runs the CI jobs locally ([Running CI locally](ci.md)).
 
 ## Linux (Ubuntu 24.04)
 
@@ -35,7 +35,9 @@ For the desktop end-to-end tests, also install `xvfb` and `webkit2gtk-driver`. R
 
 ## macOS
 
-Install the Xcode Command Line Tools with `xcode-select --install`. Tauri uses the system WebKit, so nothing else is needed.
+Install the Xcode Command Line Tools with `xcode-select --install`. Tauri uses the system WebKit, so the build needs nothing else.
+
+`scripts/docs.sh`, and with it `scripts/ci.sh docs-build`, calls `sha256sum`. If `command -v sha256sum` finds nothing, install GNU coreutils with Homebrew (`brew install coreutils`), which provides it.
 
 ## Windows
 
@@ -45,7 +47,7 @@ Install the Microsoft C++ Build Tools with the "Desktop development with C++" wo
 
 Claude Code cloud sessions run on Ubuntu 24.04 with no display. `CLAUDE.md` holds the notes that agents read; in short:
 
-- At session start, `scripts/install_pkgs.sh` installs the UI packages and fetches the crates. It skips the work when the lockfiles have not changed since the last run.
+- At session start, `scripts/install_pkgs.sh` installs the UI packages and fetches the crates. It skips the work when the lockfiles, `ui/package.json` and the script itself have not changed since the last successful run.
 - Use `pnpm -C ui tauri build --no-bundle` for the Tauri compile check, and `xvfb-run -a` for WebDriver tests. Do not start `tauri dev`.
 - Playwright cannot download browsers there. Point the browser tests at the preinstalled Chromium:
 
@@ -53,7 +55,7 @@ Claude Code cloud sessions run on Ubuntu 24.04 with no display. `CLAUDE.md` hold
     TLILLI_PW_CHROMIUM=/opt/pw-browsers/chromium pnpm -C ui test:e2e
     ```
 
-- GitHub is reached through REST only (`gh api`); the [agent playbook](agent-playbook.md) lists the routes.
+- From the shell, GitHub is reached through REST (`gh api`), because `gh pr` and `gh issue` need GraphQL and are refused. The GitHub MCP tools cover the GraphQL operations, such as marking a pull request Ready. The [agent playbook](agent-playbook.md) lists the routes.
 
 ## Codespaces and dev containers
 
