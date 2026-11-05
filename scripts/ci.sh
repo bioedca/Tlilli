@@ -95,7 +95,7 @@ job_rust_lint() {
 job_rust_test() {
   [ -f Cargo.toml ] || { skip Cargo.toml; return 0; }
   need cargo "rustup; rust-toolchain.toml picks the channel"
-  need cargo-nextest "cargo install cargo-nextest --locked"
+  need cargo-nextest "cargo install cargo-nextest --locked; a cloud session builds it at start, see .cache/cargo-nextest.log"
   run cargo nextest run --workspace --all-features
   run cargo nextest run -p tlilli-core --no-default-features
   run cargo test --doc --workspace
