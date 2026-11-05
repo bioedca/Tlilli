@@ -18,6 +18,11 @@ if [[ -n $STUB_FAIL && $line == "$STUB_FAIL"* ]]; then exit "$STUB_FAIL_STATUS";
 EOF
   chmod +x "$tmp/bin/$tool"
 done
+# The jobs check that the cargo subcommands they call are installed; the cargo stub runs them.
+for tool in cargo-deny cargo-nextest; do
+  printf '#!/bin/bash\n' >"$tmp/bin/$tool"
+  chmod +x "$tmp/bin/$tool"
+done
 
 # make_repo <dir> <file>...: a repository root holding ci.sh and the given (empty) manifests.
 make_repo() {
@@ -55,8 +60,12 @@ check() {
 }
 
 rust_calls="cargo fmt --all --check
-cargo clippy --workspace --all-targets -- -D warnings
-cargo test --workspace"
+cargo clippy --workspace --all-targets --all-features -- -D warnings
+cargo deny check
+cargo doc --workspace --no-deps
+cargo nextest run --workspace --all-features
+cargo nextest run -p tlilli-core --no-default-features
+cargo test --doc --workspace"
 ui_calls="pnpm -C ui install --frozen-lockfile
 pnpm -C ui lint
 pnpm -C ui typecheck
@@ -102,7 +111,7 @@ all_case "all reuse does not name reuse as not run" "ci.sh: not run: $pending (p
 
 fail_on="cargo clippy"
 check "the first failure stops the run with its status" "$tmp/full" 101 "cargo fmt --all --check
-cargo clippy --workspace --all-targets -- -D warnings" rust ui
+cargo clippy --workspace --all-targets --all-features -- -D warnings" rust ui
 
 if [[ $failures -gt 0 ]]; then
   printf '%s test(s) of scripts/ci.sh failed\n' "$failures"

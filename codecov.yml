@@ -1,0 +1,36 @@
+# Codecov (PR-CI-011, PR-TST-011, D-023, PRD 39 §4). The rust-test job of ci.yml uploads one lcov
+# report with all four Rust flags, and each flag's paths select its crate from it. The ui flag
+# arrives with the ui job (bootstrap task 20, part 2).
+codecov:
+  require_ci_to_pass: true
+
+coverage:
+  status:
+    # Reported, never failing: coverage is a floor, not a goal.
+    project:
+      default:
+        informational: true
+    # Required checks on `main` (PR-GIT-043): codecov/patch/tlilli-core and codecov/patch/tlilli-mcp.
+    # A pull request that changes no line of the crate passes its check.
+    patch:
+      tlilli-core:
+        target: 80%
+        flags: [tlilli-core]
+      tlilli-mcp:
+        target: 80%
+        flags: [tlilli-mcp]
+
+flags:
+  tlilli-core:
+    paths: [crates/tlilli-core/]
+  tlilli-mcp:
+    paths: [crates/tlilli-mcp/]
+  tlilli-cli:
+    paths: [crates/tlilli-cli/]
+  app:
+    paths: [src-tauri/]
+
+# A minimal comment, posted only when coverage changes.
+comment:
+  layout: condensed_header, condensed_files
+  require_changes: true

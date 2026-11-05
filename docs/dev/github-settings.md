@@ -79,7 +79,7 @@ All tokens are issued by the maintainer's account and rotated yearly ([PRD 38 §
 | `HOMEBREW_TAP_TOKEN` | `release` | Fine-grained PAT `tlilli-homebrew-tap`: repository `bioedca/homebrew-tlilli`; Contents read/write, Pull requests read/write | 2026-11-04 | 2027-11-03 | Maintainer: stored |
 | `WINGET_TOKEN` | `release` | **Classic** PAT `tlilli-winget`, scope `public_repo` only (D-061) | — | — | Later (task 26, after forking `microsoft/winget-pkgs`) |
 | crates.io | n/a | Trusted publishing (OIDC) per crate for `release-plz.yml`, environment `automation`; first publish of each crate is manual with a short-lived crates.io API token named `tlilli-<crate>-first-publish` (scopes `publish-new` + `publish-update`, 7-day expiry, revoked after use) | — | — | Later (v0.1 for `tlilli-core`; v0.2 for `tlilli-mcp`, `tlilli-cli`) |
-| Codecov | n/a | No token: `codecov/codecov-action` with `use_oidc: true` and `id-token: write` (D-061) | — | — | Later (task 20) |
+| Codecov | n/a | No token: `codecov/codecov-action` with `use_oidc: true` and `id-token: write` (D-061), in the `rust-test` job of `ci.yml` | — | — | In use (task 20) |
 
 ## 6. Updater signing key (`PR-REL-034`, T-09)
 

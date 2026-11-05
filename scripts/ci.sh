@@ -3,11 +3,11 @@
 #   scripts/ci.sh <job>...   run the named jobs in the order given; `all` runs every job in CI order
 #   scripts/ci.sh --help     list the jobs and their commands
 # The first failing command stops the run, and the script exits with that command's status.
-# The commands are today's: the `rust`, `ui` and `tauri/linux` jobs of .github/workflows/ci.yml,
-# the build of docs.yml, and `reuse lint` from docs/dev/licensing.md. The ci.yml rewrite
-# (bootstrap task 20) fills in the pending jobs and moves reuse into `all` once CI runs it. No
-# toolchain is installed: rustup, pnpm, Node 22 and python3 must be on PATH, as in the cloud
-# sandbox and the devcontainer.
+# The commands are today's: the `rust-lint`, `rust-test`, `ui` and `tauri/linux` jobs of
+# .github/workflows/ci.yml, the build of docs.yml, and `reuse lint` from docs/dev/licensing.md. The
+# rest of the ci.yml rewrite (bootstrap task 20) fills in the pending jobs and moves reuse into `all`
+# once CI runs it. No toolchain is installed: rustup, cargo-nextest, cargo-deny, pnpm, Node 22 and
+# python3 must be on PATH, as in the cloud sandbox and the devcontainer.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -27,13 +27,15 @@ usage() {
 Usage: scripts/ci.sh <job>... | all | --help
 
 Jobs, in CI order (docs/prd/33-ci-cd.md §2):
-  rust-lint           cargo fmt --all --check; cargo clippy --workspace --all-targets -- -D warnings
-  rust-test           cargo test --workspace
+  rust-lint           cargo fmt --all --check; cargo clippy --workspace --all-targets --all-features
+                      -- -D warnings; cargo deny check; cargo doc --workspace --no-deps (warnings denied)
+  rust-test           cargo nextest run --workspace --all-features; the same for tlilli-core with
+                      --no-default-features; cargo test --doc --workspace (CI adds coverage)
   ui                  pnpm -C ui install --frozen-lockfile; pnpm -C ui lint, typecheck, test, build
   docs-build          scripts/docs.sh (mkdocs build --strict); cargo doc --workspace --no-deps
   tauri/linux         pnpm -C ui install --frozen-lockfile; pnpm -C ui tauri build --no-bundle
   scripts             the tests of ci.sh and gen_fixtures.py under scripts/tests (not in ci.yml yet)
-  rust                alias: rust-lint, then rust-test (the `rust` job of today's ci.yml)
+  rust                alias: rust-lint, then rust-test
   all                 alias: every job above, in that order
 
 Runs only when named, until CI runs it (bootstrap task 20):
@@ -47,9 +49,9 @@ Pending until bootstrap task 20 (`all` skips them; naming one exits with status 
   workflows/zizmor    zizmor and actionlint on .github/workflows
   e2e/smoke           xvfb-run -a pnpm -C ui test:e2e:desktop (needs src-tauri/, task 14)
 
-Not mirrored: the build/* matrix (run on Ready) and codecov/patch/* (the Codecov service).
-A Rust or UI job is skipped when Cargo.toml or ui/package.json is missing, as in ci.yml;
-tauri/linux needs both.
+Not mirrored: the build/* matrix (run on Ready), the coverage that rust-test collects under
+cargo-llvm-cov in CI, and codecov/patch/* (the Codecov service). A Rust or UI job is skipped when
+Cargo.toml or ui/package.json is missing; tauri/linux needs both.
 EOF
 }
 
@@ -76,21 +78,27 @@ need() {
 }
 
 skip() {
-  printf 'ci.sh: no %s, so %s is skipped (as by the detect job of ci.yml)\n' "$1" "$job"
+  printf 'ci.sh: no %s, so %s is skipped\n' "$1" "$job"
   status=skipped
 }
 
 job_rust_lint() {
   [ -f Cargo.toml ] || { skip Cargo.toml; return 0; }
   need cargo "rustup; rust-toolchain.toml picks the channel"
+  need cargo-deny "cargo install cargo-deny --locked"
   run cargo fmt --all --check
-  run cargo clippy --workspace --all-targets -- -D warnings
+  run cargo clippy --workspace --all-targets --all-features -- -D warnings
+  run cargo deny check
+  run env RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps
 }
 
 job_rust_test() {
   [ -f Cargo.toml ] || { skip Cargo.toml; return 0; }
   need cargo "rustup; rust-toolchain.toml picks the channel"
-  run cargo test --workspace
+  need cargo-nextest "cargo install cargo-nextest --locked"
+  run cargo nextest run --workspace --all-features
+  run cargo nextest run -p tlilli-core --no-default-features
+  run cargo test --doc --workspace
 }
 
 job_ui() {
