@@ -5,7 +5,7 @@ name: ci
 # PR-GIT-043, which the `main` ruleset requires.
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review, labeled]
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
   push:
     branches: [main]
 
@@ -169,8 +169,8 @@ jobs:
 
   # The checks of a pull request's diff (PRD 33 §2), in scripts/pr_checks.sh, which scripts/ci.sh
   # also runs. The labels and description reach the script through env, never inside a run line
-  # (template injection). Both are the triggering event's: adding a label re-runs the checks,
-  # editing the description does not.
+  # (template injection). Both are the triggering event's: adding or removing a label re-runs the
+  # checks, editing the description does not.
   size-limit:
     name: size/limit
     if: github.event_name == 'pull_request'

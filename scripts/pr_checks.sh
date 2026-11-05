@@ -30,26 +30,27 @@ error() { printf '::error::%s\n' "$*"; status=1; }
 
 has_label() { [[ ",${PR_LABELS:-}," == *",$1,"* ]]; }
 
-# The text after "<key>:" on the first line of the description that starts with it, trimmed.
+# The text after "<key>:" on the first line of the description that starts with it and has some,
+# trimmed: a reason below the template's empty line counts.
 body_value() {
-  printf '%s\n' "${PR_BODY:-}" | awk -v key="$1:" 'index($0, key) == 1 && !found {
-    v = substr($0, length(key) + 1); gsub(/^[ \t\r]+|[ \t\r]+$/, "", v); print v; found = 1 }'
+  printf '%s\n' "${PR_BODY:-}" | awk -v key="$1:" 'index($0, key) == 1 {
+    v = substr($0, length(key) + 1); gsub(/^[ \t\r]+|[ \t\r]+$/, "", v); if (v != "") { print v; exit } }'
 }
 
-# "additions<TAB>deletions<TAB>path" for each changed file: a renamed file under its new path, a
-# binary file with "-" for both counts.
+# "additions<TAB>deletions<TAB>path<TAB>old path" for each changed file: the old path only for a
+# rename, "-" for both counts of a binary file.
 listing() {
   if [[ -n ${PR_FILES:-} ]]; then
     cat "$PR_FILES"
     return
   fi
-  local rec rest path
+  local rec rest path old
   git diff --numstat -z -M "$base...$head" | while IFS= read -r -d '' rec; do
     rest=${rec#*$'\t'}
-    path=${rest#*$'\t'}
+    path=${rest#*$'\t'} old=
     # A rename leaves the path empty and sends the old and the new path as the next two fields.
-    [[ -n $path ]] || { IFS= read -r -d '' path && IFS= read -r -d '' path; }
-    printf '%s\t%s\t%s\n' "${rec%%$'\t'*}" "${rest%%$'\t'*}" "$path"
+    [[ -n $path ]] || { IFS= read -r -d '' old && IFS= read -r -d '' path; }
+    printf '%s\t%s\t%s\t%s\n' "${rec%%$'\t'*}" "${rest%%$'\t'*}" "$path" "$old"
   done
 }
 
@@ -58,7 +59,7 @@ listing() {
 # release-plz pull request.
 changed_lines() {
   local add del path total=0
-  while IFS=$'\t' read -r add del path; do
+  while IFS=$'\t' read -r add del path _; do
     case $path in
       '' | Cargo.lock | */Cargo.lock | pnpm-lock.yaml | */pnpm-lock.yaml | *.snap | docs/reference/mcp/* | \
         tests/fixtures/* | *.svg | *.png | *.jpg | *.jpeg | *.gif | *.webp | *.ico | *.icns)
@@ -86,8 +87,9 @@ check_size() {
         "size:override label (PR-PRQ-021)"
     fi
   fi
-  # ls-tree -l prints "<mode> <type> <object> <size><TAB><path>" for each file at the head.
-  caps=$(git ls-tree -r -l "$head" | awk -F '\t' '
+  # ls-tree -l prints "<mode> <type> <object> <size><TAB><path>" for each file at the head; -z
+  # ends each with a NUL and leaves the path unquoted, so a non-ASCII name still matches its directory.
+  caps=$(git ls-tree -r -l -z "$head" | awk 'BEGIN { RS = "\0"; FS = "\t" }
     { split($1, f, / +/); size = f[4] + 0
       if (size > 2097152) printf "%s is %.1f MiB, over the 2 MiB file cap (PR-GIT-031)\n", $2, size / 1048576
       if ($2 ~ /^tests\/fixtures\//) dir["tests/fixtures/"] += size
@@ -98,17 +100,19 @@ check_size() {
 }
 
 # A change to a contract path changes docs/ too, or the PR has docs:not-needed and a "Docs not
-# needed because: <reason>" line (PR-DOC-001, D-024).
+# needed because: <reason>" line (PR-DOC-001, D-024). Both paths of a rename count.
 check_contract_sync() {
-  local add del path contract="" docs=false
-  while IFS=$'\t' read -r add del path; do
-    case $path in
-      crates/tlilli-mcp/src/tools/* | crates/tlilli-mcp/src/resources/* | crates/tlilli-mcp/src/prompts/* | \
-        skills/* | crates/tlilli-core/src/storage/* | crates/tlilli-cli/src/* | src-tauri/tauri.conf.json)
-        contract="$contract $path"
-        ;;
-      docs/*) docs=true ;;
-    esac
+  local add del path old p contract="" docs=false
+  while IFS=$'\t' read -r add del path old; do
+    for p in "$path" ${old:+"$old"}; do
+      case $p in
+        crates/tlilli-mcp/src/tools/* | crates/tlilli-mcp/src/resources/* | crates/tlilli-mcp/src/prompts/* | \
+          skills/* | crates/tlilli-core/src/storage/* | crates/tlilli-cli/src/* | src-tauri/tauri.conf.json)
+          contract="$contract $p"
+          ;;
+        docs/*) docs=true ;;
+      esac
+    done
   done <<<"$files"
   if [[ -z $contract ]]; then
     printf 'docs/contract-sync: no contract path changed\n'

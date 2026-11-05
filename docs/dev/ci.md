@@ -38,7 +38,7 @@ Pending jobs are named but not run until the rest of the `ci.yml` rewrite (boots
 
 - `size/limit` counts additions and deletions outside the lockfiles, `*.snap`, `docs/reference/mcp/`, `tests/fixtures/`, images and binary files, and outside `CHANGELOG.md` on a `release-plz-*` branch (`PR-PRQ-020`). Above 400 it fails unless the pull request has the `size:override` label and a `Size override: <reason>` line (`PR-PRQ-021`). It also fails on a file over 2 MiB, or on more than 50 MiB in `tests/fixtures/` or in `docs/assets/` (`PR-GIT-031`).
 - `docs/contract-sync` fails when a contract path changes without a change under `docs/`, unless the pull request has the `docs:not-needed` label and a `Docs not needed because: <reason>` line (`PR-DOC-001`). The contract paths are `crates/tlilli-mcp/src/{tools,resources,prompts}/`, `skills/`, `crates/tlilli-core/src/storage/`, `crates/tlilli-cli/src/` and `src-tauri/tauri.conf.json`.
-- Write the reason line first, then add the label: adding a label re-runs CI, editing the description does not.
+- Write the reason line first, then add the label: adding or removing a label re-runs CI, editing the description does not.
 
 ## Related checks
 

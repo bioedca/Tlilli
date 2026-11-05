@@ -60,7 +60,7 @@ commit_lines 21 src/b.rs
 expect "fails above 400 lines" 1 "401 hand-written changed lines exceed" size
 expect "size:override without a reason still fails" 1 "exceed the cap" size \
   PR_LABELS=area/ci,size:override "PR_BODY=Size override: "
-body=$'- [ ] ≤ 400 lines or `Size override: <reason>` below\r\nSize override: generated tables\r\n'
+body=$'- [ ] ≤ 400 lines or `Size override: <reason>` below\r\nSize override:\r\nSize override: generated tables\r\n'
 expect "passes with size:override and a reason line" 0 "over the cap with size:override" size \
   PR_LABELS=size:override,area/ci "PR_BODY=$body"
 expect "a reason line without the label still fails" 1 "exceed the cap" size "PR_BODY=$body"
@@ -74,10 +74,11 @@ printf '30\t20\tsrc/a.rs\n-\t-\tlogo.bin\n7\t0\tCargo.lock\n' >"$tmp/files.tsv"
 expect "reads a listing from PR_FILES" 0 "size/XS" size-label "PR_FILES=$tmp/files.tsv"
 expect "a missing base exits 2" 2 "no commit nope" size PR_BASE=nope
 
-# Zero-filled files: 26 of exactly 2 MiB in tests/fixtures/, one byte more for big.bin.
+# Zero-filled files: 26 of exactly 2 MiB in tests/fixtures/, under names git quotes unless told
+# not to, and one byte more for big.bin.
 new_repo
 mkdir -p "$repo/tests/fixtures"
-for i in $(seq 26); do head -c 2097152 /dev/zero >"$repo/tests/fixtures/f$i.bin"; done
+for i in $(seq 26); do head -c 2097152 /dev/zero >"$repo/tests/fixtures/figuré$i.bin"; done
 head -c 2097153 /dev/zero >"$repo/big.bin"
 git_ add -A
 git_ commit -qm "add binaries"
@@ -94,6 +95,14 @@ expect "passes with docs:not-needed and a reason line" 0 "docs:not-needed: wordi
   contract-sync PR_LABELS=docs:not-needed $'PR_BODY=## Docs\nDocs not needed because: wording only\n'
 commit_lines 2 docs/skills.md
 expect "passes when docs/ changes too" 0 "and docs/ with them" contract-sync
+
+new_repo
+commit_lines 30 skills/tlilli-review/SKILL.md
+git_ switch -q main && git_ merge -q --ff-only feature && git_ switch -q feature
+git_ mv skills/tlilli-review/SKILL.md archive.md
+git_ commit -qm "move the skill out"
+expect "counts a rename out of a contract path" 1 "nothing under docs/: skills/tlilli-review/SKILL.md" \
+  contract-sync
 
 if [[ $failures -gt 0 ]]; then
   printf '%s test(s) of scripts/pr_checks.sh failed\n' "$failures"
