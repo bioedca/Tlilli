@@ -80,7 +80,7 @@ This path is separate from the ordinary handoff above. It relies on the GitHub a
 4. **The new owner rebuilds what is tied to an account:**
     - the `release` and `automation` environments and their secrets, from the inventory in [39](../prd/39-github-configuration.md) §5, with tokens from their own account;
     - the updater key, restored from the backup admin's sealed copy;
-    - the GitHub Apps (CodeRabbit, Greptile, Codex, Codecov, DCO, Zenodo) and the crates.io trusted publisher, re-authorized;
+    - the GitHub Apps (CodeRabbit, Greptile, Codex, Codecov, DCO) and the crates.io trusted publisher re-authorized, and the Zenodo webhook re-registered;
     - GitHub Pages and the custom domain, re-pointed.
 5. **The Homebrew, winget and Flathub manifests keep working**, because they reference the transferred repository.
 6. **The new owner designates a new backup admin and a new successor**, and records everything in [the GitHub settings record](github-settings.md).
