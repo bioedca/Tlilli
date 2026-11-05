@@ -18,7 +18,7 @@ INTERSECT Packaging rules adopted: one version source; SemVer as an abbreviated 
 ## 2. Release flow (stable)
 
 ```
-commits on main ──▶ release-plz keeps "chore(release): vX.Y.Z" PR updated (versions, CHANGELOG, CITATION.cff)
+commits on main ──▶ release-plz keeps "chore(release): vX.Y.Z" PR updated (versions; CHANGELOG, CITATION.cff added by the workflow)
                 ──▶ maintainer approves (gate) ──▶ auto-merge lands it once the branch is up to date and checks pass
                 ──▶ release-plz creates tag vX.Y.Z, publishes crates (trusted publishing)
                 ──▶ release.yml: build matrix → DRAFT GitHub Release (bundles, latest.json, .sig)
@@ -31,12 +31,11 @@ commits on main ──▶ release-plz keeps "chore(release): vX.Y.Z" PR updated 
 
 ```toml
 [workspace]
-changelog_update = true
-changelog_config = "cliff.toml"          # Keep a Changelog groups mapped from commit types
+changelog_update = false                 # CHANGELOG.md comes from git-cliff (below, D-081)
 git_release_enable = false               # tauri-action creates the GitHub Release
-git_tag_enable = true
 git_tag_name = "v{{ version }}"          # one tag for the whole workspace
-pr_name = "chore(release): v{{ version }}"
+git_tag_enable = false                   # created by tlilli-app, released last
+pr_name = "chore(release): v{{ version }}"   # also the release commit's message
 pr_labels = ["release", "gate"]
 pr_draft = false
 semver_check = false                     # true for tlilli-core from v1.0
@@ -63,15 +62,15 @@ publish = false  # until v0.2 (PR-REL-024)
 name = "tlilli-app"       # src-tauri
 version_group = "tlilli"
 publish = false
-
-[[package]]
-name = "tlilli-fuzz"
-release = false
+git_only = true           # takes part although its manifest says publish = false
+git_tag_enable = true     # release-plz skips a crate whose tag exists, so the tag comes last
 ```
 
 `tlilli-mcp` and `tlilli-cli` publish from v0.2 (`PR-REL-024`). Until then their manifests carry `publish = false` and the entries above match; one gated PR removes both flags before the v0.2 release PR is cut, because release-plz builds the release PR from `main` (ADR-0001, D-077).
 
-`cliff.toml` maps commit types to Keep a Changelog headings ([35](35-documentation.md) `PR-DOC-010`), links issues and PRs, and omits `ci`, `chore(deps)`, `docs` from the user-facing changelog while keeping them in the GitHub release "Full changelog" link.
+release-plz counts only the commits that touch a crate's own files, for its changelogs and for its version bumps. So `release-plz.yml` writes `CHANGELOG.md` with git-cliff over every commit, and `CITATION.cff` with `scripts/citation_version.py`, on the release PR's branch, in a commit authored by `github-actions[bot]` (D-081). A change confined to `ui/`, `skills/` or `docs/` starts no release PR: such a release starts with a pull request that raises `[workspace.package] version`, which release-plz keeps.
+
+`cliff.toml` maps commit types to Keep a Changelog headings ([35](35-documentation.md) `PR-DOC-010`), links the pull requests, and omits `ci`, `chore`, `docs`, `test`, `build` and `style` commits, and those scoped `ci`, `docs`, `prd`, `repo` or `fixtures`, from the user-facing changelog; they stay in the GitHub release's "Full changelog" link. A `Security:` footer keeps a commit of any type.
 
 **`release.yml` jobs**
 
