@@ -18,28 +18,28 @@ case "$#:${1-}" in
   *) usage >&2; exit 2 ;;
 esac
 
-cd "$(git rev-parse --show-toplevel)"
+# The repository that holds this script, wherever it is called from.
+cd "$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)"
 committed=docs/reference
-if "$check"; then
-  out=$(mktemp -d)
-  trap 'rm -rf "$out"' EXIT
-else
-  out=$committed
-  # Fully generated directories: start empty so a page the generator no longer writes goes away.
-  rm -rf "$out/mcp" "$out/schemas"
-fi
-
+# Generate into a scratch directory, so a failed run leaves the committed pages untouched.
+out=$(mktemp -d)
+trap 'rm -rf "$out"' EXIT
 tlilli() { cargo run --quiet --locked -p tlilli-cli -- "$@"; }
 tlilli mcp schema --markdown "$out/mcp"
 tlilli schema dump "$out/schemas"
 
-if "$check"; then
-  status=0
-  for path in mcp schemas; do
-    diff -r -u "$committed/$path" "$out/$path" || status=1
-  done
-  if [[ $status -ne 0 ]]; then
-    echo "docs/reference/ is out of date: run scripts/gen_reference.sh and commit the result" >&2
+status=0
+for path in mcp schemas; do
+  if "$check"; then
+    # CRLF is folded as in the `reference` test, for checkouts that convert line endings.
+    diff -r -u --strip-trailing-cr "$committed/$path" "$out/$path" || status=1
+  else
+    # Replace the whole directory, so a page the generator no longer writes goes away.
+    rm -rf "${committed:?}/$path"
+    mv "$out/$path" "$committed/$path"
   fi
-  exit "$status"
+done
+if [[ $status -ne 0 ]]; then
+  echo "docs/reference/ is out of date: run scripts/gen_reference.sh and commit the result" >&2
 fi
+exit "$status"

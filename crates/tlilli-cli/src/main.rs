@@ -54,6 +54,7 @@ enum SchemaCommand {
     },
 }
 
+/// Parses the command line, runs the command and maps the outcome to an exit code.
 fn main() -> ExitCode {
     let cli = match Cli::try_parse() {
         Ok(cli) => cli,

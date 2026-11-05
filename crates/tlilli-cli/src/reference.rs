@@ -136,6 +136,7 @@ pub fn write_schemas(dir: &Path) -> Result<(), Failure> {
     Ok(())
 }
 
+/// Writes `contents` to `path`, creating the missing parent directories first.
 fn write_file(path: &Path, contents: &str) -> Result<(), Failure> {
     let failure = |at: &Path, error: std::io::Error| format!("{}: {error}", at.display());
     if let Some(parent) = path.parent() {
