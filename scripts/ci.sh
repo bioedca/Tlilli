@@ -3,10 +3,10 @@
 #   scripts/ci.sh <job>...   run the named jobs in the order given; `all` runs every job in CI order
 #   scripts/ci.sh --help     list the jobs and their commands
 # The first failing command stops the run, and the script exits with that command's status.
-# The commands are today's: the `rust-lint`, `rust-test`, `ui`, `docs-build` and `tauri/linux` jobs
-# of .github/workflows/ci.yml, and `reuse lint` from docs/dev/licensing.md. The
-# rest of the ci.yml rewrite (bootstrap task 20) fills in the pending jobs and moves reuse into `all`
-# once CI runs it. No toolchain is installed: rustup, cargo-nextest, cargo-deny, pnpm, Node 22 and
+# The commands are today's: the `rust-lint`, `rust-test`, `ui`, `docs-build`, `size/limit`,
+# `docs/contract-sync` and `tauri/linux` jobs of .github/workflows/ci.yml, and `reuse lint` from
+# docs/dev/licensing.md. The rest of the ci.yml rewrite (bootstrap task 20) fills in the pending
+# jobs and moves reuse into `all` once CI runs it. No toolchain is installed: rustup, cargo-nextest, cargo-deny, pnpm, Node 22 and
 # python3 must be on PATH, as in the cloud sandbox and the devcontainer.
 set -euo pipefail
 
@@ -18,9 +18,9 @@ REUSE_VERSION=6.3.0
 # Both lists follow the PRD 33 §2 table. A job moves from PENDING to JOBS when its commands exist.
 # scripts (the tests of these dev scripts) has no row there and runs last. EXTRA jobs run only when
 # named: they are not in CI yet (reuse has no row in the table either).
-JOBS="rust-lint rust-test ui docs-build tauri/linux scripts"
+JOBS="rust-lint rust-test ui docs-build size/limit docs/contract-sync tauri/linux scripts"
 EXTRA="reuse"
-PENDING="commits size/limit docs/contract-sync protocol-ref/drift workflows/zizmor e2e/smoke"
+PENDING="commits protocol-ref/drift workflows/zizmor e2e/smoke"
 
 usage() {
   cat <<'EOF'
@@ -35,9 +35,13 @@ Jobs, in CI order (docs/prd/33-ci-cd.md §2):
                       --coverage; build; playwright test --grep @smoke (needs a Chromium)
   docs-build          scripts/docs.sh (mkdocs build --strict); scripts/api_docs.sh (rustdoc into
                       site/api) when Cargo.toml exists
+  size/limit          scripts/pr_checks.sh size: hand-written changed lines against origin/main
+                      (cap 400) and the file-size caps
+  docs/contract-sync  scripts/pr_checks.sh contract-sync: a change to a contract path also changes
+                      docs/ (PR_LABELS and PR_BODY stand in for the PR's labels and description)
   tauri/linux         pnpm -C ui install --frozen-lockfile; pnpm -C ui tauri build --no-bundle
-  scripts             the tests of ci.sh, api_docs.sh and gen_fixtures.py under scripts/tests (not in
-                      ci.yml yet)
+  scripts             the tests of ci.sh, api_docs.sh, pr_checks.sh and gen_fixtures.py under
+                      scripts/tests (not in ci.yml yet)
   rust                alias: rust-lint, then rust-test
   all                 alias: every job above, in that order
 
@@ -46,8 +50,6 @@ Runs only when named, until CI runs it (bootstrap task 20):
 
 Pending until bootstrap task 20 (`all` skips them; naming one exits with status 2):
   commits             commitlint on the commits and the PR title, commit count, branch name
-  size/limit          hand-written changed lines and file-size caps
-  docs/contract-sync  a change to a contract path also changes docs/
   protocol-ref/drift  regenerate docs/reference/mcp/ and the schemas, then git diff --exit-code
   workflows/zizmor    zizmor and actionlint on .github/workflows
   e2e/smoke           xvfb-run -a pnpm -C ui test:e2e:desktop (needs src-tauri/, task 14)
@@ -126,6 +128,10 @@ job_docs_build() {
   fi
 }
 
+# The checks of a pull request's diff, on the current branch against origin/main.
+job_size_limit() { run scripts/pr_checks.sh size; }
+job_contract_sync() { run scripts/pr_checks.sh contract-sync; }
+
 # The compile check of the full app: the UI build, then the release shell with the UI embedded,
 # without bundling or signing.
 job_tauri_linux() {
@@ -143,6 +149,7 @@ job_scripts() {
   run python3 -B -m unittest discover -s scripts/tests -p 'test_*.py'
   run scripts/tests/test_ci.sh
   run scripts/tests/test_api_docs.sh
+  run scripts/tests/test_pr_checks.sh
 }
 
 job_reuse() {
@@ -166,6 +173,8 @@ run_job() {
     rust-test) job_rust_test ;;
     ui) job_ui ;;
     docs-build) job_docs_build ;;
+    size/limit) job_size_limit ;;
+    docs/contract-sync) job_contract_sync ;;
     tauri/linux) job_tauri_linux ;;
     scripts) job_scripts ;;
     reuse) job_reuse ;;

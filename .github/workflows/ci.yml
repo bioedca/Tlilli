@@ -1,8 +1,8 @@
 name: ci
 
-# The Linux lane of PRD 33 §2. Bootstrap task 20 lands it in four parts: rust-lint and rust-test,
-# then ui and docs-build. The job ids are the check names of PR-GIT-043, which the `main` ruleset
-# requires.
+# The Linux lane of PRD 33 §2. Bootstrap task 20 lands it in parts: rust-lint and rust-test, then
+# ui and docs-build, then the pull-request checks. The job ids and names are the check names of
+# PR-GIT-043, which the `main` ruleset requires.
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, labeled]
@@ -166,6 +166,49 @@ jobs:
           path: site
           retention-days: 7
           if-no-files-found: error
+
+  # The checks of a pull request's diff (PRD 33 §2), in scripts/pr_checks.sh, which scripts/ci.sh
+  # also runs. The labels and description reach the script through env, never inside a run line
+  # (template injection). Both are the triggering event's: adding a label re-runs the checks,
+  # editing the description does not.
+  size-limit:
+    name: size/limit
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0 # the base and the head commits, for the diff
+          persist-credentials: false
+      - run: scripts/pr_checks.sh size
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
+          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+
+  docs-contract-sync:
+    name: docs/contract-sync
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0 # the base and the head commits, for the diff
+          persist-credentials: false
+      - run: scripts/pr_checks.sh contract-sync
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+          PR_BODY: ${{ github.event.pull_request.body }}
 
   # Compile check of the full app (PRD 33 §2, bootstrap task 14): `tauri build` runs the UI build
   # and compiles the release shell with the UI embedded, without bundling or signing.
