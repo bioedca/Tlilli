@@ -70,7 +70,7 @@ git_tag_enable = true     # release-plz skips a crate whose tag exists, so the t
 
 release-plz counts only the commits that touch a crate's own files, for its changelogs and for its version bumps. So `release-plz.yml` writes `CHANGELOG.md` with git-cliff over every commit, and `CITATION.cff` with `scripts/citation_version.py`, on the release PR's branch, in a commit authored by `github-actions[bot]` (D-081). A change confined to `ui/`, `skills/` or `docs/` starts no release PR: such a release starts with a pull request that raises `[workspace.package] version`, which release-plz keeps.
 
-`cliff.toml` maps commit types to Keep a Changelog headings ([35](35-documentation.md) `PR-DOC-010`), links the pull requests, and omits `ci`, `chore`, `docs`, `test`, `build` and `style` commits, and those scoped `ci`, `docs`, `prd`, `repo` or `fixtures`, from the user-facing changelog; they stay in the GitHub release's "Full changelog" link. A `Security:` footer keeps a commit of any type.
+`cliff.toml` maps commit types to Keep a Changelog headings ([35](35-documentation.md) `PR-DOC-010`), links the pull requests, and omits `ci`, `chore`, `docs`, `test`, `build` and `style` commits, and those scoped `ci`, `docs`, `prd`, `repo` or `fixtures`, from the user-facing changelog; they stay in the GitHub release's "Full changelog" link. A `Security:` footer keeps a commit of any type, and a `build` or `chore` commit that changes the MSRV is kept under Changed (`PR-REL-008`).
 
 **`release.yml` jobs**
 
