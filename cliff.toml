@@ -1,5 +1,5 @@
-# git-cliff configuration for CHANGELOG.md (PR-DOC-010, PRD 37 §2, D-081): the release workflow
-# writes it on the release branch from every commit (git-cliff --tag v0.2.0 --output CHANGELOG.md).
+# git-cliff 2.14.2 or later, which requires every condition of a parser to hold, for CHANGELOG.md
+# (PR-DOC-010, PRD 37 §2, D-081), written on the release branch from every commit (--tag v0.2.0).
 
 [changelog]
 header = """
