@@ -17,7 +17,7 @@ The script installs no toolchain: it expects rustup, cargo-nextest, cargo-deny, 
 | `rust-lint` | `cargo fmt --all --check`, `cargo clippy --workspace --all-targets --all-features -- -D warnings`, `cargo deny check`, then `cargo doc --workspace --no-deps` with warnings denied |
 | `rust-test` | `cargo nextest run --workspace --all-features` (which includes the drift test of the generated reference pages), the same for `tlilli-core` with `--no-default-features`, then `cargo test --doc --workspace` |
 | `ui` | `pnpm -C ui install --frozen-lockfile`, then `exec biome ci .`, `typecheck`, `exec vitest run --coverage`, `build` and the Playwright smoke subset, `exec playwright test --grep @smoke` (it needs a Chromium; see [Setup](setup.md)) |
-| `docs-build` | `scripts/docs.sh` (`mkdocs build --strict`), then `cargo doc --workspace --no-deps` when `Cargo.toml` exists |
+| `docs-build` | `scripts/docs.sh` (`mkdocs build --strict`), then, when `Cargo.toml` exists, `scripts/api_docs.sh`: `cargo doc --workspace --no-deps` into `site/api` with a page that lists the crates |
 | `tauri/linux` | `pnpm -C ui install --frozen-lockfile`, then `pnpm -C ui tauri build --no-bundle` |
 | `scripts` | the tests of `ci.sh` and `gen_fixtures.py` under `scripts/tests/` (not in `ci.yml` yet) |
 | `rust` | an alias for `rust-lint` then `rust-test` |

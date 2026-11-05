@@ -33,7 +33,7 @@ Jobs, in CI order (docs/prd/33-ci-cd.md §2):
                       --no-default-features; cargo test --doc --workspace (CI adds coverage)
   ui                  pnpm -C ui install --frozen-lockfile; biome ci .; typecheck; vitest run
                       --coverage; build; playwright test --grep @smoke (needs a Chromium)
-  docs-build          scripts/docs.sh (mkdocs build --strict); cargo doc --workspace --no-deps
+  docs-build          scripts/docs.sh (mkdocs build --strict); scripts/api_docs.sh (rustdoc in site/api)
   tauri/linux         pnpm -C ui install --frozen-lockfile; pnpm -C ui tauri build --no-bundle
   scripts             the tests of ci.sh and gen_fixtures.py under scripts/tests (not in ci.yml yet)
   rust                alias: rust-lint, then rust-test
@@ -120,7 +120,7 @@ job_docs_build() {
   run scripts/docs.sh
   if [ -f Cargo.toml ]; then
     need cargo "rustup; rust-toolchain.toml picks the channel"
-    run cargo doc --workspace --no-deps
+    run scripts/api_docs.sh
   fi
 }
 
