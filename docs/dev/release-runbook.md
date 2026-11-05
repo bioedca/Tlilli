@@ -19,7 +19,7 @@ The binding sources are [37 Releases and packaging](../prd/37-releases-and-packa
     - The release commit is authored by the `RELEASE_PLZ_TOKEN` user without a sign-off, so the `DCO` check fails on it. Open that check and choose **Set DCO to pass**, again after each update of the pull request (D-081).
     - Approve the gate. Auto-merge lands the pull request once the branch is up to date and the checks pass (`PR-PRQ-010`).
 3. **Watch the publishing workflows.**
-    - `release-plz.yml` creates the tag, using `RELEASE_PLZ_TOKEN` from the `automation` environment, and publishes the crates through crates.io trusted publishing, so no crates.io token is stored.
+    - `release-plz.yml` publishes the crates through crates.io trusted publishing, so no crates.io token is stored, and then creates the tag with `RELEASE_PLZ_TOKEN` from the `automation` environment.
     - `release.yml` builds the draft release, and its `verify` job must pass.
 4. **Edit the draft release notes** (Highlights, Known issues, Upgrade notes, Verify your download), then publish.
 5. **Confirm that `post-release.yml` finished every step:**
