@@ -25,7 +25,7 @@ INTERSECT CI/CD rules adopted: separate CI from CD; CD triggers on tags, with `w
 | `dependabot-automerge.yml` | `pull_request` by `dependabot[bot]` | Enable auto-merge for grouped patch/minor updates after CI; majors left for triage; enabled with `GITHUB_TOKEN`, so its merges start no `push` workflows (D-075) | none |
 | `protocol-ref.yml` | part of `ci.yml` (`protocol-ref/drift` job) | `cargo run -p tlilli-cli -- mcp schema --markdown docs/reference/mcp/` then `git diff --exit-code` | none |
 
-Everything a fork PR triggers runs with `permissions: read-all` and no secrets; privileged workflows use `pull_request_target` without checking out PR code, or run only on `main`/tags.
+Everything a fork PR triggers runs with a read-only token and no secrets; privileged workflows use `pull_request_target` without checking out PR code, or run only on `main`/tags.
 
 ## 2. `ci.yml` in detail
 
@@ -39,7 +39,7 @@ on:
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}  # one group per main run (D-080)
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
-permissions: read-all
+permissions: {}  # each job declares its scopes (PR-CI-003, D-064)
 env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: -D warnings
@@ -114,4 +114,4 @@ README shows: `ci` on `main`, Codecov, Scorecard, latest release, Zenodo DOI, li
 
 ## 7. Security of the pipeline (from the threat register)
 
-T-07, T-08, T-10 mitigations are implemented in this file: pinned SHAs, `zizmor`, read-all permissions, environment-scoped secrets with required reviewer, fork approval, no PR-code checkout in privileged jobs, attestations and SBOMs, Dependabot, CodeQL, Scorecard, `cargo-deny`.
+T-07, T-08, T-10 mitigations are implemented in this file: pinned SHAs, `zizmor`, least-privilege permissions, environment-scoped secrets with required reviewer, fork approval, no PR-code checkout in privileged jobs, attestations and SBOMs, Dependabot, CodeQL, Scorecard, `cargo-deny`.
