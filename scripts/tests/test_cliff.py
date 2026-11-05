@@ -14,6 +14,7 @@ COMMITS = [
     "chore(deps): bump serde from 1.0.1 to 1.0.2",
     "chore(deps): bump openssl\n\nSecurity: RUSTSEC-2026-0001",
     "feat(mcp)!: remove the legacy list tool",
+    "fix(cli): remove the raw alias\n\nBREAKING CHANGE: use --plain",
     "feat(cli): deprecate the raw flag",
     "perf(core): cache the style sheet",
     "build(repo): raise the msrv to 1.98",
@@ -39,6 +40,7 @@ WANT = """## [0.2.0] - DATE
 ### Removed
 
 - **mcp:** **Breaking:** Remove the legacy list tool
+- **cli:** **Breaking:** Remove the raw alias
 
 ### Fixed
 

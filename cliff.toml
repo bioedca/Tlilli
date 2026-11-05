@@ -1,6 +1,5 @@
-# git-cliff configuration for CHANGELOG.md (PR-DOC-010, PRD 37 §2, D-081). The release workflow
-# writes the whole file on the release branch from every commit, ui/, skills/ and docs/ included.
-#   git-cliff --tag v0.2.0 --output CHANGELOG.md   (add --offline to skip the pull request links)
+# git-cliff configuration for CHANGELOG.md (PR-DOC-010, PRD 37 §2, D-081): the release workflow
+# writes it on the release branch from every commit (git-cliff --tag v0.2.0 --output CHANGELOG.md).
 
 [changelog]
 header = """
@@ -42,20 +41,18 @@ trim = false
 [git]
 conventional_commits = true
 filter_unconventional = true
-# A commit that no parser below puts in a group is left out.
-filter_commits = true
-# Only stable tags start a section; the commits of a beta (v0.4.0-beta.2) go into the next one.
-tag_pattern = "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+filter_commits = true # a commit that no parser below puts in a group is left out
+tag_pattern = "^v[0-9]+\\.[0-9]+\\.[0-9]+$" # stable only: a beta's commits go into the next version
 sort_commits = "oldest"
-# The first parser that matches decides. The groups are those of PR-DOC-010. Left out: docs, ci,
-# chore, test, build and style commits, and the scopes of the repository's own tooling and
-# documents, unless a commit carries a "Security:" footer or changes the MSRV (PR-REL-008).
+# The first parser that matches decides; the groups are PR-DOC-010's. Left out: docs, ci, chore,
+# test, build and style commits and the tooling and document scopes, unless a commit has a
+# "Security:" footer or changes the MSRV (PR-REL-008). Removed: breaking ("!" or footer) removals.
 commit_parsers = [
   { message = "^chore\\(release\\)", skip = true },
   { footer = "^(?i)security", group = "<!-- 5 -->Security" },
   { message = "^(build|chore)(\\([a-z]+\\))?!?: .*\\b(msrv|rust-version)\\b", group = "<!-- 1 -->Changed" },
   { message = "^[a-z]+\\((ci|docs|prd|repo|fixtures)\\)", skip = true },
-  { message = "^(feat|fix|refactor|perf)(\\([a-z]+\\))?!: .*\\bremov", group = "<!-- 3 -->Removed" },
+  { message = "^(feat|fix|refactor|perf)(\\([a-z]+\\))?!?: .*\\bremov", field = "breaking", pattern = "true", group = "<!-- 3 -->Removed" },
   { message = "^(feat|fix|refactor|perf)(\\([a-z]+\\))?!?: .*deprecat", group = "<!-- 2 -->Deprecated" },
   { message = "^feat", group = "<!-- 0 -->Added" },
   { message = "^fix", group = "<!-- 4 -->Fixed" },
