@@ -67,10 +67,11 @@ cargo nextest run --workspace --all-features
 cargo nextest run -p tlilli-core --no-default-features
 cargo test --doc --workspace"
 ui_calls="pnpm -C ui install --frozen-lockfile
-pnpm -C ui lint
+pnpm -C ui exec biome ci .
 pnpm -C ui typecheck
-pnpm -C ui test
-pnpm -C ui build"
+pnpm -C ui exec vitest run --coverage
+pnpm -C ui build
+pnpm -C ui exec playwright test --grep @smoke"
 tauri_calls="pnpm -C ui install --frozen-lockfile
 pnpm -C ui tauri build --no-bundle"
 

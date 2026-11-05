@@ -1,7 +1,8 @@
 import { AxeBuilder } from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-test.describe("shell", () => {
+// `@smoke` marks the subset that ci.yml runs on every pull request; nightly runs every spec.
+test.describe("shell @smoke", () => {
   test("loads with the editor and review landmarks", async ({ page }) => {
     await page.goto("/");
 

@@ -1,7 +1,8 @@
 name: ci
 
-# The Linux lane of PRD 33 §2. Bootstrap task 20 lands it in four parts; this one adds rust-lint and
-# rust-test. The job ids are the check names of PR-GIT-043, which the `main` ruleset requires.
+# The Linux lane of PRD 33 §2. Bootstrap task 20 lands it in four parts: rust-lint and rust-test,
+# then ui and docs-build. The job ids are the check names of PR-GIT-043, which the `main` ruleset
+# requires.
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, labeled]
@@ -92,11 +93,14 @@ jobs:
           flags: tlilli-core,tlilli-mcp,tlilli-cli,app
           fail_ci_if_error: true
 
+  # Biome in CI mode, the type check, Vitest with coverage, the build, and the Playwright smoke
+  # subset against the mocked core; the full Playwright suite runs nightly (bootstrap task 22).
   ui:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
       contents: read
+      id-token: write # the Codecov upload authenticates by OIDC; no token is stored (D-061)
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
@@ -110,10 +114,62 @@ jobs:
           cache: pnpm
           cache-dependency-path: ui/pnpm-lock.yaml
       - run: pnpm -C ui install --frozen-lockfile
-      - run: pnpm -C ui lint # Biome
+      - run: pnpm -C ui exec biome ci . # lint and format check; writes nothing
       - run: pnpm -C ui typecheck # tsc --noEmit
-      - run: pnpm -C ui test # Vitest
+      - run: pnpm -C ui exec vitest run --coverage # writes ui/coverage/lcov.info
       - run: pnpm -C ui build
+      - run: pnpm -C ui exec playwright install --with-deps chromium
+      - run: pnpm -C ui exec playwright test --grep @smoke
+      # As in rust-test: no upload from Dependabot's runs, none of which get an OIDC token.
+      - if: github.actor != 'dependabot[bot]'
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          use_oidc: ${{ !github.event.pull_request.head.repo.fork }}
+          files: ui/coverage/lcov.info
+          disable_search: true
+          flags: ui
+          fail_ci_if_error: true
+
+  # The strict MkDocs build with the hash-pinned toolchain, and rustdoc under site/api, as docs.yml
+  # builds them for Pages; the site is kept as an artifact for 7 days (PR-CI-016).
+  docs-build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0 # git-revision-date-localized reads each page's last commit date
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13" # the version docs/requirements.txt was compiled with
+          cache: pip
+          cache-dependency-path: docs/requirements.txt
+      - run: pip install --require-hashes -r docs/requirements.txt
+      - run: mkdocs build --strict
+        env:
+          NO_MKDOCS_2_WARNING: "1" # Material's end-of-life notice, as in docs.yml
+      - name: Tauri 2 Linux prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file \
+            libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+      - name: Toolchain from rust-toolchain.toml
+        run: rustup toolchain install
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - name: API docs under site/api
+        run: |
+          cargo doc --workspace --no-deps
+          mkdir -p site/api
+          cp -R target/doc/. site/api/
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: site
+          path: site
+          retention-days: 7
+          if-no-files-found: error
 
   # Compile check of the full app (PRD 33 §2, bootstrap task 14): `tauri build` runs the UI build
   # and compiles the release shell with the UI embedded, without bundling or signing.

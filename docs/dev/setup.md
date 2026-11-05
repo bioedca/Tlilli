@@ -22,7 +22,7 @@ Then, from the repository root:
 pnpm -C ui install --frozen-lockfile
 ```
 
-This installs the UI packages and the lefthook git hooks. On commit, when Rust files are staged, rustfmt and clippy check the whole workspace; Biome checks only the staged UI files; commitlint checks the message. CI runs rustfmt, clippy and Biome in full; commitlint joins CI with the `commits` job (bootstrap task 20). `scripts/ci.sh all` runs the CI jobs locally ([Running CI locally](ci.md)).
+This installs the UI packages and the lefthook git hooks. On commit, when Rust files are staged, rustfmt and clippy check the whole workspace; Biome checks only the staged UI files; commitlint checks the message. CI runs rustfmt, clippy and Biome in full; commitlint joins CI with the `commits` job (bootstrap task 20). `scripts/ci.sh all` runs the CI jobs locally ([Running CI locally](ci.md)). Its `ui` job runs the Playwright smoke tests, which need Playwright's Chromium: `pnpm -C ui exec playwright install chromium` (the cloud sandbox uses its own, below).
 
 ## Linux (Ubuntu 24.04)
 
