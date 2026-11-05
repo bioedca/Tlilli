@@ -8,9 +8,11 @@ on:
   push:
     branches: [main]
 
-# A newer push to a pull request cancels its older run; runs on `main` are never cancelled (PR-CI-015).
+# A newer push to a pull request cancels its older run. Runs on `main` are never cancelled
+# (PR-CI-015, D-080): each gets its own group, because GitHub replaces a group's pending run
+# with a newer one whatever cancel-in-progress says.
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions: {} # each job declares the scopes it needs (PR-CI-003)
