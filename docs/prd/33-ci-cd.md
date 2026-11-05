@@ -95,7 +95,7 @@ Caching: `Swatinem/rust-cache@<sha>` keyed by lockfile and toolchain; pnpm store
 
 1. `release-plz.yml` on `main`: maintains the release PR (`chore(release): vX.Y.Z`, label `release`, gated).
 2. Maintainer approves and auto-merge lands the release PR.
-3. `release-plz.yml` runs again, sees the merged version bump, creates and pushes annotated tag `vX.Y.Z` with `RELEASE_PLZ_TOKEN`, publishes `tlilli-core`, `tlilli-mcp`, `tlilli-cli` to crates.io via trusted publishing.
+3. `release-plz.yml` runs again, sees the merged version bump, publishes `tlilli-core`, `tlilli-mcp`, `tlilli-cli` to crates.io via trusted publishing, then creates and pushes annotated tag `vX.Y.Z` with `RELEASE_PLZ_TOKEN`.
 4. `release.yml` on the tag: matrix build with tauri-action → **draft** GitHub Release with bundles, `latest.json`, `.sig` files; `sbom` job attaches `sbom.spdx.json`; `checksums` job attaches `SHA256SUMS`; `attest` job signs provenance for every asset with `actions/attest` (Sigstore public-good, SLSA Build L2); `verify` job downloads the assets and runs `gh attestation verify` and size assertions.
 5. Maintainer reviews the draft notes and clicks **Publish** (the last manual gate, D-025).
 6. `post-release.yml` on `release: published`: Homebrew, winget, Flathub, `updates/stable.json`, Zenodo confirmation, announcement draft; `docs.yml` deploys versioned docs (post-1.0).

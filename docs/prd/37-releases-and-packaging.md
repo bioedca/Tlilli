@@ -11,7 +11,7 @@ INTERSECT Packaging rules adopted: one version source; SemVer as an abbreviated 
 | `PR-REL-003` | Breaking changes are declared in commits (`!`, `BREAKING CHANGE:` footer), labelled `breaking-change` on the PR, documented under "Upgrade notes", and in 0.x may occur in minors; the workspace schema and canonical JSON schema versions bump with them. |
 | `PR-REL-004` | Deprecations: a tool, resource, flag or format is marked deprecated (tool description, docs, changelog) for at least one minor before removal; the app logs a warning when a deprecated path is used. |
 | `PR-REL-005` | Rust API of `tlilli-core`: `cargo-semver-checks` runs in the release PR from v1.0 and blocks an incorrect bump. |
-| `PR-REL-006` | Tags are annotated `v<version>`, created only by release-plz (stable) or `prerelease.yml` (beta) under the release token; the tag ruleset forbids update and deletion (`PR-GIT-030`). |
+| `PR-REL-006` | Tags are annotated `v<version>`, created only by `release-plz.yml` (stable, once every crate is published) or `prerelease.yml` (beta) under the release token; the tag ruleset forbids update and deletion (`PR-GIT-030`). |
 | `PR-REL-007` | Skill pack version = app version; `tlilli skills install --check` reports mismatches (`NFR-COMPAT-004`). |
 | `PR-REL-008` | MSRV bumps are minor-level changes noted in the changelog (`rust-version`). |
 
@@ -20,7 +20,7 @@ INTERSECT Packaging rules adopted: one version source; SemVer as an abbreviated 
 ```
 commits on main ──▶ release-plz keeps "chore(release): vX.Y.Z" PR updated (versions; CHANGELOG, CITATION.cff added by the workflow)
                 ──▶ maintainer approves (gate) ──▶ auto-merge lands it once the branch is up to date and checks pass
-                ──▶ release-plz creates tag vX.Y.Z, publishes crates (trusted publishing)
+                ──▶ release-plz publishes crates (trusted publishing), then the workflow tags vX.Y.Z
                 ──▶ release.yml: build matrix → DRAFT GitHub Release (bundles, latest.json, .sig)
                                   + SBOM + SHA256SUMS + attestations + verify job
                 ──▶ maintainer edits notes, clicks Publish (last manual gate)
@@ -34,7 +34,7 @@ commits on main ──▶ release-plz keeps "chore(release): vX.Y.Z" PR updated 
 changelog_update = false                 # CHANGELOG.md comes from git-cliff (below, D-081)
 git_release_enable = false               # tauri-action creates the GitHub Release
 git_tag_name = "v{{ version }}"          # one tag for the whole workspace
-git_tag_enable = false                   # created by tlilli-app, released last
+git_tag_enable = false                   # release-plz.yml tags once every crate is published
 pr_name = "chore(release): v{{ version }}"   # also the release commit's message
 pr_labels = ["release", "gate"]
 pr_draft = false
@@ -63,7 +63,6 @@ name = "tlilli-app"       # src-tauri
 version_group = "tlilli"
 publish = false
 git_only = true           # takes part although its manifest says publish = false
-git_tag_enable = true     # release-plz skips a crate whose tag exists, so the tag comes last
 ```
 
 `tlilli-mcp` and `tlilli-cli` publish from v0.2 (`PR-REL-024`). Until then their manifests carry `publish = false` and the entries above match; one gated PR removes both flags before the v0.2 release PR is cut, because release-plz builds the release PR from `main` (ADR-0001, D-077).
