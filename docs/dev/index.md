@@ -8,7 +8,7 @@ For contributors and for the agents that work on Tlilli. `PR-DOC-013` sets what 
 | Setup | Laptop setup on macOS, Windows and Linux; cloud sandbox notes; Codespaces (`.devcontainer/`) | tasks 30 and 31 |
 | Running CI locally | `scripts/ci.sh` and what each lane checks ([33 CI/CD](../prd/33-ci-cd.md)) | task 30 |
 | [Review severity](review-severity.md) | The scale human and AI reviewers use, and how each tool's labels map onto it ([32 Code review](../prd/32-code-review.md) §6) | published |
-| Release runbook | From tag to published release, step by step ([37 Releases and packaging](../prd/37-releases-and-packaging.md)) | task 30 |
+| [Release runbook](release-runbook.md) | From tag to published release, step by step, and the handoff and successor paths ([37 Releases and packaging](../prd/37-releases-and-packaging.md), [38](../prd/38-maintenance-and-support.md) §8) | published |
 | Fixtures | The synthetic manuscripts and vendored papers under `tests/fixtures/` | task 30 |
 | [Agent playbook](agent-playbook.md) | How an agent session proceeds: issue, branch, tests, PR, review pipeline, merge, report; the cloud-session API routes | published |
 | Debugging | Reading the event log and the ledger | with the event log |
