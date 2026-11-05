@@ -44,9 +44,8 @@ filter_unconventional = true
 filter_commits = true # a commit that no parser below puts in a group is left out
 tag_pattern = "^v[0-9]+\\.[0-9]+\\.[0-9]+$" # stable only: a beta's commits go into the next version
 sort_commits = "oldest"
-# The first parser that matches decides; the groups are PR-DOC-010's. Left out: docs, ci, chore,
-# test, build and style commits and the tooling and document scopes, unless a commit has a
-# "Security:" footer or changes the MSRV (PR-REL-008). Removed: breaking ("!" or footer) removals.
+# First match decides; groups per PR-DOC-010. Left out: docs, ci, chore, test, build, style and the
+# tooling and document scopes, unless a commit has a "Security:" footer or changes the MSRV.
 commit_parsers = [
   { message = "^chore\\(release\\)", skip = true },
   { footer = "^(?i)security", group = "<!-- 5 -->Security" },

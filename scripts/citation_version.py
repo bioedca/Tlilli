@@ -3,13 +3,11 @@
 
 Sets the top-level `version` of CITATION.cff to `[workspace.package] version` in Cargo.toml and
 its `date-released` to the release date, changing only those two lines. The release workflow runs
-it on the release pull request's branch after release-plz has bumped the version.
+it on the release pull request's branch after release-plz has bumped the version. Bad input exits 2.
 
     scripts/citation_version.py                    update CITATION.cff, dated today (UTC)
     scripts/citation_version.py --date 2026-11-05  update it with that date
     scripts/citation_version.py --check            exit 1 if its version differs from Cargo.toml
-
-Exit status: 0 done or in step, 1 out of step (--check), 2 bad input.
 """
 
 from __future__ import annotations
@@ -92,8 +90,7 @@ def main(argv: list[str]) -> int:
         if args.check:
             _, current = cff_version(text.splitlines(keepends=True))
             if current != version:
-                print(f"CITATION.cff has version {current}, Cargo.toml {version}: "
-                      "run scripts/citation_version.py", file=sys.stderr)
+                print(f"CITATION.cff has version {current}, Cargo.toml {version}", file=sys.stderr)
                 return 1
             print(f"CITATION.cff is at version {version}")
             return 0
