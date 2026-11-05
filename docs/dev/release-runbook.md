@@ -17,7 +17,7 @@ The binding sources are [37 Releases and packaging](../prd/37-releases-and-packa
     - Check the versions, the groups in `CHANGELOG.md`, `CITATION.cff` and the migration notes.
     - Approve the gate. Auto-merge lands the pull request once the branch is up to date and the checks pass (`PR-PRQ-010`).
 3. **Watch the publishing workflows.**
-    - `release-plz.yml` creates the tag and publishes the crates (trusted publishing, no stored token).
+    - `release-plz.yml` creates the tag, using `RELEASE_PLZ_TOKEN` from the `automation` environment, and publishes the crates through crates.io trusted publishing, so no crates.io token is stored.
     - `release.yml` builds the draft release, and its `verify` job must pass.
 4. **Edit the draft release notes** (Highlights, Known issues, Upgrade notes, Verify your download), then publish.
 5. **Confirm that `post-release.yml` finished every step:**
@@ -27,7 +27,7 @@ The binding sources are [37 Releases and packaging](../prd/37-releases-and-packa
     - `updates/stable.json` is live;
     - the Zenodo DOI is minted;
     - the announcement Discussion is posted.
-6. **Install from each channel** on one machine, run the smoke journey, and file an issue for anything that is off.
+6. **Install from each channel** on one machine, once that channel serves the new version (a winget or Flathub pull request has to merge and propagate first). Run the smoke journey, and file an issue for anything that is off.
 7. **For a `.0` release only:**
     - create the next milestone and move the deferred items to it;
     - re-baseline the status line of the PRD.
