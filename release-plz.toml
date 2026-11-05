@@ -1,6 +1,5 @@
-# release-plz configuration (PRD 37 §2, D-025, D-081): the release pull request with the next
-# workspace version, then the tag and the crates.io publish when it merges. The release workflow
-# adds CHANGELOG.md (cliff.toml) and CITATION.cff (scripts/citation_version.py) to the pull request.
+# release-plz configuration (PRD 37 §2, D-025, D-081): the release pull request, then the tag and the
+# crates.io publish. The workflow adds CHANGELOG.md (cliff.toml) and CITATION.cff to the pull request.
 
 [workspace]
 changelog_update = false # CHANGELOG.md comes from git-cliff over the whole repository (D-081)
