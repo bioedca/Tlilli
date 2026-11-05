@@ -152,6 +152,7 @@ pub fn help_markdown(command: clap::Command) -> String {
     page
 }
 
+/// Appends the help section of `command`, then those of its subcommands, to `page`.
 fn push_help(page: &mut String, command: &mut clap::Command) {
     let name = command
         .get_bin_name()
@@ -187,8 +188,15 @@ pub fn write_skills_page(source: &Path, file: &Path) -> Result<(), Failure> {
     for entry in fs::read_dir(source).map_err(unreadable)? {
         let entry = entry.map_err(unreadable)?;
         let name = entry.file_name().to_string_lossy().into_owned();
-        if name.starts_with("tlilli-") && entry.path().is_dir() {
-            skills.push(name);
+        // `metadata` follows symlinks and, unlike `Path::is_dir`, reports an entry it cannot
+        // read instead of counting it as "not a skill".
+        if name.starts_with("tlilli-") {
+            let path = entry.path();
+            let metadata =
+                fs::metadata(&path).map_err(|error| format!("{}: {error}", path.display()))?;
+            if metadata.is_dir() {
+                skills.push(name);
+            }
         }
     }
     if !skills.is_empty() {
