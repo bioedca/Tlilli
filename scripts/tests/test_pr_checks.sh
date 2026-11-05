@@ -104,6 +104,44 @@ git_ commit -qm "move the skill out"
 expect "counts a rename out of a contract path" 1 "nothing under docs/: skills/tlilli-review/SKILL.md" \
   contract-sync
 
+# commits and build-each, with stubs: commitlint rejects a message or title that says BAD and prints
+# whether the Dependabot switch is on; cargo fails in a tree that holds a file named broken.
+stub="$tmp/stub"
+mkdir -p "$stub"
+# shellcheck disable=SC2016 # the stubs' own code, expanded when they run
+printf '%s\n' '#!/bin/bash' 'echo "dependabot=${TLILLI_COMMITLINT_DEPENDABOT:-0}"' \
+  'if [[ $1 == --from ]]; then git log --format=%B "$2..$4"; else cat; fi | { ! grep -q BAD; }' >"$stub/commitlint"
+printf '%s\n' '#!/bin/bash' '[[ ! -e broken ]]' >"$stub/cargo"
+chmod +x "$stub/commitlint" "$stub/cargo"
+ok=("COMMITLINT=$stub/commitlint" PR_BRANCH=claude/p0-20-checks)
+body=$'## Summary\n## Requirements\nRequirements: none\n## Changes\n## Testing\n## Docs\n## Review pipeline\n'
+body+=$'- Codex local rounds: 0\n- CodeRabbit: pending\n- Greptile: n/a\n- Gated paths touched: none\n## Checklist\n'
+new_repo
+commit_lines 3 src/a.rs
+expect "passes when every commit builds" 0 "cargo check at" build-each "PATH=$stub:$PATH"
+commit_lines 3 broken
+git_ rm -q broken
+git_ commit -qm "fix the build"
+expect "passes a pull request that follows the rules" 0 "commits: 3 commits" commits "${ok[@]}" \
+  "PR_TITLE=ci(ci): add a check" "PR_BODY=$body"
+expect "fails a title that commitlint rejects" 1 "the title is not" commits "${ok[@]}" PR_TITLE=BAD PR_BODY=
+expect "fails a description without a section" 1 "lacks '## Docs'" commits "${ok[@]}" \
+  "PR_TITLE=ci(ci): add a check" "PR_BODY=${body/'## Docs'/}"
+expect "fails a branch name outside PR-GIT-003" 1 "branch 'Feature/x'" commits "${ok[@]}" PR_BRANCH=Feature/x
+expect "lints Dependabot without the header cap and skips its description" 0 "dependabot=1" commits \
+  "${ok[@]}" PR_AUTHOR='dependabot[bot]' PR_BRANCH=dependabot/cargo/serde-1.0.2 "PR_TITLE=chore(deps): bump" PR_BODY=
+expect "fails a commit that does not build on its own" 1 "does not build on its own" build-each "PATH=$stub:$PATH"
+[[ $(git_ worktree list | wc -l) == 1 ]] || { printf 'FAIL build-each left a worktree\n'; failures=$((failures + 1)); }
+git_ switch -qc side main
+git_ commit -q --allow-empty -m "side"
+git_ switch -q feature
+git_ merge -q --no-ff -m "BAD merge" side
+for i in $(seq 8); do git_ commit -q --allow-empty -m "chore(ci): step $i"; done
+expect "fails a bad message" 1 "a commit message breaks" commits "${ok[@]}"
+expect "fails 13 commits" 1 "13 commits, over 10" commits "${ok[@]}"
+expect "names the merge commit" 1 "merge commits $(git_ rev-parse HEAD~8)" commits "${ok[@]}"
+expect "skips the build above 10 commits" 0 "over 10: not checked" build-each "PATH=$stub:$PATH"
+
 if [[ $failures -gt 0 ]]; then
   printf '%s test(s) of scripts/pr_checks.sh failed\n' "$failures"
   exit 1

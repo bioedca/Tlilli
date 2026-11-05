@@ -12,7 +12,7 @@ Thank you for considering a contribution. Tlilli is pre-alpha (Phase 0): one mai
 ## Workflow ([PRD 30](docs/prd/30-git-workflow.md) and [31](docs/prd/31-pull-requests.md))
 
 1. **Fork and branch.** Branch from current `origin/main`: `git fetch origin main && git switch -c <type>/<issue>-<slug> origin/main`, with `type` one of `feat fix docs chore refactor perf test ci build`; lower-case, hyphens, at most 60 characters. Agents use their platform prefix (`claude/<slug>`, `codex/<slug>`). One branch, one PR, one issue.
-2. **Commit.** Conventional Commits 1.0: `type(scope): subject` with the scope from the closed list `core mcp cli tauri ui skills docs prd ci release deps repo fixtures`; imperative subject, lower-case first letter, no trailing period, at most 72 characters; the body says what and why. Every commit is signed off (`git commit -s`) under the Developer Certificate of Origin 1.1, and the sign-off must match the author; there is no CLA. Each commit builds on its own. Squash fix-ups before review (`git commit --fixup <sha>`, then `GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash origin/main`); at most 10 commits per PR.
+2. **Commit.** Conventional Commits 1.0: `type(scope): subject` with the scope from the closed list `core mcp cli tauri ui skills docs prd ci release deps repo fixtures`; imperative subject, lower-case first letter, no trailing period, at most 72 characters (Dependabot's headers excepted); the body says what and why. Every commit is signed off (`git commit -s`) under the Developer Certificate of Origin 1.1, and the sign-off must match the author; there is no CLA. Each commit builds on its own. Squash fix-ups before review (`git commit --fixup <sha>`, then `GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash origin/main`); at most 10 commits per PR.
 3. **Stay current by rebasing** (`git pull --rebase origin main`), never by merging `main` into your branch; force-push only your own branch and only with `--force-with-lease`.
 4. **Open a draft PR early** so the work survives interruptions. The body follows the template ([PRD 31 §3](docs/prd/31-pull-requests.md)): Summary with `Closes #<issue>`, Requirements (the `FR`, `NFR` or `PR` IDs), Changes, Testing, Docs, Review pipeline, Checklist. Write it for someone who was not there.
 5. **Size.** At most 400 changed hand-written lines; lockfiles, snapshots, generated reference pages and fixtures do not count. Larger work is split by design into a stack of PRs (label `stacked`, each naming its base) or a sequence of issues. Exceeding the cap needs a `Size override: <reason>` line in the body and then the `size:override` label; the `size/limit` check counts the lines.
@@ -32,12 +32,12 @@ Automated review is the default; the maintainer reviews only gated paths.
 `scripts/ci.sh` runs the commands of the CI jobs on your machine (`PR-CI-010`) and stops at the first failure. Run `scripts/ci.sh all` before you push; `scripts/ci.sh --help` lists the jobs and their commands:
 
 ```sh
-scripts/ci.sh all          # rust-lint, rust-test, ui, docs-build, size/limit, docs/contract-sync, tauri/linux, scripts
+scripts/ci.sh all          # rust-lint, rust-test, ui, docs-build, commits, size/limit, docs/contract-sync, tauri/linux, scripts
 scripts/ci.sh rust-test    # one job
 scripts/ci.sh reuse        # the license check, reuse lint
 ```
 
-The `ci.yml` rewrite (bootstrap task 20) adds `reuse` to `all` and fills in the jobs listed as pending, such as `commits` and `protocol-ref/drift`. The script installs no toolchain: it expects rustup, pnpm, Node 22 and Python 3 on `PATH`.
+The `ci.yml` rewrite (bootstrap task 20) adds `reuse` to `all` and fills in the jobs listed as pending, such as `protocol-ref/drift`. The script installs no toolchain: it expects rustup, pnpm, Node 22 and Python 3 on `PATH`.
 
 `pnpm -C ui install` also installs the git hooks (`lefthook`): formatting, lint and commit-message checks on commit, the tests of the changed crates on push. Setup pages for a laptop, the cloud sandbox and Codespaces land under `docs/dev/`.
 

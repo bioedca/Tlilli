@@ -3,8 +3,8 @@
 #   scripts/ci.sh <job>...   run the named jobs in the order given; `all` runs every job in CI order
 #   scripts/ci.sh --help     list the jobs and their commands
 # The first failing command stops the run, and the script exits with that command's status.
-# The commands are today's: the `rust-lint`, `rust-test`, `ui`, `docs-build`, `size/limit`,
-# `docs/contract-sync` and `tauri/linux` jobs of .github/workflows/ci.yml, and `reuse lint` from
+# The commands are today's: the `rust-lint`, `rust-test`, `ui`, `docs-build`, `commits`,
+# `size/limit`, `docs/contract-sync` and `tauri/linux` jobs of .github/workflows/ci.yml, and `reuse lint` from
 # docs/dev/licensing.md. The rest of the ci.yml rewrite (bootstrap task 20) fills in the pending
 # jobs and moves reuse into `all` once CI runs it. No toolchain is installed: rustup, cargo-nextest, cargo-deny, pnpm, Node 22 and
 # python3 must be on PATH, as in the cloud sandbox and the devcontainer.
@@ -18,9 +18,9 @@ REUSE_VERSION=6.3.0
 # Both lists follow the PRD 33 §2 table. A job moves from PENDING to JOBS when its commands exist.
 # scripts (the tests of these dev scripts) has no row there and runs last. EXTRA jobs run only when
 # named: they are not in CI yet (reuse has no row in the table either).
-JOBS="rust-lint rust-test ui docs-build size/limit docs/contract-sync tauri/linux scripts"
+JOBS="rust-lint rust-test ui docs-build commits size/limit docs/contract-sync tauri/linux scripts"
 EXTRA="reuse"
-PENDING="commits protocol-ref/drift workflows/zizmor e2e/smoke"
+PENDING="protocol-ref/drift workflows/zizmor e2e/smoke"
 
 usage() {
   cat <<'EOF'
@@ -35,6 +35,9 @@ Jobs, in CI order (docs/prd/33-ci-cd.md §2):
                       --coverage; build; playwright test --grep @smoke (needs a Chromium)
   docs-build          scripts/docs.sh (mkdocs build --strict); scripts/api_docs.sh (rustdoc into
                       site/api) when Cargo.toml exists
+  commits             scripts/pr_checks.sh commits: commitlint on the commits since origin/main,
+                      their count, merge commits and the branch name (PR_TITLE and PR_BODY add the
+                      title and the description); then cargo check at each commit (build-each)
   size/limit          scripts/pr_checks.sh size: hand-written changed lines against origin/main
                       (cap 400) and the file-size caps
   docs/contract-sync  scripts/pr_checks.sh contract-sync: a change to a contract path also changes
@@ -49,7 +52,6 @@ Runs only when named, until CI runs it (bootstrap task 20):
   reuse               reuse lint (docs/dev/licensing.md)
 
 Pending until bootstrap task 20 (`all` skips them; naming one exits with status 2):
-  commits             commitlint on the commits and the PR title, commit count, branch name
   protocol-ref/drift  regenerate docs/reference/mcp/ and the schemas, then git diff --exit-code
   workflows/zizmor    zizmor and actionlint on .github/workflows
   e2e/smoke           xvfb-run -a pnpm -C ui test:e2e:desktop (needs src-tauri/, task 14)
@@ -128,7 +130,11 @@ job_docs_build() {
   fi
 }
 
-# The checks of a pull request's diff, on the current branch against origin/main.
+# The checks of a pull request's commits and diff, on the current branch against origin/main.
+job_commits() {
+  run scripts/pr_checks.sh commits
+  run scripts/pr_checks.sh build-each
+}
 job_size_limit() { run scripts/pr_checks.sh size; }
 job_contract_sync() { run scripts/pr_checks.sh contract-sync; }
 
@@ -173,6 +179,7 @@ run_job() {
     rust-test) job_rust_test ;;
     ui) job_ui ;;
     docs-build) job_docs_build ;;
+    commits) job_commits ;;
     size/limit) job_size_limit ;;
     docs/contract-sync) job_contract_sync ;;
     tauri/linux) job_tauri_linux ;;

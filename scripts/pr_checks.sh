@@ -4,18 +4,22 @@
 #   scripts/pr_checks.sh size           the size/limit check (PR-PRQ-020, PR-PRQ-021, PR-GIT-031)
 #   scripts/pr_checks.sh contract-sync  the docs/contract-sync check (PR-DOC-001)
 #   scripts/pr_checks.sh size-label     print the size/* label (PR-PRQ-022)
+#   scripts/pr_checks.sh commits        the commits check, but for the build at each commit
+#   scripts/pr_checks.sh build-each     cargo check at each commit (PR-GIT-024)
 # Input from the environment, all optional:
 #   PR_BASE, PR_HEAD  the diff is PR_BASE...PR_HEAD (default origin/main...HEAD)
 #   PR_FILES          a file of "additions<TAB>deletions<TAB>path" lines to count instead of that diff
 #   PR_BRANCH         the head branch (default: the current one); release-plz-* skips CHANGELOG.md
 #   PR_LABELS         the PR's labels, comma-separated; PR_BODY: its description
+#   PR_TITLE          its title; without it, commits checks neither the title nor the description
+#   PR_AUTHOR         its author's login; COMMITLINT: the commitlint to run (default: the one in ui/)
 # A failed check prints an ::error:: line and exits 1; bad input exits 2.
 set -euo pipefail
 
-usage() { sed -n '4,12p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '4,16p' "$0" | sed 's/^# \{0,1\}//'; }
 
 case "$#:${1-}" in
-  1:size | 1:contract-sync | 1:size-label) ;;
+  1:size | 1:contract-sync | 1:size-label | 1:commits | 1:build-each) ;;
   1:-h | 1:--help) usage; exit 0 ;;
   *) usage >&2; exit 2 ;;
 esac
@@ -138,6 +142,78 @@ size_label() {
   else echo size/XL; fi
 }
 
+# Conventional Commits on every commit and on the title, at most 10 commits and no merge commit
+# (PR-GIT-020, PR-GIT-025, PR-GIT-029), the branch name and the description. Dependabot's headers
+# are linted without the 72-character cap (D-082).
+check_commits() {
+  local commitlint=${COMMITLINT:-$PWD/ui/node_modules/.bin/commitlint} count merges
+  [[ -x $commitlint ]] || { printf 'pr_checks.sh: no %s: run pnpm -C ui install\n' "$commitlint" >&2; exit 2; }
+  [[ ${PR_AUTHOR:-} != 'dependabot[bot]' ]] || export TLILLI_COMMITLINT_DEPENDABOT=1
+  "$commitlint" --from "$base" --to "$head" || error "a commit message breaks PR-GIT-020 or PR-GIT-021"
+  if [[ -n ${PR_TITLE+x} ]]; then
+    printf '%s\n' "$PR_TITLE" | "$commitlint" || error "the title is not a Conventional Commit header (PRD 31 §1)"
+  fi
+  count=$(git rev-list --count "$base..$head")
+  printf 'commits: %s commits\n' "$count"
+  ((count <= 10)) || error "$count commits, over 10 (PR-GIT-025): squash the fix-ups or split the pull request"
+  merges=$(git rev-list --merges "$base..$head" | tr '\n' ' ')
+  [[ -z $merges ]] || error "merge commits ${merges% }: rebase onto main instead (PR-GIT-029)"
+  check_branch
+  # Dependabot and release-plz write their own descriptions.
+  if [[ -n ${PR_TITLE+x} && ${PR_AUTHOR:-} != 'dependabot[bot]' && $branch != release-plz-* ]]; then
+    check_template
+  fi
+}
+
+# PR-GIT-003: claude/<slug> or codex/<slug> for agents, <type>/<issue>-<slug> for people, lower-case
+# with hyphens, at most 60 characters. The reserved prefixes belong to the tools and the maintainer.
+check_branch() {
+  local slug='[a-z0-9]+(-[a-z0-9]+)*' re
+  re="^((claude|codex)/$slug|(feat|fix|docs|chore|refactor|perf|test|ci|build)/[0-9]+-$slug)\$"
+  case $branch in release/* | release-plz-* | dependabot/* | backport/*) return ;; esac
+  if ((${#branch} > 60)) || ! [[ $branch =~ $re ]]; then
+    error "branch '$branch': name it claude/<slug>, codex/<slug> or <type>/<issue>-<slug>, in" \
+      "lower case with hyphens and at most 60 characters (PR-GIT-003)"
+  fi
+}
+
+# PRD 31 §3: the template's headings, a Requirements: line with a value ("none" for a chore) and the
+# lines of the Review pipeline section.
+check_template() {
+  local body item missing=""
+  body=$(printf '%s\n' "${PR_BODY:-}" | tr -d '\r')
+  for item in Summary Requirements Changes Testing Docs 'Review pipeline' Checklist; do
+    grep -qxE "## ${item}[[:space:]]*" <<<"$body" || missing="$missing, '## $item'"
+  done
+  [[ -n $(body_value Requirements) ]] || missing="$missing, 'Requirements: <IDs, or none>'"
+  for item in 'Codex local rounds' CodeRabbit Greptile 'Gated paths touched'; do
+    grep -q "^- $item:" <<<"$body" || missing="$missing, '- $item:'"
+  done
+  [[ -z $missing ]] ||
+    error "the description lacks ${missing#, } (.github/PULL_REQUEST_TEMPLATE.md, PRD 31 §3)"
+}
+
+# PR-GIT-024: cargo check passes at each commit, each in a worktree of its own. The target directory
+# is shared, so the dependencies build once. Not run above 10 commits, which fail the count anyway.
+build_each() {
+  local count c
+  count=$(git rev-list --count "$base..$head")
+  if ((count > 10)); then
+    printf 'build-each: %s commits, over 10: not checked\n' "$count"
+    return
+  fi
+  worktrees=$(mktemp -d)
+  trap 'rm -rf "$worktrees"; git worktree prune' EXIT
+  export CARGO_TARGET_DIR=${CARGO_TARGET_DIR:-$PWD/target}
+  for c in $(git rev-list --reverse "$base..$head"); do
+    printf 'build-each: cargo check at %s\n' "$(git log -1 --format='%h %s' "$c")"
+    git worktree add -q --detach "$worktrees/$c" "$c"
+    (cd "$worktrees/$c" && cargo check --workspace --locked --quiet) ||
+      error "commit $c does not build on its own (PR-GIT-024)"
+    git worktree remove --force "$worktrees/$c"
+  done
+}
+
 if [[ -z ${PR_FILES:-} ]]; then
   for rev in "$base" "$head"; do
     git rev-parse -q --verify "$rev^{commit}" >/dev/null ||
@@ -150,5 +226,7 @@ case $1 in
   size) check_size ;;
   contract-sync) check_contract_sync ;;
   size-label) size_label ;;
+  commits) check_commits ;;
+  build-each) build_each ;;
 esac
 exit "$status"

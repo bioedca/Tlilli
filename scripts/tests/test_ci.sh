@@ -109,7 +109,7 @@ all_case() {
     failures=$((failures + 1))
   fi
 }
-pending="commits protocol-ref/drift workflows/zizmor e2e/smoke"
+pending="protocol-ref/drift workflows/zizmor e2e/smoke"
 all_case "all names reuse as not run" "ci.sh: not run: reuse (only when named), $pending (pending)" all
 all_case "all reuse does not name reuse as not run" "ci.sh: not run: $pending (pending)" all reuse
 
