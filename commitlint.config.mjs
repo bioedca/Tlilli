@@ -33,6 +33,10 @@ const scopes = [
   "fixtures",
 ];
 
+// Dependabot's grouped titles run past 72 characters, so its commits and titles are linted without the
+// header cap (D-082). scripts/pr_checks.sh sets this for Dependabot's pull requests only.
+const dependabot = process.env.TLILLI_COMMITLINT_DEPENDABOT === "1";
+
 export default {
   // commitlint splits a scope on `/`, `\\` and `,` before scope-enum runs, so `core/ui` would pass as
   // two listed scopes. PR-GIT-020 allows exactly one scope from the closed list.
@@ -65,7 +69,7 @@ export default {
     // Lower-case first letter: reject the capitalised styles.
     "subject-case": [2, "never", ["sentence-case", "start-case", "pascal-case", "upper-case"]],
     "subject-full-stop": [2, "never", "."],
-    "header-max-length": [2, "always", 72],
+    "header-max-length": dependabot ? [0] : [2, "always", 72],
     "body-leading-blank": [2, "always"],
     // PR-GIT-021 asks for a 72-column body; a warning keeps long URLs from blocking a commit.
     "body-max-line-length": [1, "always", 72],
