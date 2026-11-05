@@ -22,5 +22,6 @@ The site follows [Diátaxis](https://diataxis.fr/): every page is one of four ki
 
 - [Requirements](prd/README.md): the product requirements document (PRD). Every issue, pull request and gate cites it.
 - [Developer documentation](dev/index.md): setup, running CI locally, review severity, release runbook, agent playbook, and the GitHub settings record.
+- [Gate scripts](gates/index.md): the acceptance script of each phase, G0 to G6, followed literally at its gate (PRD 40 §3).
 - [API documentation](https://bioedca.github.io/Tlilli/api/): rustdoc for the Rust crates, built with `cargo doc --workspace --no-deps` and published under `/api/` (PRD 35 §1).
 - [Source repository](https://github.com/bioedca/Tlilli) on GitHub.
