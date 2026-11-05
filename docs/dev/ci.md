@@ -16,14 +16,14 @@ The script installs no toolchain: it expects rustup, cargo-nextest, cargo-deny, 
 | --- | --- |
 | `rust-lint` | `cargo fmt --all --check`, `cargo clippy --workspace --all-targets --all-features -- -D warnings`, `cargo deny check`, then `cargo doc --workspace --no-deps` with warnings denied |
 | `rust-test` | `cargo nextest run --workspace --all-features` (which includes the drift test of the generated reference pages), the same for `tlilli-core` with `--no-default-features`, then `cargo test --doc --workspace` |
-| `ui` | `pnpm -C ui install --frozen-lockfile`, then `lint`, `typecheck`, `test` and `build` |
+| `ui` | `pnpm -C ui install --frozen-lockfile`, then `exec biome ci .`, `typecheck`, `exec vitest run --coverage`, `build` and the Playwright smoke subset, `exec playwright test --grep @smoke` (it needs a Chromium; see [Setup](setup.md)) |
 | `docs-build` | `scripts/docs.sh` (`mkdocs build --strict`), then `cargo doc --workspace --no-deps` when `Cargo.toml` exists |
 | `tauri/linux` | `pnpm -C ui install --frozen-lockfile`, then `pnpm -C ui tauri build --no-bundle` |
 | `scripts` | the tests of `ci.sh` and `gen_fixtures.py` under `scripts/tests/` (not in `ci.yml` yet) |
 | `rust` | an alias for `rust-lint` then `rust-test` |
 | `reuse` | `reuse lint` ([Licensing](licensing.md)); it runs only when named, until CI runs it |
 
-Pending jobs are named but not run until the rest of the `ci.yml` rewrite (bootstrap task 20) adds them: `commits`, `size/limit`, `docs/contract-sync`, `protocol-ref/drift`, `workflows/zizmor` and `e2e/smoke`. `all` skips them, and naming one exits with status 2. Not mirrored: the `build/*` matrix, which runs when a pull request is Ready; the coverage that `rust-test` collects in CI, where the nextest runs go through `cargo llvm-cov` and the report goes to Codecov; and the `codecov/patch/*` checks, which the Codecov service computes.
+Pending jobs are named but not run until the rest of the `ci.yml` rewrite (bootstrap task 20) adds them: `commits`, `size/limit`, `docs/contract-sync`, `protocol-ref/drift`, `workflows/zizmor` and `e2e/smoke`. `all` skips them, and naming one exits with status 2. Not mirrored: the `build/*` matrix, which runs when a pull request is Ready; the coverage uploads to Codecov, of the nextest runs, which `rust-test` puts through `cargo llvm-cov` in CI, and of the Vitest report that `ui` writes locally too; and the `codecov/patch/*` checks, which the Codecov service computes.
 
 ## Related checks
 

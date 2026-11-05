@@ -3,8 +3,8 @@
 #   scripts/ci.sh <job>...   run the named jobs in the order given; `all` runs every job in CI order
 #   scripts/ci.sh --help     list the jobs and their commands
 # The first failing command stops the run, and the script exits with that command's status.
-# The commands are today's: the `rust-lint`, `rust-test`, `ui` and `tauri/linux` jobs of
-# .github/workflows/ci.yml, the build of docs.yml, and `reuse lint` from docs/dev/licensing.md. The
+# The commands are today's: the `rust-lint`, `rust-test`, `ui`, `docs-build` and `tauri/linux` jobs
+# of .github/workflows/ci.yml, and `reuse lint` from docs/dev/licensing.md. The
 # rest of the ci.yml rewrite (bootstrap task 20) fills in the pending jobs and moves reuse into `all`
 # once CI runs it. No toolchain is installed: rustup, cargo-nextest, cargo-deny, pnpm, Node 22 and
 # python3 must be on PATH, as in the cloud sandbox and the devcontainer.
@@ -31,7 +31,8 @@ Jobs, in CI order (docs/prd/33-ci-cd.md §2):
                       -- -D warnings; cargo deny check; cargo doc --workspace --no-deps (warnings denied)
   rust-test           cargo nextest run --workspace --all-features; the same for tlilli-core with
                       --no-default-features; cargo test --doc --workspace (CI adds coverage)
-  ui                  pnpm -C ui install --frozen-lockfile; pnpm -C ui lint, typecheck, test, build
+  ui                  pnpm -C ui install --frozen-lockfile; biome ci .; typecheck; vitest run
+                      --coverage; build; playwright test --grep @smoke (needs a Chromium)
   docs-build          scripts/docs.sh (mkdocs build --strict); cargo doc --workspace --no-deps
   tauri/linux         pnpm -C ui install --frozen-lockfile; pnpm -C ui tauri build --no-bundle
   scripts             the tests of ci.sh and gen_fixtures.py under scripts/tests (not in ci.yml yet)
@@ -105,13 +106,15 @@ job_ui() {
   [ -f ui/package.json ] || { skip ui/package.json; return 0; }
   need pnpm "the version in the packageManager field of ui/package.json"
   run pnpm -C ui install --frozen-lockfile
-  run pnpm -C ui lint
+  run pnpm -C ui exec biome ci .
   run pnpm -C ui typecheck
-  run pnpm -C ui test
+  run pnpm -C ui exec vitest run --coverage
   run pnpm -C ui build
+  # Playwright's own Chromium (pnpm -C ui exec playwright install chromium), or TLILLI_PW_CHROMIUM.
+  run pnpm -C ui exec playwright test --grep @smoke
 }
 
-# docs.yml: the strict MkDocs build, then rustdoc once the workspace exists.
+# The docs-build job: the strict MkDocs build, then rustdoc once the workspace exists.
 job_docs_build() {
   need python3 "3.13, the version docs/requirements.txt was compiled with"
   run scripts/docs.sh

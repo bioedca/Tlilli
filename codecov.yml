@@ -1,6 +1,6 @@
 # Codecov (PR-CI-011, PR-TST-011, D-023, PRD 39 §4). The rust-test job of ci.yml uploads one lcov
-# report with all four Rust flags, and each flag's paths select its crate from it. The ui flag
-# arrives with the ui job (bootstrap task 20, part 2).
+# report with all four Rust flags, and each flag's paths select its crate from it; the ui job
+# uploads Vitest's report with the ui flag. The ui and app flags are measured, not gated.
 codecov:
   require_ci_to_pass: true
 
@@ -20,6 +20,10 @@ coverage:
         target: 80%
         flags: [tlilli-mcp]
 
+# Vitest writes paths relative to ui/ (src/App.tsx); map them onto the repository's.
+fixes:
+  - "^src/::ui/src/"
+
 flags:
   tlilli-core:
     paths: [crates/tlilli-core/]
@@ -29,6 +33,8 @@ flags:
     paths: [crates/tlilli-cli/]
   app:
     paths: [src-tauri/]
+  ui:
+    paths: [ui/src/]
 
 # A minimal comment, posted only when coverage changes.
 comment:
