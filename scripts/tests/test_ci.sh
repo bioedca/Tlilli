@@ -86,8 +86,10 @@ check "missing manifests skip the jobs" "$tmp/bare" 0 "" rust-lint rust-test ui 
 
 # all_case <name> <want in the last line> <ci.sh args>...: `all` in a repository with no manifests,
 # where the docs, scripts and reuse jobs find stubs, so nothing real runs; checks the closing line.
-make_repo "$tmp/stubs" scripts/docs.sh scripts/tests/test_ci.sh .cache/venv-reuse-6.3.0/bin/reuse
+make_repo "$tmp/stubs" scripts/docs.sh scripts/tests/test_ci.sh scripts/tests/test_api_docs.sh \
+  .cache/venv-reuse-6.3.0/bin/reuse
 chmod +x "$tmp/stubs/scripts/docs.sh" "$tmp/stubs/scripts/tests/test_ci.sh" \
+  "$tmp/stubs/scripts/tests/test_api_docs.sh" \
   "$tmp/stubs/.cache/venv-reuse-6.3.0/bin/reuse"
 printf 'import unittest\n\n\nclass Stub(unittest.TestCase):\n    def test_stub(self):\n        pass\n' \
   >"$tmp/stubs/scripts/tests/test_stub.py"

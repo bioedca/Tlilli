@@ -36,7 +36,8 @@ Jobs, in CI order (docs/prd/33-ci-cd.md §2):
   docs-build          scripts/docs.sh (mkdocs build --strict); scripts/api_docs.sh (rustdoc into
                       site/api) when Cargo.toml exists
   tauri/linux         pnpm -C ui install --frozen-lockfile; pnpm -C ui tauri build --no-bundle
-  scripts             the tests of ci.sh and gen_fixtures.py under scripts/tests (not in ci.yml yet)
+  scripts             the tests of ci.sh, api_docs.sh and gen_fixtures.py under scripts/tests (not in
+                      ci.yml yet)
   rust                alias: rust-lint, then rust-test
   all                 alias: every job above, in that order
 
@@ -141,6 +142,7 @@ job_scripts() {
   need python3 "for the gen_fixtures.py tests"
   run python3 -B -m unittest discover -s scripts/tests -p 'test_*.py'
   run scripts/tests/test_ci.sh
+  run scripts/tests/test_api_docs.sh
 }
 
 job_reuse() {

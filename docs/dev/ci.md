@@ -19,7 +19,7 @@ The script installs no toolchain: it expects rustup, cargo-nextest, cargo-deny, 
 | `ui` | `pnpm -C ui install --frozen-lockfile`, then `exec biome ci .`, `typecheck`, `exec vitest run --coverage`, `build` and the Playwright smoke subset, `exec playwright test --grep @smoke` (it needs a Chromium; see [Setup](setup.md)) |
 | `docs-build` | `scripts/docs.sh` (`mkdocs build --strict`), then, when `Cargo.toml` exists, `scripts/api_docs.sh`: `cargo doc --workspace --no-deps` into `site/api` with a page that lists the crates |
 | `tauri/linux` | `pnpm -C ui install --frozen-lockfile`, then `pnpm -C ui tauri build --no-bundle` |
-| `scripts` | the tests of `ci.sh` and `gen_fixtures.py` under `scripts/tests/` (not in `ci.yml` yet) |
+| `scripts` | the tests of `ci.sh`, `api_docs.sh` and `gen_fixtures.py` under `scripts/tests/` (not in `ci.yml` yet) |
 | `rust` | an alias for `rust-lint` then `rust-test` |
 | `reuse` | `reuse lint` ([Licensing](licensing.md)); it runs only when named, until CI runs it |
 
