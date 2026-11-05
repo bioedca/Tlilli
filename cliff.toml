@@ -1,0 +1,67 @@
+# git-cliff configuration for CHANGELOG.md (PR-DOC-010, PRD 37 §2, D-081). The release workflow
+# writes the whole file on the release branch from every commit, ui/, skills/ and docs/ included.
+#   git-cliff --tag v0.2.0 --output CHANGELOG.md   (add --offline to skip the pull request links)
+
+[changelog]
+header = """
+# Changelog
+
+All notable changes to Tlilli are listed here, newest first. The format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the versions follow
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html). This file is generated from the
+commit messages at each release; it is not edited by hand.
+"""
+# The HTML comments order the groups as Keep a Changelog does; striptags removes them.
+body = """
+{% if version %}\
+## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
+{% else %}\
+## [Unreleased]
+{% endif %}\
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group | striptags | trim }}
+{% for commit in commits %}
+- {% if commit.scope %}**{{ commit.scope }}:** {% endif %}\
+{% if commit.breaking %}**Breaking:** {% endif %}\
+{{ commit.message | split(pat="\n") | first | upper_first }}\
+{% if commit.remote.pr_number %} \
+([#{{ commit.remote.pr_number }}](https://github.com/bioedca/Tlilli/pull/{{ commit.remote.pr_number }}))\
+{% endif %}\
+{% endfor %}
+{% endfor %}
+"""
+footer = """
+{% for release in releases | filter(attribute="version") -%}
+[{{ release.version | trim_start_matches(pat="v") }}]: https://github.com/bioedca/Tlilli/\
+{% if release.previous.version %}compare/{{ release.previous.version }}...{% else %}releases/tag/{% endif %}\
+{{ release.version }}{% if not loop.last %}
+{% endif %}\
+{% endfor %}"""
+trim = false
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+# A commit that no parser below puts in a group is left out.
+filter_commits = true
+# Only stable tags start a section; the commits of a beta (v0.4.0-beta.2) go into the next one.
+tag_pattern = "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+sort_commits = "oldest"
+# The first parser that matches decides. The groups are those of PR-DOC-010. Left out: docs, ci,
+# chore, test, build and style commits, and the scopes of the repository's own tooling and
+# documents, unless a commit carries a "Security:" footer or changes the MSRV (PR-REL-008).
+commit_parsers = [
+  { message = "^chore\\(release\\)", skip = true },
+  { footer = "^(?i)security", group = "<!-- 5 -->Security" },
+  { message = "^(build|chore)(\\([a-z]+\\))?!?: .*\\b(msrv|rust-version)\\b", group = "<!-- 1 -->Changed" },
+  { message = "^[a-z]+\\((ci|docs|prd|repo|fixtures)\\)", skip = true },
+  { message = "^(feat|fix|refactor|perf)(\\([a-z]+\\))?!: .*\\bremov", group = "<!-- 3 -->Removed" },
+  { message = "^(feat|fix|refactor|perf)(\\([a-z]+\\))?!?: .*deprecat", group = "<!-- 2 -->Deprecated" },
+  { message = "^feat", group = "<!-- 0 -->Added" },
+  { message = "^fix", group = "<!-- 4 -->Fixed" },
+  { message = "^(refactor|perf)", group = "<!-- 1 -->Changed" },
+]
+
+[remote.github]
+owner = "bioedca"
+repo = "Tlilli"
