@@ -7,10 +7,10 @@ For contributors and for the agents that work on Tlilli. `PR-DOC-013` sets what 
 | [GitHub settings record](github-settings.md) | What is set on the account and the repository, by whom and when, diffed against [39 GitHub configuration](../prd/39-github-configuration.md) at every gate | published |
 | Setup | Laptop setup on macOS, Windows and Linux; cloud sandbox notes; Codespaces (`.devcontainer/`) | tasks 30 and 31 |
 | Running CI locally | `scripts/ci.sh` and what each lane checks ([33 CI/CD](../prd/33-ci-cd.md)) | task 30 |
-| Review severity | The scale human and AI reviewers use ([32 Code review](../prd/32-code-review.md)) | task 30 |
+| [Review severity](review-severity.md) | The scale human and AI reviewers use, and how each tool's labels map onto it ([32 Code review](../prd/32-code-review.md) §6) | published |
 | Release runbook | From tag to published release, step by step ([37 Releases and packaging](../prd/37-releases-and-packaging.md)) | task 30 |
 | Fixtures | The synthetic manuscripts and vendored papers under `tests/fixtures/` | task 30 |
-| Agent playbook | How an agent session proceeds: issue, branch, tests, PR, review pipeline, report | task 30 |
+| [Agent playbook](agent-playbook.md) | How an agent session proceeds: issue, branch, tests, PR, review pipeline, merge, report; the cloud-session API routes | published |
 | Debugging | Reading the event log and the ledger | with the event log |
 
 Gate scripts `G0` to `G6` (`docs/gates/`, task 30) and the ADRs (`docs/adr/`, task 16) are separate sections of the site. The root files `CLAUDE.md` and `AGENTS.md` carry the short version of these rules for agents.
