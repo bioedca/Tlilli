@@ -1,7 +1,5 @@
-"""Tests for scripts/citation_version.py (PR-REL-002): run it as a subprocess on copies of
-Cargo.toml and CITATION.cff in temporary directories, and once with --check on the repository's
-own files. Run with `python3 -B -m unittest discover -s scripts/tests`.
-"""
+"""Tests for scripts/citation_version.py (PR-REL-002), run as a subprocess on copies of Cargo.toml
+and CITATION.cff in temporary directories, and once with --check on the repository's own files."""
 
 import datetime
 import subprocess
@@ -17,7 +15,6 @@ CFF = """# A comment that stays.
 cff-version: 1.2.0
 title: Tlilli
 version: 0.0.0
-license: Apache-2.0
 references:
   - type: software
     title: A dependency
