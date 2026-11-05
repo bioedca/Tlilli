@@ -1,0 +1,60 @@
+# Setup
+
+This page covers the tools Tlilli needs on a laptop running Linux, macOS or Windows, notes for the cloud sandbox that agent sessions use, and where to find Codespaces. The workflow itself is in [`CONTRIBUTING.md`](https://github.com/bioedca/Tlilli/blob/main/CONTRIBUTING.md) and [30 Git workflow](../prd/30-git-workflow.md) §5.
+
+Clone your own copy. Never share a clone or work in a folder that a sync service mirrors.
+
+## Every platform
+
+| Tool | Version | Notes |
+| --- | --- | --- |
+| Rust, through [rustup](https://rustup.rs/) | stable, at least the MSRV in `Cargo.toml` (`rust-version`) | `rust-toolchain.toml` selects stable with `rustfmt` and `clippy`, so rustup installs them on first use |
+| `cargo-nextest` | latest | `cargo install cargo-nextest --locked` |
+| Node.js | 22 | |
+| pnpm | the version in `ui/package.json` (`packageManager`) | `corepack enable` provides it |
+| Python | 3 | for `scripts/docs.sh`, which builds its hash-pinned toolchain in `.cache/`, and for `scripts/gen_fixtures.py` and the scripts' tests |
+| Git | any recent | commit with `git commit -s` (DCO, `PR-GIT-023`) |
+
+Then, from the repository root:
+
+```bash
+pnpm -C ui install --frozen-lockfile
+```
+
+This installs the UI packages and the lefthook git hooks. On commit, the hooks run rustfmt, clippy and Biome on the staged files, and commitlint on the message. CI runs the same checks in full. `scripts/ci.sh all` runs the CI jobs locally ([Running CI locally](ci.md)).
+
+## Linux (Ubuntu 24.04)
+
+Install the Tauri 2 prerequisites. This is the list in `.devcontainer/post-create.sh`; `ci.yml` installs the same packages except `pkg-config`, which the runner image already has:
+
+```bash
+sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev pkg-config
+```
+
+For the desktop end-to-end tests, also install `xvfb` and `webkit2gtk-driver`. Run the tests under a virtual display with `xvfb-run -a`.
+
+## macOS
+
+Install the Xcode Command Line Tools with `xcode-select --install`. Tauri uses the system WebKit, so nothing else is needed.
+
+## Windows
+
+Install the Microsoft C++ Build Tools with the "Desktop development with C++" workload. Tauri uses WebView2, which Windows 10 (version 1803 and later) and Windows 11 already include.
+
+## Cloud sandbox (agent sessions)
+
+Claude Code cloud sessions run on Ubuntu 24.04 with no display. `CLAUDE.md` holds the notes that agents read; in short:
+
+- At session start, `scripts/install_pkgs.sh` installs the UI packages and fetches the crates. It skips the work when the lockfiles have not changed since the last run.
+- Use `pnpm -C ui tauri build --no-bundle` for the Tauri compile check, and `xvfb-run -a` for WebDriver tests. Do not start `tauri dev`.
+- Playwright cannot download browsers there. Point the browser tests at the preinstalled Chromium:
+
+    ```bash
+    TLILLI_PW_CHROMIUM=/opt/pw-browsers/chromium pnpm -C ui test:e2e
+    ```
+
+- GitHub is reached through REST only (`gh api`); the [agent playbook](agent-playbook.md) lists the routes.
+
+## Codespaces and dev containers
+
+`.devcontainer/` sets up all of the above in a container, with a browser view of the Tauri window. See [Develop in Codespaces or a dev container](../how-to/codespaces.md).
