@@ -78,19 +78,20 @@ pnpm -C ui tauri build --no-bundle"
 check "--help exits 0" "$tmp/full" 0 "" --help
 check "no arguments exit 2" "$tmp/full" 2 ""
 check "an unknown job exits 2 and runs nothing" "$tmp/full" 2 "" rust no-such-job
-check "a pending job exits 2 and runs nothing" "$tmp/full" 2 "" rust commits
+check "a pending job exits 2 and runs nothing" "$tmp/full" 2 "" rust protocol-ref/drift
 check "passing jobs run CI's commands in order" "$tmp/full" 0 "$rust_calls
 $ui_calls" rust ui
 check "tauri/linux runs CI's no-bundle build" "$tmp/full" 0 "$tauri_calls" tauri/linux
 check "missing manifests skip the jobs" "$tmp/bare" 0 "" rust-lint rust-test ui tauri/linux
 
 # all_case <name> <want in the last line> <ci.sh args>...: `all` in a repository with no manifests,
-# where the docs, scripts and reuse jobs find stubs, so nothing real runs; checks the closing line.
-make_repo "$tmp/stubs" scripts/docs.sh scripts/tests/test_ci.sh scripts/tests/test_api_docs.sh \
-  .cache/venv-reuse-6.3.0/bin/reuse
-chmod +x "$tmp/stubs/scripts/docs.sh" "$tmp/stubs/scripts/tests/test_ci.sh" \
-  "$tmp/stubs/scripts/tests/test_api_docs.sh" \
-  "$tmp/stubs/.cache/venv-reuse-6.3.0/bin/reuse"
+# where the docs, diff, scripts and reuse jobs find stubs, so nothing real runs; checks the closing
+# line.
+stubs="scripts/docs.sh scripts/pr_checks.sh scripts/tests/test_ci.sh scripts/tests/test_api_docs.sh
+  scripts/tests/test_pr_checks.sh .cache/venv-reuse-6.3.0/bin/reuse"
+# shellcheck disable=SC2086 # one path per word
+make_repo "$tmp/stubs" $stubs
+for stub in $stubs; do chmod +x "$tmp/stubs/$stub"; done
 printf 'import unittest\n\n\nclass Stub(unittest.TestCase):\n    def test_stub(self):\n        pass\n' \
   >"$tmp/stubs/scripts/tests/test_stub.py"
 all_case() {
@@ -108,7 +109,7 @@ all_case() {
     failures=$((failures + 1))
   fi
 }
-pending="commits size/limit docs/contract-sync protocol-ref/drift workflows/zizmor e2e/smoke"
+pending="commits protocol-ref/drift workflows/zizmor e2e/smoke"
 all_case "all names reuse as not run" "ci.sh: not run: reuse (only when named), $pending (pending)" all
 all_case "all reuse does not name reuse as not run" "ci.sh: not run: $pending (pending)" all reuse
 
