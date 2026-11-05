@@ -32,7 +32,7 @@ Automated review is the default; the maintainer reviews only gated paths.
 `scripts/ci.sh` runs the commands of the CI jobs on your machine (`PR-CI-010`) and stops at the first failure. Run `scripts/ci.sh all` before you push; `scripts/ci.sh --help` lists the jobs and their commands:
 
 ```sh
-scripts/ci.sh all          # rust-lint, rust-test, ui, docs-build and scripts (the scripts' tests)
+scripts/ci.sh all          # rust-lint, rust-test, ui, docs-build, tauri/linux and scripts (the scripts' tests)
 scripts/ci.sh rust-test    # one job
 scripts/ci.sh reuse        # the license check, reuse lint
 ```
