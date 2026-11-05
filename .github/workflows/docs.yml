@@ -75,23 +75,7 @@ jobs:
 
       - name: Build the API docs
         if: hashFiles('Cargo.toml') != ''
-        run: |
-          cargo doc --workspace --no-deps
-          mkdir -p site/api
-          cp -R target/doc/. site/api/
-          # cargo doc writes no top-level index for a workspace; list the crates.
-          if [ ! -f site/api/index.html ]; then
-            {
-              echo '<!doctype html><html lang="en"><head><meta charset="utf-8">'
-              echo '<title>Tlilli API documentation</title></head><body>'
-              echo '<h1>Tlilli API documentation</h1><ul>'
-              for crate in site/api/*/index.html; do
-                name=$(basename "$(dirname "$crate")")
-                echo "<li><a href=\"$name/index.html\">$name</a></li>"
-              done
-              echo '</ul><p><a href="../">Back to the documentation</a></p></body></html>'
-            } > site/api/index.html
-          fi
+        run: scripts/api_docs.sh # rustdoc into site/api, with a page that lists the crates
 
       - name: Placeholder API page
         if: hashFiles('Cargo.toml') == ''

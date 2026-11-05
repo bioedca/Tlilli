@@ -159,11 +159,7 @@ jobs:
       - name: Toolchain from rust-toolchain.toml
         run: rustup toolchain install
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
-      - name: API docs under site/api
-        run: |
-          cargo doc --workspace --no-deps
-          mkdir -p site/api
-          cp -R target/doc/. site/api/
+      - run: scripts/api_docs.sh # rustdoc into site/api, with a page that lists the crates
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: site

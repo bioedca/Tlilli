@@ -10,12 +10,13 @@ export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  // PRD 33 (`e2e/smoke`): one retry allowed in CI.
-  retries: process.env.CI ? 1 : 0,
+  // No retries: PR-CI-009 allows one only for the desktop `e2e/smoke` job, which is a separate
+  // (tauri-driver) suite; a browser test that passes only on retry must fail the `ui` check.
+  retries: 0,
   reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "list",
   use: {
     baseURL,
-    trace: "on-first-retry",
+    trace: "retain-on-failure",
   },
   projects: [
     {
