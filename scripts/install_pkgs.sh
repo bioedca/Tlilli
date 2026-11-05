@@ -15,10 +15,12 @@ mkdir -p .cache
 # cargo-nextest runs the Rust tests (scripts/ci.sh rust-test), at the version ci.yml installs. Its
 # build takes minutes, so it runs in the background and the session starts at once; the output
 # goes to .cache/cargo-nextest.log. The check comes before the stamp's, so a session whose
-# lockfiles have not changed still gets it.
+# lockfiles have not changed still gets it. flock -n skips the build while an earlier session's
+# build still holds the lock; cargo install is a no-op once that build has finished.
 NEXTEST_VERSION=0.9.150
 if [ -f Cargo.lock ] && ! command -v cargo-nextest >/dev/null 2>&1; then
-  nohup cargo install --locked "cargo-nextest@$NEXTEST_VERSION" >.cache/cargo-nextest.log 2>&1 &
+  nohup flock -n .cache/cargo-nextest.lock \
+    cargo install --locked "cargo-nextest@$NEXTEST_VERSION" >>.cache/cargo-nextest.log 2>&1 &
 fi
 
 stamp=.cache/install_pkgs.sha256
