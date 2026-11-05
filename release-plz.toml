@@ -1,0 +1,40 @@
+# release-plz configuration (PRD 37 §2, D-025, D-081): the release pull request with the next
+# workspace version, then the tag and the crates.io publish when it merges. The release workflow
+# adds CHANGELOG.md (cliff.toml) and CITATION.cff (scripts/citation_version.py) to the pull request.
+
+[workspace]
+changelog_update = false # CHANGELOG.md comes from git-cliff over the whole repository (D-081)
+git_release_enable = false # tauri-action creates the GitHub Release
+git_tag_name = "v{{ version }}" # one tag for the whole workspace
+git_tag_enable = false # tlilli-app creates it, below
+pr_name = "chore(release): v{{ version }}" # also the commit message, which commitlint checks
+pr_labels = ["release", "gate"]
+pr_draft = false
+semver_check = false # true for tlilli-core from v1.0 (PR-REL-005)
+dependencies_update = false # Dependabot owns dependency bumps
+publish_timeout = "20m"
+release_always = false # release only when the release pull request merges
+
+[[package]]
+name = "tlilli-core"
+version_group = "tlilli"
+publish = true
+
+[[package]]
+name = "tlilli-mcp"
+version_group = "tlilli"
+publish = false # until v0.2 (PR-REL-024)
+
+[[package]]
+name = "tlilli-cli"
+version_group = "tlilli"
+publish = false # until v0.2 (PR-REL-024)
+
+# release-plz releases in dependency order and skips a crate whose tag exists, so the shared tag
+# comes from the shell, which no crate depends on; git_only makes it take part.
+[[package]]
+name = "tlilli-app" # src-tauri
+version_group = "tlilli"
+publish = false
+git_tag_enable = true
+git_only = true
