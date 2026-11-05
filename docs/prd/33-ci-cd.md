@@ -33,7 +33,7 @@ Everything a fork PR triggers runs with a read-only token and no secrets; privil
 name: ci
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review, labeled]
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
   push:
     branches: [main]
 concurrency:
