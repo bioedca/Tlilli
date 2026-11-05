@@ -74,6 +74,32 @@ $ui_calls" rust ui
 check "tauri/linux runs CI's no-bundle build" "$tmp/full" 0 "$tauri_calls" tauri/linux
 check "missing manifests skip the jobs" "$tmp/bare" 0 "" rust-lint rust-test ui tauri/linux
 
+# all_case <name> <want in the last line> <ci.sh args>...: `all` in a repository with no manifests,
+# where the docs, scripts and reuse jobs find stubs, so nothing real runs; checks the closing line.
+make_repo "$tmp/stubs" scripts/docs.sh scripts/tests/test_ci.sh .cache/venv-reuse-6.3.0/bin/reuse
+chmod +x "$tmp/stubs/scripts/docs.sh" "$tmp/stubs/scripts/tests/test_ci.sh" \
+  "$tmp/stubs/.cache/venv-reuse-6.3.0/bin/reuse"
+printf 'import unittest\n\n\nclass Stub(unittest.TestCase):\n    def test_stub(self):\n        pass\n' \
+  >"$tmp/stubs/scripts/tests/test_stub.py"
+all_case() {
+  local name=$1 want=$2 status=0 last
+  shift 2
+  : >"$tmp/log"
+  STUB_LOG="$tmp/log" STUB_FAIL="" STUB_FAIL_STATUS=101 PATH="$tmp/bin:$PATH" \
+    "$tmp/stubs/scripts/ci.sh" "$@" >"$tmp/out" 2>&1 || status=$?
+  last=$(tail -n 1 "$tmp/out")
+  if [[ $status == 0 && $last == "$want" ]]; then
+    printf 'ok   %s\n' "$name"
+  else
+    printf 'FAIL %s: exit %s, last line:\n%s\nwant:\n%s\noutput:\n' "$name" "$status" "$last" "$want"
+    cat "$tmp/out"
+    failures=$((failures + 1))
+  fi
+}
+pending="commits size/limit docs/contract-sync protocol-ref/drift workflows/zizmor e2e/smoke"
+all_case "all names reuse as not run" "ci.sh: not run: reuse (only when named), $pending (pending)" all
+all_case "all reuse does not name reuse as not run" "ci.sh: not run: $pending (pending)" all reuse
+
 fail_on="cargo clippy"
 check "the first failure stops the run with its status" "$tmp/full" 101 "cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings" rust ui

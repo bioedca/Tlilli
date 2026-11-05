@@ -198,7 +198,21 @@ for name in $selected; do
 done
 
 printf '\nci.sh: done:%s\n' "$summary"
+# After `all`, name what it left out: the EXTRA jobs not also named, and the pending ones.
 case " $* " in
-  *" all "*) printf 'ci.sh: not run: %s (only when named), %s (pending)\n' "$EXTRA" "$PENDING" ;;
+  *" all "*)
+    unnamed=""
+    for name in $EXTRA; do
+      case " $selected " in
+        *" $name "*) ;;
+        *) unnamed="$unnamed $name" ;;
+      esac
+    done
+    if [ -n "$unnamed" ]; then
+      printf 'ci.sh: not run:%s (only when named), %s (pending)\n' "$unnamed" "$PENDING"
+    else
+      printf 'ci.sh: not run: %s (pending)\n' "$PENDING"
+    fi
+    ;;
   *) ;;
 esac
