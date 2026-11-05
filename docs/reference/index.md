@@ -2,11 +2,13 @@
 
 Reference pages are for looking things up: what a tool, resource, prompt, schema, command or shortcut is and does, stated once and precisely. They describe; they do not advise (see [How-to guides](../how-to/index.md)).
 
-Most of this section is generated and never hand-edited (`PR-DOC-003`). The `tlilli` command produces it from the running code, every generated file carries a header comment saying so, and the `protocol-ref/drift` CI job fails when a committed page differs from the generator's output. The generators and the drift job are bootstrap task 29.
+Most of this section is generated and never hand-edited (`PR-DOC-003`). The `tlilli` command produces it from the running code, and every generated file carries a header comment saying so. `scripts/gen_reference.sh` runs the generators and rewrites the pages; `scripts/gen_reference.sh --check`, and the `reference` test that `cargo test` runs for `crates/tlilli-cli`, fail when a committed page differs from the generator's output. The `protocol-ref/drift` CI job, which runs the same check, arrives with the `ci.yml` rewrite (bootstrap task 20).
+
+Until the surfaces they document exist, the generated pages are skeletons that say so: the MCP pages and the tool-input schemas fill in with v0.2, the canonical JSON schema with v0.1 and the style-sheet schema with v0.4. The generators of `cli.md` and `skills.md` follow in a second pull request for bootstrap task 29.
 
 | Page | Generator | Source of truth |
 | --- | --- | --- |
-| `mcp/tools.md`, `mcp/resources.md`, `mcp/prompts.md` | `tlilli mcp schema --markdown` | the MCP server's schema (`crates/tlilli-mcp`) |
+| [`mcp/tools.md`](mcp/tools.md), [`mcp/resources.md`](mcp/resources.md), [`mcp/prompts.md`](mcp/prompts.md) | `tlilli mcp schema --markdown` | the MCP server's schema (`crates/tlilli-mcp`) |
 | `schemas/*.json` | `tlilli schema dump` | canonical JSON, style sheet and tool-input schemas (`crates/tlilli-core`) |
 | `cli.md` | `tlilli --help-markdown` | the clap command tree (`crates/tlilli-cli`) |
 | `skills.md` | `tlilli skills build --docs` | the skill sources under `skills/` |
