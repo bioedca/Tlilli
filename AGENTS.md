@@ -140,8 +140,9 @@ them (rulesets, DCO, commitlint, size and gate checks).
   (name AI-written tests), Docs, Review pipeline, Checklist, and the `Size override:`, `Docs not needed because:`
   and `AI assistance:` lines. At most 400 changed hand-written lines. The review order is fixed
   ([PRD 32](docs/prd/32-code-review.md)): self-review, Codex local rounds, `@codex review`, `@coderabbitai review`
-  within the CodeRabbit ledger, `@greptileai` at Ready on PRs labelled `gate` or `review:deep`, the maintainer on
-  PRs labelled `gate` once they are Ready (or the maintainer's relayed authorization, `PR-GIT-058`). Answer every
+  within the CodeRabbit ledger, Greptile on PRs labelled `gate` or `review:deep` (it starts at Ready; `@greptileai`
+  only for a label added after Ready or a review not started 10 minutes after Ready), the maintainer on PRs labelled
+  `gate` once they are Ready (or the maintainer's relayed authorization, `PR-GIT-058`). Answer every
   finding in its thread (fixed with the SHA, declined with a reason, or escalated) before resolving it.
 
 ## Codex
