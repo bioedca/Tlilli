@@ -166,6 +166,26 @@ fn skills_build_refuses_a_source_that_already_holds_skills() {
     assert!(!out.exists(), "a refused build wrote the page");
 }
 
+#[cfg(unix)]
+#[test]
+fn skills_build_reports_a_skill_entry_it_cannot_read() {
+    let dir = tempfile::tempdir().unwrap();
+    std::os::unix::fs::symlink(dir.path().join("missing"), dir.path().join("tlilli-run")).unwrap();
+    let out = dir.path().join("skills.md");
+    let source = dir.path().to_str().unwrap();
+    let output = tlilli(&[
+        "skills",
+        "build",
+        "--source",
+        source,
+        "--docs",
+        out.to_str().unwrap(),
+    ]);
+    assert_eq!(output.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("tlilli-run"));
+    assert!(!out.exists(), "a failed build wrote the page");
+}
+
 #[test]
 fn exit_codes_follow_fr_01_050() {
     assert_eq!(tlilli(&["--version"]).status.code(), Some(0));
