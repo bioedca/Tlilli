@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Regenerates the generated reference pages under docs/reference/ (PR-DOC-003): the MCP protocol
-# reference (mcp/) and the JSON Schemas (schemas/). Each of those files says that it is
-# generated; never edit one by hand.
+# reference (mcp/), the JSON Schemas (schemas/), the command reference (cli.md) and the skill
+# reference (skills.md). Each of those files says that it is generated; never edit one by hand.
 #
 #   scripts/gen_reference.sh           rewrite the pages in place
 #   scripts/gen_reference.sh --check   regenerate into a scratch directory and exit 1 when the
@@ -27,14 +27,16 @@ trap 'rm -rf "$out"' EXIT
 tlilli() { cargo run --quiet --locked -p tlilli-cli -- "$@"; }
 tlilli mcp schema --markdown "$out/mcp"
 tlilli schema dump "$out/schemas"
+tlilli --help-markdown > "$out/cli.md"
+tlilli skills build --docs "$out/skills.md" --source skills
 
 status=0
-for path in mcp schemas; do
+for path in mcp schemas cli.md skills.md; do
   if "$check"; then
     # CRLF is folded as in the `reference` test, for checkouts that convert line endings.
     diff -r -u --strip-trailing-cr "$committed/$path" "$out/$path" || status=1
   else
-    # Replace the whole directory, so a page the generator no longer writes goes away.
+    # Replace each directory whole, so a page the generator no longer writes goes away.
     rm -rf "${committed:?}/$path"
     mv "$out/$path" "$committed/$path"
   fi
