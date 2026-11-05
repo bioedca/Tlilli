@@ -31,7 +31,7 @@ Install the Tauri 2 prerequisites. This is the list in `.devcontainer/post-creat
 sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev pkg-config
 ```
 
-For the desktop end-to-end tests, also install `xvfb` and `webkit2gtk-driver`. Run the tests under a virtual display with `xvfb-run -a`.
+For the desktop end-to-end tests (the `tauri-driver` smoke suite, whose `ui` script has not landed yet), also install `xvfb` and `webkit2gtk-driver`, and run them under a virtual display with `xvfb-run -a`. The browser suite, `pnpm -C ui test:e2e`, runs headless and needs neither.
 
 ## macOS
 

@@ -27,5 +27,5 @@ Pending jobs are named but not run until the `ci.yml` rewrite (bootstrap task 20
 
 ## Related checks
 
-- `scripts/gen_reference.sh --check` generates the reference pages into a temporary directory, compares them with `docs/reference/` and fails when they differ (`PR-DOC-003`); it changes nothing. Without `--check`, the script replaces the committed pages. It is the check that the `protocol-ref/drift` job will run.
+- `scripts/gen_reference.sh --check` generates the reference pages into a temporary directory, compares them with `docs/reference/` and fails when they differ (`PR-DOC-003`); it changes nothing. Without `--check`, the script replaces the committed pages. The pending `protocol-ref/drift` job covers `docs/reference/mcp/` and the schemas ([33 CI/CD](../prd/33-ci-cd.md) §2); `--check` also compares `cli.md` and `skills.md`.
 - The lefthook hooks installed by `pnpm -C ui install` run at commit time. When Rust files are staged, `cargo fmt --all --check` and `cargo clippy` check the whole workspace; Biome checks only the staged UI files; commitlint checks the message.
