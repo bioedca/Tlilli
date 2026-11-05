@@ -7,8 +7,12 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 cargo doc --workspace --no-deps
+# cargo writes into its configured target directory, which CARGO_TARGET_DIR or build.target-dir
+# can move away from ./target; cargo metadata names the one in effect.
+target_dir=$(cargo metadata --format-version 1 --no-deps |
+  sed -n 's/.*"target_directory":"\([^"]*\)".*/\1/p')
 mkdir -p site/api
-cp -R target/doc/. site/api/
+cp -R "${target_dir:?cargo metadata named no target directory}/doc/." site/api/
 if [ ! -f site/api/index.html ]; then
   {
     echo '<!doctype html><html lang="en"><head><meta charset="utf-8">'

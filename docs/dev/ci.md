@@ -23,7 +23,12 @@ The script installs no toolchain: it expects rustup, cargo-nextest, cargo-deny, 
 | `rust` | an alias for `rust-lint` then `rust-test` |
 | `reuse` | `reuse lint` ([Licensing](licensing.md)); it runs only when named, until CI runs it |
 
-Pending jobs are named but not run until the rest of the `ci.yml` rewrite (bootstrap task 20) adds them: `commits`, `size/limit`, `docs/contract-sync`, `protocol-ref/drift`, `workflows/zizmor` and `e2e/smoke`. `all` skips them, and naming one exits with status 2. Not mirrored: the `build/*` matrix, which runs when a pull request is Ready; the coverage uploads to Codecov, of the nextest runs, which `rust-test` puts through `cargo llvm-cov` in CI, and of the Vitest report that `ui` writes locally too; and the `codecov/patch/*` checks, which the Codecov service computes.
+Pending jobs are named but not run until the rest of the `ci.yml` rewrite (bootstrap task 20) adds them: `commits`, `size/limit`, `docs/contract-sync`, `protocol-ref/drift`, `workflows/zizmor` and `e2e/smoke`. `all` skips them, and naming one exits with status 2. Not mirrored:
+
+- the `build/*` matrix, which runs when a pull request is Ready;
+- the Rust coverage: CI runs the nextest commands of `rust-test` under `cargo llvm-cov`, and the local job runs them without it;
+- the uploads to Codecov, of that Rust report and of the Vitest report (the local `ui` job writes the Vitest report to `ui/coverage/` but uploads nothing);
+- the `codecov/patch/*` checks, which the Codecov service computes.
 
 ## Related checks
 
