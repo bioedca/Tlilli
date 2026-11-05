@@ -1,5 +1,4 @@
-# git-cliff 2.14.2 or later, which requires every condition of a parser to hold, for CHANGELOG.md
-# (PR-DOC-010, PRD 37 §2, D-081), written on the release branch from every commit (--tag v0.2.0).
+# CHANGELOG.md (PR-DOC-010, D-081); needs git-cliff 2.14.2+, whose parsers require every condition.
 
 [changelog]
 header = """
