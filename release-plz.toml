@@ -1,5 +1,4 @@
-# release-plz configuration (PRD 37 §2, D-025, D-081): the release pull request, then the crates.io
-# publish. The workflow adds CHANGELOG.md and CITATION.cff to the pull request, and tags v<version>.
+# release-plz (PRD 37 §2, D-025, D-081); release-plz.yml adds CHANGELOG.md, CITATION.cff, the tag.
 
 [workspace]
 changelog_update = false # CHANGELOG.md comes from git-cliff over the whole repository (D-081)
