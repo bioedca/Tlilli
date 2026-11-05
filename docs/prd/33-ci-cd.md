@@ -37,7 +37,7 @@ on:
   push:
     branches: [main]
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}  # one group per main run (D-080)
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 permissions: read-all
 env:
