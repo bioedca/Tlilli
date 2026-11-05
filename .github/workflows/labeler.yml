@@ -1,9 +1,10 @@
 # Path labels on pull requests from .github/labeler.yml: area/*, gate, review:deep
-# (docs/prd/32-code-review.md PR-REV-014; docs/prd/33-ci-cd.md §1).
-# pull_request_target runs in the base-branch context so the token may write labels on fork PRs; the
-# job never checks out or executes PR code (PR-CI-006): actions/labeler reads the configuration from
-# the base branch through the API and only lists the PR's changed files.
-# Labels are only added here (sync-labels: false, PR-PRQ-030/033). A gate label that no longer matches any gated path
+# (docs/prd/32-code-review.md PR-REV-014; docs/prd/33-ci-cd.md §1); and the size/* label.
+# pull_request_target runs in the base-branch context so the token may write labels on fork PRs; no
+# job checks out or executes PR code (PR-CI-006): actions/labeler reads the configuration from the
+# base branch through the API and only lists the PR's changed files, and the size job checks out the
+# base branch only.
+# Path labels are only added here (sync-labels: false, PR-PRQ-030/033). A gate label that no longer matches any gated path
 # is removed by gate.yml, which recomputes the gated paths from the diff on every push (PR-REV-010, bootstrap task 19).
 name: labeler
 
@@ -33,3 +34,36 @@ jobs:
           # hand, such as review:deep or an area/* correction (PR-PRQ-030), are never stripped.
           sync-labels: false
           dot: true
+
+  # The size/* label (PR-PRQ-022), from the hand-written changed lines as the size/limit check counts
+  # them, by the base branch's scripts/pr_checks.sh over the PR's file list from the API. Only the
+  # base branch is checked out, so no PR code runs (PR-CI-006). One size/* label at a time: the old
+  # one is removed when the count moves.
+  size:
+    name: size label
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read # the base branch, for the script
+      pull-requests: write # set the size/* label
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - name: Count the changed lines and set the label
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: |
+          gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR/files" \
+            --jq '.[] | "\(.additions)\t\(.deletions)\t\(.filename)"' >"$RUNNER_TEMP/files.tsv"
+          label=$(PR_FILES="$RUNNER_TEMP/files.tsv" scripts/pr_checks.sh size-label)
+          echo "$label"
+          for old in size/XS size/S size/M size/L size/XL; do
+            if [[ $old != "$label" && ",$LABELS," == *",$old,"* ]]; then
+              gh api -X DELETE "repos/$GITHUB_REPOSITORY/issues/$PR/labels/${old/\//%2F}" >/dev/null
+            fi
+          done
+          gh api "repos/$GITHUB_REPOSITORY/issues/$PR/labels" -f "labels[]=$label" >/dev/null
