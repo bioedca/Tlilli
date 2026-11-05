@@ -20,6 +20,7 @@ clap.workspace = true
 [dev-dependencies]
 # The reference test parses the generated JSON Schemas; the generator itself writes them by hand.
 serde_json.workspace = true
+tempfile.workspace = true
 
 [lints]
 workspace = true

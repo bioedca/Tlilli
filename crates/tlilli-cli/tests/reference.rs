@@ -7,15 +7,19 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
-/// Runs `tlilli` with `args`, then `out` (a fresh scratch directory named `name`) appended.
-fn generate(name: &str, args: &[&str]) -> PathBuf {
-    let out = Path::new(env!("CARGO_TARGET_TMPDIR")).join(name);
-    let _ = fs::remove_dir_all(&out);
+use tempfile::TempDir;
+
+/// Runs `tlilli` with `args` and then `out`, a path named `name` in a fresh temporary directory,
+/// appended. The directory goes away when the returned guard drops.
+fn generate(name: &str, args: &[&str]) -> (TempDir, PathBuf) {
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    let out = dir.path().join(name);
     let output = tlilli(&[args, &[out.to_str().expect("a UTF-8 path")]].concat());
     assert!(output.status.success(), "tlilli {args:?}: {output:?}");
-    out
+    (dir, out)
 }
 
+/// Runs the `tlilli` binary that cargo built for this test.
 fn tlilli(args: &[&str]) -> Output {
     Command::new(env!("CARGO_BIN_EXE_tlilli"))
         .args(args)
@@ -61,7 +65,7 @@ fn assert_same_tree(generated: &Path, committed: &str) {
 
 #[test]
 fn the_mcp_reference_matches_the_generator_and_says_it_is_generated() {
-    let out = generate("mcp", &["mcp", "schema", "--markdown"]);
+    let (_dir, out) = generate("mcp", &["mcp", "schema", "--markdown"]);
     assert_same_tree(&out, "mcp");
     for page in ["tools.md", "resources.md", "prompts.md"] {
         let text = fs::read_to_string(out.join(page)).unwrap();
@@ -74,7 +78,7 @@ fn the_mcp_reference_matches_the_generator_and_says_it_is_generated() {
 
 #[test]
 fn the_json_schemas_match_the_generator_and_parse() {
-    let out = generate("schemas", &["schema", "dump"]);
+    let (_dir, out) = generate("schemas", &["schema", "dump"]);
     assert_same_tree(&out, "schemas");
     for page in ["canonical.schema.json", "style-sheet.schema.json"] {
         let text = fs::read_to_string(out.join(page)).unwrap();
@@ -98,7 +102,8 @@ fn exit_codes_follow_fr_01_050() {
     assert_eq!(tlilli(&["no-such-command"]).status.code(), Some(1));
     assert_eq!(tlilli(&["schema", "dump"]).status.code(), Some(1));
     // So is an output directory that cannot be created, here because a file is in the way.
-    let blocker = Path::new(env!("CARGO_TARGET_TMPDIR")).join("blocker");
+    let dir = tempfile::tempdir().unwrap();
+    let blocker = dir.path().join("blocker");
     fs::write(&blocker, "").unwrap();
     let output = tlilli(&["schema", "dump", blocker.join("schemas").to_str().unwrap()]);
     assert_eq!(output.status.code(), Some(1));
