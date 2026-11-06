@@ -112,6 +112,12 @@ jobs:
     if: always() && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+    # One report at a time, so none reads an issue that another is rewriting. Only this job queues:
+    # the checks keep their own groups. A newer pending report may replace an older one, and the
+    # run ids keep the newest result in any case.
+    concurrency:
+      group: nightly-report
+      cancel-in-progress: false
     permissions:
       contents: read
       issues: write
