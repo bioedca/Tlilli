@@ -78,17 +78,19 @@ def main() -> int:
     dry = parser.parse_args().dry_run
     repo = os.environ["GITHUB_REPOSITORY"]
     now = datetime.datetime.now(datetime.UTC)
-    prs = [pr for pr in lines(gh("--paginate", f"repos/{repo}/pulls?state=all&per_page=100", "--jq",
-                                 ".[] | {number, state, draft, merged_at, created_at, user: "
-                                 ".user.login, head: .head.ref, sha: .head.sha, head_repo: "
-                                 ".head.repo.full_name, labels: [.labels[].name]}"))
-           if pr["head_repo"] == repo]
+    prs = lines(gh("--paginate", f"repos/{repo}/pulls?state=all&per_page=100", "--jq",
+                   ".[] | {number, state, draft, merged_at, created_at, user: .user.login, head: "
+                   ".head.ref, label: .head.label, sha: .head.sha, head_repo: "
+                   ".head.repo.full_name, labels: [.labels[].name]}"))
+    # A fork's PR is swept like any other (PR-GIT-010), but its branch is not one of this repo's.
+    mine = [pr for pr in prs if pr["head_repo"] == repo]
     refs = [line.split(" ", 1) for line in subprocess.run(
         ["git", "for-each-ref", "--format=%(refname:lstrip=3) %(committerdate:iso-strict)",
          "refs/remotes/origin"], capture_output=True, text=True, check=True).stdout.splitlines()]
     marked, closed = [], []
     for pr in (pr for pr in prs if pr["state"] == "open"):
         n = pr["number"]
+        name = pr["head"] if pr["head_repo"] == repo else pr["label"]  # a fork's is owner:branch
         # GitHub makes a commit's first check suite when the commit is pushed, so that dates the
         # last push even when the commit itself is older; without one, the commit date stands.
         suites = gh("--paginate", f"repos/{repo}/commits/{pr['sha']}/check-suites?per_page=100",
@@ -118,16 +120,16 @@ def main() -> int:
                     f"weekly sweep marked it `{STALE}`. After 21 days without a push, comment or "
                     "review it is closed (`PR-PRQ-005`, D-084).")})
         elif action == "close":
-            closed.append({"number": n, "branch": pr["head"]})
+            closed.append({"number": n, "branch": name})
             if not dry:
                 gh(f"repos/{repo}/issues/{n}/comments", payload={"body": (
                     f"{CLOSED}\nClosed by the weekly sweep after 21 days without a push, comment "
-                    f"or review (`PR-PRQ-005`, D-084). The branch `{pr['head']}` stays: reopen "
+                    f"or review (`PR-PRQ-005`, D-084). The branch `{name}` stays: reopen "
                     "this pull request, or open a new one from it, to go on.")})
                 gh("-X", "PATCH", f"repos/{repo}/pulls/{n}", payload={"state": "closed"})
             pr["state"] = "closed"  # so the branch list below sees this run's closes
         print(f"#{n}: {action or 'nothing'}", file=sys.stderr)
-    print(json.dumps({"marked": marked, "closed": closed, "branches": branches(refs, prs, now)}))
+    print(json.dumps({"marked": marked, "closed": closed, "branches": branches(refs, mine, now)}))
     return 0
 
 
