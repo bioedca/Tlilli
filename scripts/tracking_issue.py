@@ -68,16 +68,13 @@ def gh(*args: str, payload: dict | None = None) -> str:
     return subprocess.run(cmd, input=data, stdout=subprocess.PIPE, text=True, check=True).stdout
 
 
-def find(repo: str, title: str) -> dict | None:
-    """The oldest issue with this title that the bot opened, open or closed."""
+def find(repo: str, title: str) -> list[dict]:
+    """The issues with this title that the bot opened, open or closed, oldest first."""
     text = gh("--paginate", f"repos/{repo}/issues?state=all&labels=type/task&sort=created"
               "&direction=asc&per_page=100", "--jq", '.[] | select(.pull_request == null) | '
               '{number, title, state, body, user: .user.login, labels: [.labels[].name]}')
-    for line in filter(str.strip, text.splitlines()):
-        issue = json.loads(line)
-        if issue["user"] == BOT and issue["title"] == title:
-            return issue
-    return None
+    issues = [json.loads(line) for line in filter(str.strip, text.splitlines())]
+    return [issue for issue in issues if issue["user"] == BOT and issue["title"] == title]
 
 
 def main() -> int:
@@ -91,7 +88,10 @@ def main() -> int:
     url = f"{os.environ['GITHUB_SERVER_URL']}/{repo}/actions/runs/{os.environ['GITHUB_RUN_ID']}"
     title = f"Tracking: {args.job}"
     today = datetime.datetime.now(datetime.UTC).date()
-    issue = find(repo, title)
+    issue, *duplicates = find(repo, title) or [None]
+    for extra in (d for d in duplicates if d["state"] == "open"):  # two runs at once made two
+        gh("-X", "PATCH", f"repos/{repo}/issues/{extra['number']}",
+           payload={"state": "closed", "state_reason": "not_planned"})
     change = plan(args.job, issue, args.result, today, url, args.p1)
     if change is None:
         print(f"{title}: {args.result}, nothing to record")
