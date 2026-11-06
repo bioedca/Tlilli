@@ -77,6 +77,8 @@ expect "reads a listing from PR_FILES" 0 "size/XS" size-label "PR_FILES=$tmp/fil
 printf '1\t1\tfile\nstatus[$(touch %s/pwned)]\t0\tother\n' "$tmp" >"$tmp/files.tsv"
 expect "refuses a count that is not a number" 2 "not a line count" size-label "PR_FILES=$tmp/files.tsv"
 [[ ! -e $tmp/pwned ]] || { printf 'FAIL a forged count ran a command\n'; failures=$((failures + 1)); }
+: >"$tmp/files.tsv"
+expect "counts an empty listing as no lines" 0 "size/XS" size-label "PR_FILES=$tmp/files.tsv"
 expect "a missing base exits 2" 2 "no commit nope" size PR_BASE=nope
 commit_lines 1 $'src/tab\tname.rs'
 expect "a path with a tab exits 2" 2 "a path with a tab or a newline" size
