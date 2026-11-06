@@ -89,8 +89,8 @@ def main() -> int:
         # last push even when the commit itself is older; without one, the commit date stands.
         suites = gh("--paginate", f"repos/{repo}/commits/{pr['sha']}/check-suites?per_page=100",
                     "--jq", ".check_suites[].created_at").split()
-        pushed = min(suites, default=None) or gh(f"repos/{repo}/pulls/{n}/commits?per_page=100",
-                                                  "--jq", "last.commit.committer.date").strip()
+        pushed = min(suites, default=None) or gh(f"repos/{repo}/commits/{pr['sha']}", "--jq",
+                                                  ".commit.committer.date").strip()
         comments = [c for path in (f"issues/{n}/comments", f"pulls/{n}/comments")  # threads too
                     for c in lines(gh("--paginate", f"repos/{repo}/{path}?per_page=100", "--jq",
                                       ".[] | {user: .user.login, created_at, body}"))]
