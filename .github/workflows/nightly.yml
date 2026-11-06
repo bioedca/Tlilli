@@ -8,9 +8,10 @@ on:
     - cron: "17 3 * * *" # 03:17 UTC
   workflow_dispatch:
 
-# Each run has its own group, so none is cancelled or replaced (PR-CI-015, D-080).
+# One run at a time (PR-CI-015, D-083): a run waits for the one before it, so no two reports touch
+# an issue together. A newer pending run may replace an older pending one, which it makes redundant.
 concurrency:
-  group: nightly-${{ github.run_id }}
+  group: nightly
   cancel-in-progress: false
 
 permissions: {} # each job declares the scopes it needs (PR-CI-003)
@@ -112,12 +113,6 @@ jobs:
     if: always() && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
-    # One report at a time, so none reads an issue that another is rewriting. Only this job queues:
-    # the checks keep their own groups. A newer pending report may replace an older one, and the
-    # run ids keep the newest result in any case.
-    concurrency:
-      group: nightly-report
-      cancel-in-progress: false
     permissions:
       contents: read
       issues: write
