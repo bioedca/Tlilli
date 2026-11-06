@@ -57,10 +57,11 @@ def plan(pr: dict, last: datetime.datetime, now: datetime.datetime) -> str | Non
 def branches(refs: list[list[str]], prs: list[dict], now: datetime.datetime) -> list[dict]:
     """Branches whose last commit is over 7 days old and that have no open PR, oldest first."""
     newest = {pr["head"]: pr for pr in sorted(prs, key=lambda pr: pr["number"])}
+    busy = {pr["head"] for pr in prs if pr["state"] == "open"}  # any open PR, not just the newest
     old = []
     for name, date in refs:
         pr = newest.get(name)
-        if name in ("HEAD", "main") or (pr and pr["state"] == "open") or now - when(date) < AGE:
+        if name in ("HEAD", "main") or name in busy or now - when(date) < AGE:
             continue
         old.append({"name": name, "date": date[:10], "pr": pr["number"] if pr else None,
                     "merged": bool(pr and pr["merged_at"])})
@@ -75,18 +76,24 @@ def main() -> int:
     now = datetime.datetime.now(datetime.UTC)
     prs = [pr for pr in lines(gh("--paginate", f"repos/{repo}/pulls?state=all&per_page=100", "--jq",
                                  ".[] | {number, state, draft, merged_at, created_at, user: "
-                                 ".user.login, head: .head.ref, head_repo: .head.repo.full_name, "
-                                 "labels: [.labels[].name]}")) if pr["head_repo"] == repo]
+                                 ".user.login, head: .head.ref, sha: .head.sha, head_repo: "
+                                 ".head.repo.full_name, labels: [.labels[].name]}"))
+           if pr["head_repo"] == repo]
     refs = [line.split(" ", 1) for line in subprocess.run(
         ["git", "for-each-ref", "--format=%(refname:lstrip=3) %(committerdate:iso-strict)",
          "refs/remotes/origin"], capture_output=True, text=True, check=True).stdout.splitlines()]
     marked, closed = [], []
     for pr in (pr for pr in prs if pr["state"] == "open"):
         n = pr["number"]
-        pushed = gh(f"repos/{repo}/pulls/{n}/commits?per_page=100", "--jq",
-                    "last.commit.committer.date").strip()
-        comments = lines(gh("--paginate", f"repos/{repo}/issues/{n}/comments?per_page=100",
-                            "--jq", ".[] | {user: .user.login, created_at, body}"))
+        # GitHub makes a commit's first check suite when the commit is pushed, so that dates the
+        # last push even when the commit itself is older; without one, the commit date stands.
+        suites = gh("--paginate", f"repos/{repo}/commits/{pr['sha']}/check-suites?per_page=100",
+                    "--jq", ".check_suites[].created_at").split()
+        pushed = min(suites, default=None) or gh(f"repos/{repo}/pulls/{n}/commits?per_page=100",
+                                                  "--jq", "last.commit.committer.date").strip()
+        comments = [c for path in (f"issues/{n}/comments", f"pulls/{n}/comments")  # threads too
+                    for c in lines(gh("--paginate", f"repos/{repo}/{path}?per_page=100", "--jq",
+                                      ".[] | {user: .user.login, created_at, body}"))]
         reviews = lines(gh("--paginate", f"repos/{repo}/pulls/{n}/reviews?per_page=100", "--jq",
                            ".[] | {submitted_at}"))
         action = plan(pr, active(pr, pushed, comments, reviews), now)

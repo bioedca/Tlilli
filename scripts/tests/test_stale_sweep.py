@@ -36,6 +36,7 @@ def pr(number: int, age: float, labels: tuple[str, ...] = (), draft: bool = True
        user: str = "bioedca", head: str = "", state: str = "open") -> dict:
     return {"number": number, "state": state, "draft": draft, "merged_at": None,
             "created_at": ago(age), "user": user, "head": head or f"claude/b{number}",
+            "sha": f"s{number}",
             "head_repo": "o/r", "labels": list(labels)}
 
 
@@ -68,16 +69,20 @@ class RuleTest(unittest.TestCase):
         self.assertEqual(sweep.branches(refs, prs, NOW), [
             {"name": "claude/none", "date": ago(15)[:10], "pr": None, "merged": False},
             {"name": "claude/merged", "date": ago(10)[:10], "pr": 2, "merged": True}])
+        reopened = [pr(1, 20, head="claude/none"), pr(2, 12, head="claude/none", state="closed")]
+        self.assertEqual(sweep.branches(refs[5:], reopened, NOW), [])  # #1 is open again
 
 
 class MainTest(unittest.TestCase):
-    def run_main(self, *args: str) -> tuple[dict, list[dict]]:
+    def run_main(self, *args: str, extra: dict | None = None) -> tuple[dict, list[dict]]:
         prs = [pr(1, 8), pr(2, 40, (sweep.STALE,)), pr(3, 40, user="dependabot[bot]"),
                {**pr(4, 40), "head_repo": "fork/r"}]  # a fork's PR is not this repository's
         data = {"repos/o/r/pulls": "".join(json.dumps(p) + "\n" for p in prs)}
-        for n in (1, 2, 3):
+        for n in (1, 2, 3):  # no check suite: the commit date stands for the push
+            data |= {f"repos/o/r/pulls/{n}/{path}": "" for path in ("comments", "reviews")}
             data |= {f"repos/o/r/pulls/{n}/commits": ago(30), f"repos/o/r/issues/{n}/comments": "",
-                     f"repos/o/r/pulls/{n}/reviews": ""}
+                     f"repos/o/r/commits/s{n}/check-suites": ""}
+        data |= extra or {}
         with tempfile.TemporaryDirectory() as tmp:
             Path(tmp, "gh").write_text(STUB, encoding="utf-8")
             Path(tmp, "gh").chmod(0o755)
@@ -107,6 +112,13 @@ class MainTest(unittest.TestCase):
         self.assertEqual(writes[0]["input"], {"labels": [sweep.STALE]})
         self.assertIn("`claude/b2` stays", writes[2]["input"]["body"])
         self.assertEqual(writes[3]["input"], {"state": "closed"})
+
+    def test_a_late_push_of_an_old_commit_or_a_thread_reply_keeps_the_pr_open(self) -> None:
+        reply = json.dumps({"user": "bioedca", "created_at": ago(2), "body": "a reply"})
+        for extra in ({"repos/o/r/commits/s2/check-suites": f"{ago(1)}\n{ago(3)}"},
+                      {"repos/o/r/pulls/2/comments": reply}):
+            summary, _ = self.run_main("--dry-run", extra=extra)
+            self.assertEqual(summary["closed"], [], extra)
 
     def test_a_dry_run_changes_nothing(self) -> None:
         summary, writes = self.run_main("--dry-run")
