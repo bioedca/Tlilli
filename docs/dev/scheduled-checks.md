@@ -16,11 +16,13 @@
 | Job | Runs | Locally |
 | --- | --- | --- |
 | `mutants` | cargo-mutants 27.1.0 on `tlilli-core` (`PR-TST-012`). Missed mutants do not fail the job; the run fails only when it cannot finish, for example when the tests fail with no mutation. The `mutants-out` artifact keeps the details for 7 days | `cargo mutants --package tlilli-core` |
+| `sweep` | The stale sweep (`PR-PRQ-005`, D-084). An open pull request older than 7 days gets `status/stale` and one comment. One with no push, comment or review other than the sweep's own for 21 days is closed, with a comment naming its branch. Ready gated pull requests, Dependabot's and the release-plz pull request are exempt. No branch is deleted | `GITHUB_REPOSITORY=bioedca/Tlilli scripts/stale_sweep.py --dry-run` in a full clone |
 
-Then the `report` job writes the `Weekly report` issue. Each run replaces its body with the new report and adds the same report as a comment, so past weeks stay readable; the issue stays open, and the run's summary page shows the report too. It has three sections (D-084):
+Then the `report` job writes the `Weekly report` issue. Each run replaces its body with the new report and adds the same report as a comment, so past weeks stay readable; the issue stays open, and the run's summary page shows the report too. It has four sections (D-084):
 
 - **The mutation score of `tlilli-core`**: caught mutants and those that timed out, out of all the viable ones. The target is 70% by v0.4. Up to 20 missed mutants are named; those in `model`, `event` and `segment` become test issues.
 - **The audited labels**: each pull request updated in the past 7 days that has `docs:not-needed`, `size:override` or `needs-tests`, with its `Docs not needed because:` or `Size override:` line (`PR-PRQ-031`). The maintainer may revert any of them.
+- **The stale sweep**: the pull requests it marked and closed, and the branches whose last commit is over 7 days old and that have no open pull request, each with its last pull request. Up to 30 are listed.
 - **The review budgets**: the `@coderabbitai review` requests of the past 7 days and the most in any one hour, against the 6 an hour of D-062; and the Greptile reviews of the month, against 15 to 20 (D-021), with a warning when 18 are used before day 20 (R-11). A request counts when a person writes it at the start of a line. The Greptile count also includes earlier reviews of a pull request that Greptile reviewed this month, because it reads the summary comment's `Reviews (N)`.
 
 ## Tracking issues
@@ -42,4 +44,4 @@ A host that rate-limits robots or blocks them goes in `exclude` in `lychee.toml`
 
 ## Not yet in the workflow
 
-The stale sweep of pull requests and branches (D-084; part 3 of bootstrap task 22); the criterion benchmarks against their stored baselines, which fail at a 20% regression (`PR-TST-014`); the property tests at 10,000 cases (PRD 34 §1); the compile check on the beta toolchain (`PR-MNT-013`); the LaTeX compile of exports (v0.4) and the docx check in LibreOffice (PRD 34 §3).
+The criterion benchmarks against their stored baselines, which fail at a 20% regression (`PR-TST-014`); the property tests at 10,000 cases (PRD 34 §1); the compile check on the beta toolchain (`PR-MNT-013`); the LaTeX compile of exports (v0.4) and the docx check in LibreOffice (PRD 34 §3).
