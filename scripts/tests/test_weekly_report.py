@@ -70,6 +70,22 @@ class SectionTest(unittest.TestCase):
             "| #8 | merged | `docs:not-needed` | no reason line |"])
         self.assertIn("No pull request", weekly.audit(prs[2:], WEEK))
 
+    def test_the_sweep_section_lists_its_actions_and_old_branches(self) -> None:
+        old = [{"name": f"claude/b{n}", "date": "2026-10-01", "pr": n or None, "merged": n % 2 == 1}
+               for n in range(32)]
+        text = weekly.sweep(json.dumps({"marked": [7, 8], "closed": [
+            {"number": 6, "branch": "claude/`x`"}], "branches": old}), "success")
+        self.assertIn("- Marked `status/stale`: #7, #8.", text)
+        self.assertIn("- Closed after 21 days without activity: #6 (branch `claude/'x'`).", text)
+        self.assertIn("no open pull request: 32 (none is deleted):", text)
+        self.assertIn("  - `claude/b0`, last commit 2026-10-01, no pull request\n"
+                      "  - `claude/b1`, last commit 2026-10-01, #1 merged\n"
+                      "  - `claude/b2`, last commit 2026-10-01, #2 closed", text)
+        self.assertTrue(text.endswith("  - 2 more"))
+        empty = weekly.sweep(json.dumps({"marked": [], "closed": [], "branches": []}), "success")
+        self.assertIn("none.\n- Closed after 21 days without activity: none.", empty)
+        self.assertIn("ended `skipped`", weekly.sweep("", "skipped"))
+
     def test_pull_requests_are_read_page_by_page_until_one_predates_the_week(self) -> None:
         full = "".join(json.dumps(pr(n, ())) + "\n" for n in range(weekly.PAGE))
         old = json.dumps(pr(1, (), updated="2026-10-01T00:00:00Z"))

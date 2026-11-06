@@ -1,8 +1,8 @@
 name: weekly
 
 # The weekly checks of PRD 33 §1 on `main` (bootstrap task 22; docs/dev/scheduled-checks.md lists
-# those still to come). Only `report` writes: the `Weekly report` issue (D-084) and the tracking
-# issue of `mutants` (PR-CI-014).
+# those still to come). `sweep` labels, comments on and closes pull requests (D-084); `report`
+# writes the `Weekly report` issue and the tracking issues of both (PR-CI-014).
 on:
   schedule:
     - cron: "23 5 * * 1" # Monday 05:23 UTC, before the weekly triage
@@ -51,8 +51,32 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
+  # The stale sweep (PR-PRQ-005, PR-GIT-004, D-084): it marks and closes pull requests, and lists
+  # old branches without deleting any.
+  sweep:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    outputs:
+      summary: ${{ steps.sweep.outputs.summary }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+          fetch-depth: 0 # every branch, for the date of its last commit
+      - id: sweep
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          summary=$(scripts/stale_sweep.py)
+          echo "summary=$summary" >>"$GITHUB_OUTPUT"
+
   report:
-    needs: [mutants]
+    needs: [mutants, sweep]
     if: always() && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -68,8 +92,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           MUTANTS: ${{ needs.mutants.outputs.summary }}
           MUTANTS_RESULT: ${{ needs.mutants.result }}
+          SWEEP: ${{ needs.sweep.outputs.summary }}
+          SWEEP_RESULT: ${{ needs.sweep.result }}
         run: |
           status=0
           scripts/weekly_report.py || status=1
           scripts/tracking_issue.py weekly/mutants "$MUTANTS_RESULT" || status=1
+          scripts/tracking_issue.py weekly/sweep "$SWEEP_RESULT" || status=1
           exit "$status"

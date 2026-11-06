@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Write the `Weekly report` issue of weekly.yml for the Monday triage (PRD 33 §1, D-084).
 
-The mutation score of tlilli-core, the week's audited labels and the review budgets: each run
-replaces the body and adds the same report as a comment, so past weeks stay readable.
-Environment: MUTANTS (the mutants job's JSON summary, empty if it did not finish), MUTANTS_RESULT.
+The mutation score of tlilli-core, the week's audited labels, the stale sweep and the review
+budgets: each run replaces the body and adds the same report as a comment, so past weeks stay
+readable. Environment: MUTANTS and SWEEP (the mutants and sweep jobs' JSON summaries, empty if a
+job did not finish), MUTANTS_RESULT and SWEEP_RESULT.
 """
 
 import datetime
@@ -55,6 +56,26 @@ def mutation(summary: str, result: str) -> str:
         if data["missed"] > len(names):
             lines.append(f"- {data['missed'] - len(names)} more in the `mutants-out` artifact")
     return "\n".join(lines)
+
+
+def sweep(summary: str, result: str) -> str:
+    """What stale_sweep.py did, and the old branches it lists (PR-PRQ-005, D-084)."""
+    if result != "success" or not summary:
+        return f"Not run: the `sweep` job ended `{result or 'unknown'}`; see its issue."
+    data = json.loads(summary)
+    closed = [f"#{c['number']} (branch {quote(c['branch'])})" for c in data["closed"]]
+    old = data["branches"]
+    text = [f"- Marked `status/stale`: {', '.join(f'#{n}' for n in data['marked']) or 'none'}.",
+            f"- Closed after 21 days without activity: {', '.join(closed) or 'none'}.",
+            f"- Branches over 7 days old with no open pull request: {len(old) or 'none'}"
+            + (" (none is deleted):" if old else ".")]
+    for branch in old[:30]:
+        pr = branch["pr"] and f"#{branch['pr']} {'merged' if branch['merged'] else 'closed'}"
+        text.append(f"  - {quote(branch['name'])}, last commit {branch['date']}, "
+                    f"{pr or 'no pull request'}")
+    if len(old) > 30:
+        text.append(f"  - {len(old) - 30} more")
+    return "\n".join(text)
 
 
 def audit(prs: list[dict], since: datetime.datetime) -> str:
@@ -144,6 +165,8 @@ def main() -> int:
         ("Mutation score of `tlilli-core` (`PR-TST-012`)",
          mutation(os.environ.get("MUTANTS", ""), os.environ.get("MUTANTS_RESULT", ""))),
         (f"Audited labels since {week:%Y-%m-%d} (`PR-PRQ-031`)", audit(prs, week)),
+        ("Stale sweep (`PR-PRQ-005`)",
+         sweep(os.environ.get("SWEEP", ""), os.environ.get("SWEEP_RESULT", ""))),
         ("Review budgets", budget(comments, week, month, now))])
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as summary:
