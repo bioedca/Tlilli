@@ -16,7 +16,7 @@ After the four jobs, the `report` job runs `scripts/tracking_issue.py`. It keeps
 - A red run opens the issue, or reopens it, and adds a comment that links the run. The body always shows the last run.
 - On the third red day in a row the issue gets `priority/P1`.
 - A green run closes the issue and removes `priority/P1`. A cancelled or skipped job changes nothing.
-- Only issues that `github-actions[bot]` opened count. Leave the first line of the body as it is: it records the day the job turned red.
+- Only issues that `github-actions[bot]` opened count; if two runs at once opened two, the newer is closed. Leave the first line of the body as it is: it records the day the job turned red.
 
 ## Links that cannot be checked
 
@@ -24,7 +24,4 @@ A host that rate-limits robots or blocks them goes in `exclude` in `lychee.toml`
 
 ## Not yet in the workflow
 
-- The criterion benchmarks against their stored baselines, which fail at a 20% regression (`PR-TST-014`), with the first benchmark.
-- The property tests at 10,000 cases (PRD 34 §1), with the first property test.
-- The compile check on the beta toolchain (`PR-MNT-013`).
-- The LaTeX compile of exports (v0.4), and the docx check in LibreOffice (PRD 34 §3).
+The criterion benchmarks against their stored baselines, which fail at a 20% regression (`PR-TST-014`); the property tests at 10,000 cases (PRD 34 §1); the compile check on the beta toolchain (`PR-MNT-013`); the LaTeX compile of exports (v0.4) and the docx check in LibreOffice (PRD 34 §3).

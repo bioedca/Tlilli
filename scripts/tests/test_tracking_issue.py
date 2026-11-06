@@ -94,10 +94,13 @@ class MainTest(unittest.TestCase):
         self.assertEqual(calls[1]["input"]["labels"], ["type/task", "area/docs", tracking.P1])
         self.assertEqual(calls[1]["input"]["title"], f"Tracking: {JOB}")
 
-    def test_updates_an_open_issue_adds_p1_and_comments(self) -> None:
-        calls = self.run_main([issue("open", "2026-01-01")], JOB, "failure")
+    def test_updates_the_oldest_issue_and_closes_an_open_duplicate(self) -> None:
+        dup = {**issue("open", "2026-01-02"), "number": 4}  # two overlapping runs made two
+        calls = self.run_main([issue("open", "2026-01-01"), dup, {**dup, "number": 5, "state": "closed"}],
+                              JOB, "failure")
         self.assertEqual([c["args"][:3] for c in calls[1:]], [
-            ["-X", "PATCH", "repos/o/r/issues/3"], ["repos/o/r/issues/3/labels", "--input", "-"],
-            ["repos/o/r/issues/3/comments", "--input", "-"]])
-        self.assertEqual(calls[1]["input"]["state"], "open")
-        self.assertEqual(calls[2]["input"], {"labels": [tracking.P1]})
+            ["-X", "PATCH", "repos/o/r/issues/4"], ["-X", "PATCH", "repos/o/r/issues/3"],
+            ["repos/o/r/issues/3/labels", "--input", "-"], ["repos/o/r/issues/3/comments", "--input", "-"]])
+        self.assertEqual(calls[1]["input"], {"state": "closed", "state_reason": "not_planned"})
+        self.assertEqual(calls[2]["input"]["state"], "open")
+        self.assertEqual(calls[3]["input"], {"labels": [tracking.P1]})
