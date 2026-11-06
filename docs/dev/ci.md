@@ -31,7 +31,8 @@ Pending jobs are named but not run until the rest of the `ci.yml` rewrite (boots
 - the `build/*` matrix, which runs when a pull request is Ready;
 - the Rust coverage: CI runs the nextest commands of `rust-test` under `cargo llvm-cov`, and the local job runs them without it;
 - the uploads to Codecov, of that Rust report and of the Vitest report (the local `ui` job writes the Vitest report to `ui/coverage/` but uploads nothing);
-- the `codecov/patch/*` checks, which the Codecov service computes.
+- the `codecov/patch/*` checks, which the Codecov service computes;
+- the install of the Tauri 2 Linux prerequisites: the jobs that need them use `.github/actions/tauri-deps`, which keeps the packages' `.deb` files in the Actions cache for a week and retries a stalled download, while locally you install them once ([Setup](setup.md)).
 
 ## The diff checks
 

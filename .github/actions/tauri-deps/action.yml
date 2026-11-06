@@ -1,0 +1,24 @@
+# The Tauri 2 Linux prerequisites for the jobs that build or document the app (PRD 33 §2). The
+# packages' .deb files are cached for a week, because a slow Ubuntu mirror stalled the apt step past
+# the job timeouts several times; install.sh downloads what the cache lacks with a timeout and retries.
+name: Tauri 2 Linux prerequisites
+description: Install the Tauri 2 Linux packages, from cached .deb files where the cache has them.
+runs:
+  using: composite
+  steps:
+    - id: week
+      shell: bash
+      run: echo "week=$(date -u +%G-%V)" >>"$GITHUB_OUTPUT"
+    - id: restore
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.cache/tauri-debs
+        key: tauri-debs-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.github/actions/tauri-deps/install.sh') }}-${{ steps.week.outputs.week }}
+        restore-keys: tauri-debs-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.github/actions/tauri-deps/install.sh') }}-
+    - shell: bash
+      run: '"$GITHUB_ACTION_PATH/install.sh"'
+    - if: steps.restore.outputs.cache-hit != 'true'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.cache/tauri-debs
+        key: ${{ steps.restore.outputs.cache-primary-key }}
