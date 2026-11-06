@@ -17,16 +17,19 @@ import sys
 
 BOT = "github-actions[bot]"
 P1 = "priority/P1"
-MARK = re.compile(r"<!-- tracking job=(\S+) red_since=(\S+) -->")
+MARK = re.compile(r"<!-- tracking job=(\S+) red_since=(\S+)(?: run=(\d+))? -->")
+
+
+def mark(issue: dict | None, job: str) -> re.Match | None:
+    """The first line of the issue's body, when it is this job's marker."""
+    match = MARK.fullmatch(((issue or {}).get("body") or "").split("\n", 1)[0])
+    return match if match and match.group(1) == job else None
 
 
 def red_since(issue: dict | None, job: str) -> datetime.date | None:
     """The day an open issue's job turned red, or None when it is green or unreadable."""
-    if issue is None or issue["state"] != "open":
-        return None
-    first = (issue.get("body") or "").split("\n", 1)[0]
-    match = MARK.fullmatch(first)
-    if not match or match.group(1) != job:
+    match = mark(issue, job)
+    if match is None or issue["state"] != "open":
         return None
     try:
         return datetime.date.fromisoformat(match.group(2))
@@ -34,9 +37,10 @@ def red_since(issue: dict | None, job: str) -> datetime.date | None:
         return None
 
 
-def render(job: str, since: datetime.date | None, today: datetime.date, result: str, url: str) -> str:
+def render(job: str, since: datetime.date | None, today: datetime.date, result: str, url: str,
+           run: int) -> str:
     red = f"Red since {since}." if since else "Green."
-    return (f"<!-- tracking job={job} red_since={since or 'none'} -->\n"
+    return (f"<!-- tracking job={job} red_since={since or 'none'} run={run} -->\n"
             f"Tracking issue of the `{job}` job (`PR-CI-014`), kept by `scripts/tracking_issue.py`: "
             "a red run opens it and comments, a green run closes it, and a third red day in a row "
             f"adds `{P1}`. Leave the first line as it is.\n\n"
@@ -44,19 +48,22 @@ def render(job: str, since: datetime.date | None, today: datetime.date, result: 
 
 
 def plan(job: str, issue: dict | None, result: str, today: datetime.date, url: str,
-         p1_first: bool) -> dict | None:
+         p1_first: bool, run: int) -> dict | None:
     """What one run changes: body, state, comment, and the P1 label to add or remove."""
     if result not in ("success", "failure") or (result == "success" and issue is None):
         return None  # cancelled or skipped runs say nothing; a green job needs no issue
+    last = mark(issue, job)
+    if last and last.group(3) and int(last.group(3)) > run:
+        return None  # an older run that finished late: a newer one has reported already
     labels = set(issue["labels"]) if issue else set()
     if result == "success":
-        return {"body": render(job, None, today, result, url), "state": "closed",
+        return {"body": render(job, None, today, result, url, run), "state": "closed",
                 "comment": f"Green on {today}: {url}" if issue["state"] == "open" else None,
                 "add_p1": False, "remove_p1": P1 in labels}
     since = red_since(issue, job) or today
     days = (today - since).days + 1
     note = f" (red since {since}, day {days})" if days > 1 else ""
-    return {"body": render(job, since, today, result, url), "state": "open",
+    return {"body": render(job, since, today, result, url, run), "state": "open",
             "comment": f"Red on {today}: {url}{note}",
             "add_p1": (p1_first or days >= 3) and P1 not in labels, "remove_p1": False}
 
@@ -85,14 +92,15 @@ def main() -> int:
     parser.add_argument("--p1", action="store_true", help="priority/P1 on the first red run")
     args = parser.parse_args()
     repo = os.environ["GITHUB_REPOSITORY"]
-    url = f"{os.environ['GITHUB_SERVER_URL']}/{repo}/actions/runs/{os.environ['GITHUB_RUN_ID']}"
+    run = int(os.environ["GITHUB_RUN_ID"])  # run ids grow, so they order the runs
+    url = f"{os.environ['GITHUB_SERVER_URL']}/{repo}/actions/runs/{run}"
     title = f"Tracking: {args.job}"
     today = datetime.datetime.now(datetime.UTC).date()
     issue, *duplicates = find(repo, title) or [None]
     for extra in (d for d in duplicates if d["state"] == "open"):  # two runs at once made two
         gh("-X", "PATCH", f"repos/{repo}/issues/{extra['number']}",
            payload={"state": "closed", "state_reason": "not_planned"})
-    change = plan(args.job, issue, args.result, today, url, args.p1)
+    change = plan(args.job, issue, args.result, today, url, args.p1, run)
     if change is None:
         print(f"{title}: {args.result}, nothing to record")
         return 0
