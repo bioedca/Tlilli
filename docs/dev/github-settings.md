@@ -86,7 +86,7 @@ All tokens are issued by the maintainer's account and rotated yearly ([PRD 38 §
 - Generated offline by the maintainer on 2026-11-04 with `cargo tauri signer generate`.
 - Key ID: `B83A0AA7DD3EDF35`.
 - Custody: private key and passphrase as separate password-manager entries; one sealed offline copy held by the maintainer until a backup admin is named, then handed to them; the `release` environment secret is the only online copy. The private key file was deleted from the generating machine.
-- Restore drill: issue #5, yearly, next due 2027-11-04.
+- Restore drill: issue #5, yearly, next due 2027-11-04; `yearly.yml` reopens it every 1 November.
 - Public key, exactly as it stands in `src-tauri/tauri.conf.json` → `plugins.updater.pubkey` (wired by bootstrap task 14, issue #22; it is the base64 of the `.pub` file, not a path). The app's updater endpoint is `https://bioedca.github.io/Tlilli/updates/stable.json`; `src-tauri/tests/config.rs` fails if the configured key or endpoint drifts from this record or from `site_url` in `mkdocs.yml`:
 
 ```text

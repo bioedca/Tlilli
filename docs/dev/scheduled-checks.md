@@ -8,6 +8,8 @@
 | `playwright` | The whole browser suite; pull requests run only its `@smoke` tests (PRD 34 §1) | `pnpm -C ui exec playwright test` | The `playwright-report` artifact, kept for 7 days |
 | `links` | lychee on the Markdown files, external links only (`PR-DOC-019`) | `lychee --config lychee.toml './**/*.md'` | The issue is labelled `area/docs` |
 | `advisories` | `cargo deny check advisories`, because the advisory database changes every day (`PR-MNT-011`) | `cargo deny check advisories` | `priority/P1` at once |
+| `bench` | A skeleton for the criterion benchmarks, which will fail at a 20% regression from their stored baselines (`PR-TST-014`). It passes while there is no benchmark; the first one makes it fail until that comparison is wired | `cargo bench` | — |
+| `latex` | A skeleton for the LaTeX compile of exports in a TeX container, until the LaTeX export lands in v0.4 (PRD 34 §3) | — | — |
 
 ## Tracking issues
 
@@ -17,6 +19,10 @@ After the four jobs, the `report` job runs `scripts/tracking_issue.py`. It keeps
 - On the third red day in a row the issue gets `priority/P1`.
 - A green run closes the issue and removes `priority/P1`. A cancelled or skipped job changes nothing, and so does a run older than the last one recorded, which finished late, as a re-run of an older run can. Runs never overlap: a new run waits for the one before it (D-083).
 - Only issues that `github-actions[bot]` opened count; if two runs at once opened two, the newer is closed. Leave the first line of the body as it is: it records the day the job turned red and the last run.
+
+## Yearly reminder
+
+`.github/workflows/yearly.yml` reopens issue #5, the updater-key restore drill, every 1 November at 06:41 UTC. It comments that the drill is due that week (`PR-REL-034`, T-09).
 
 ## Links that cannot be checked
 

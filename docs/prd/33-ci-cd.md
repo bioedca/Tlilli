@@ -24,6 +24,7 @@ INTERSECT CI/CD rules adopted: separate CI from CD; CD triggers on tags, with `w
 | `project.yml` | `issues` opened/reopened/labeled, `pull_request_target` opened (base-branch context, no checkout of PR code) | Add items to the Project; set Phase from milestone, Area from label | `PROJECT_TOKEN` (environment `automation`; fine-grained PAT with project write) |
 | `dependabot-automerge.yml` | `pull_request` by `dependabot[bot]` | Enable auto-merge for grouped patch/minor updates after CI; majors left for triage; enabled with `GITHUB_TOKEN`, so its merges start no `push` workflows (D-075) | none |
 | `protocol-ref.yml` | part of `ci.yml` (`protocol-ref/drift` job) | `cargo run -p tlilli-cli -- mcp schema --markdown docs/reference/mcp/` then `git diff --exit-code` | none |
+| `yearly.yml` | yearly cron 1 November 06:41 UTC, `workflow_dispatch` | Reopens the updater-key restore drill, issue #5, with a comment that it is due (`PR-REL-034`, T-09) | none (`GITHUB_TOKEN`: `issues: write`) |
 
 Everything a fork PR triggers runs with a read-only token and no secrets; privileged workflows use `pull_request_target` without checking out PR code, or run only on `main`/tags.
 
