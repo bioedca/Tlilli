@@ -55,14 +55,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
           PR_BRANCH: ${{ github.event.pull_request.head.ref }}
-          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
         run: |
           gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR/files" \
             --jq '.[] | [.additions, .deletions, .filename] | @tsv' >"$RUNNER_TEMP/files.tsv"
           label=$(PR_FILES="$RUNNER_TEMP/files.tsv" scripts/pr_checks.sh size-label)
           echo "$label"
+          # The labels as they are now: the event's list is stale on a re-run or after an older run.
+          labels=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/labels" --jq '[.[].name] | join(",")')
           for old in size/XS size/S size/M size/L size/XL; do
-            if [[ $old != "$label" && ",$LABELS," == *",$old,"* ]]; then
+            if [[ $old != "$label" && ",$labels," == *",$old,"* ]]; then
               gh api -X DELETE "repos/$GITHUB_REPOSITORY/issues/$PR/labels/${old/\//%2F}" >/dev/null
             fi
           done
