@@ -68,6 +68,7 @@ listing() {
 # release-plz pull request.
 changed_lines() {
   local add del path total=0
+  [[ -n $files ]] || { echo 0; return; } # <<< would feed an empty listing in as one empty row
   while IFS=$'\t' read -r add del path _; do
     # Counts reach $(( )), which would run a command hidden in a subscript such as a[$(cmd)].
     if ! [[ $add =~ ^([0-9]+|-)$ && $del =~ ^([0-9]+|-)$ ]]; then
