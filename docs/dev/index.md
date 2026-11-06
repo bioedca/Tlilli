@@ -7,6 +7,7 @@ For contributors and for the agents that work on Tlilli. `PR-DOC-013` sets what 
 | [GitHub settings record](github-settings.md) | What is set on the account and the repository, by whom and when, diffed against [39 GitHub configuration](../prd/39-github-configuration.md) at every gate | published |
 | [Setup](setup.md) | Laptop setup on macOS, Windows and Linux; cloud sandbox notes; Codespaces (`.devcontainer/`) | published |
 | [Running CI locally](ci.md) | `scripts/ci.sh` and what each lane checks ([33 CI/CD](../prd/33-ci-cd.md)) | published |
+| [Scheduled checks](scheduled-checks.md) | The nightly and weekly workflows, their tracking issues, and how to run each check locally | published |
 | [Review severity](review-severity.md) | The scale human and AI reviewers use, and how each tool's labels map onto it ([32 Code review](../prd/32-code-review.md) §6) | published |
 | [Release runbook](release-runbook.md) | From tag to published release, step by step, and the handoff and successor paths ([37 Releases and packaging](../prd/37-releases-and-packaging.md), [38](../prd/38-maintenance-and-support.md) §8) | published |
 | [Fixtures](fixtures.md) | The synthetic manuscripts and vendored papers under `tests/fixtures/` | published |
