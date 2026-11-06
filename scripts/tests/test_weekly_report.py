@@ -21,6 +21,7 @@ UTC = datetime.UTC
 NOW = datetime.datetime(2026, 11, 9, 5, 30, tzinfo=UTC)
 WEEK = NOW - datetime.timedelta(days=7)
 MONTH = datetime.datetime(2026, 11, 1, tzinfo=UTC)
+RECENT = (datetime.datetime.now(UTC) - datetime.timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
 STUB = """#!/usr/bin/env python3
 import json, os, sys
 args = sys.argv[2:]  # after "api"
@@ -28,6 +29,7 @@ data = sys.stdin.read() if "--input" in args else ""
 with open(os.environ["GH_LOG"], "a") as log:
     log.write(json.dumps({"args": args, "input": json.loads(data) if data else None}) + "\\n")
 path = next(a for a in args if a.startswith("repos/"))
+sys.exit(1) if os.environ.get("GH_FAIL") and path.endswith(os.environ["GH_FAIL"]) else None
 name = "pulls" if "/pulls?" in path else "comments" if "/comments?" in path else "issues"
 print(open(os.environ["GH_DATA"] + name).read() if "?" in path else '{"number": 7}')
 """
@@ -100,12 +102,13 @@ class SectionTest(unittest.TestCase):
 
 
 class MainTest(unittest.TestCase):
-    def run_main(self, issues: list[dict]) -> list[dict]:
+    def run_main(self, issues: list[dict], fail: str = "") -> list[dict]:
         with tempfile.TemporaryDirectory() as tmp:
             stub = Path(tmp, "gh")
             stub.write_text(STUB, encoding="utf-8")
             stub.chmod(0o755)
-            data = {"pulls": [pr(5, ("size:override",), "Size override: x")], "issues": issues,
+            data = {"pulls": [pr(5, ("size:override",), "Size override: x", updated=RECENT)],
+                    "issues": issues,
                     "comments": [comment("@coderabbitai review", "2026-11-06T07:00:00Z")]}
             for name, rows in data.items():
                 Path(tmp, f"data-{name}").write_text("".join(json.dumps(r) + "\n" for r in rows))
@@ -113,9 +116,10 @@ class MainTest(unittest.TestCase):
                    "GH_DATA": f"{tmp}/data-", "GITHUB_REPOSITORY": "o/r", "GITHUB_RUN_ID": "10",
                    "GITHUB_SERVER_URL": "https://github.com", "GITHUB_STEP_SUMMARY": f"{tmp}/sum",
                    "MUTANTS": '{"caught": 1, "missed": 1, "timeout": 0, "unviable": 0}',
-                   "MUTANTS_RESULT": "success"}
-            subprocess.run([sys.executable, str(SCRIPTS / "weekly_report.py")], env=env, check=True,
-                           capture_output=True)
+                   "MUTANTS_RESULT": "success", "GH_FAIL": fail}  # main() reads the real clock
+            done = subprocess.run([sys.executable, str(SCRIPTS / "weekly_report.py")], env=env,
+                                  capture_output=True, check=False)
+            self.assertEqual(done.returncode != 0, bool(fail), done.stderr)
             self.assertIn("Score 50%", Path(tmp, "sum").read_text())
             calls = [json.loads(line) for line in Path(tmp, "log").read_text().splitlines()]
             self.assertIn("creator=github-actions%5Bbot%5D", calls[2]["args"][1])  # not by label
@@ -138,8 +142,12 @@ class MainTest(unittest.TestCase):
     def test_replaces_the_body_of_the_oldest_issue_and_reopens_it(self) -> None:
         calls = self.run_main([self.issue(3, 9, state="closed"), self.issue(4, 9)])
         self.assertEqual([c["args"][:3] for c in calls], [
-            ["-X", "PATCH", "repos/o/r/issues/3"], ["repos/o/r/issues/3/comments", "--input", "-"]])
-        self.assertEqual(calls[0]["input"]["state"], "open")
+            ["repos/o/r/issues/3/comments", "--input", "-"], ["-X", "PATCH", "repos/o/r/issues/3"]])
+        self.assertEqual(calls[1]["input"]["state"], "open")
+
+    def test_a_failed_comment_leaves_last_weeks_body_in_place(self) -> None:
+        calls = self.run_main([self.issue(3, 9)], fail="/comments")
+        self.assertEqual([c["args"][0] for c in calls], ["repos/o/r/issues/3/comments"])
 
     def test_a_run_older_than_the_last_report_changes_nothing(self) -> None:
         self.assertEqual(self.run_main([self.issue(3, 11)]), [])
