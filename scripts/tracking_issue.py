@@ -64,7 +64,8 @@ def plan(job: str, issue: dict | None, result: str, today: datetime.date, url: s
 def gh(*args: str, payload: dict | None = None) -> str:
     cmd = ["gh", "api", *args] + (["--input", "-"] if payload is not None else [])
     data = json.dumps(payload) if payload is not None else None
-    return subprocess.run(cmd, input=data, capture_output=True, text=True, check=True).stdout
+    # stderr is not captured, so a failure's message from gh reaches the job log.
+    return subprocess.run(cmd, input=data, stdout=subprocess.PIPE, text=True, check=True).stdout
 
 
 def find(repo: str, title: str) -> dict | None:
