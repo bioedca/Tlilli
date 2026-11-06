@@ -158,8 +158,11 @@ def main() -> int:
             "title": TITLE, "body": body, "labels": ["type/task", "area/ci"]}))["number"]
     else:
         number = issue["number"]
-        gh("-X", "PATCH", f"repos/{repo}/issues/{number}", payload={"body": body, "state": "open"})
+    # The comment first: if it fails, the body still holds last week's report, which has its own
+    # comment, so no week drops out of the history.
     gh(f"repos/{repo}/issues/{number}/comments", payload={"body": report})
+    if issue is not None:
+        gh("-X", "PATCH", f"repos/{repo}/issues/{number}", payload={"body": body, "state": "open"})
     print(f"{TITLE}: issue #{number}")
     return 0
 
