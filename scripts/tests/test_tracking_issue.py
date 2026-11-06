@@ -28,19 +28,20 @@ print(open(os.environ["GH_ISSUES"]).read() if "--paginate" in args else '{"numbe
 """
 
 
-def issue(state: str, since: str, labels: tuple[str, ...] = (), job: str = JOB) -> dict:
+def issue(state: str, since: str, labels: tuple[str, ...] = (), job: str = JOB, run: int = 5) -> dict:
     return {"number": 3, "title": f"Tracking: {job}", "state": state, "user": tracking.BOT,
-            "body": f"<!-- tracking job={job} red_since={since} -->\ntext", "labels": list(labels)}
+            "body": f"<!-- tracking job={job} red_since={since} run={run} -->\ntext",
+            "labels": list(labels)}
 
 
 class PlanTest(unittest.TestCase):
     def plan(self, current: dict | None, result: str, p1_first: bool = False) -> dict | None:
-        return tracking.plan(JOB, current, result, TODAY, URL, p1_first)
+        return tracking.plan(JOB, current, result, TODAY, URL, p1_first, 10)
 
     def test_a_first_red_run_opens_the_issue_without_p1(self) -> None:
         change = self.plan(None, "failure")
         self.assertEqual((change["state"], change["add_p1"]), ("open", False))
-        self.assertTrue(change["body"].startswith(f"<!-- tracking job={JOB} red_since=2026-11-06 -->\n"))
+        self.assertTrue(change["body"].startswith(f"<!-- tracking job={JOB} red_since=2026-11-06 run=10 -->\n"))
 
     def test_the_third_red_day_adds_p1(self) -> None:
         self.assertFalse(self.plan(issue("open", "2026-11-05"), "failure")["add_p1"])
@@ -67,6 +68,12 @@ class PlanTest(unittest.TestCase):
         self.assertIn("red_since=none ", change["body"])
         self.assertIsNone(self.plan(issue("closed", "none"), "success")["comment"])
 
+    def test_a_run_older_than_the_last_one_reported_changes_nothing(self) -> None:
+        for result in ("success", "failure"):
+            with self.subTest(result):
+                self.assertIsNone(self.plan(issue("open", "2026-11-05", run=11), result))
+                self.assertIsNotNone(self.plan(issue("open", "2026-11-05", run=10), result))  # a re-run
+
     def test_nothing_to_record(self) -> None:
         for current, result in [(None, "success"), (None, "cancelled"), (issue("open", "x"), "skipped")]:
             with self.subTest(result):
@@ -82,7 +89,7 @@ class MainTest(unittest.TestCase):
             Path(tmp, "issues").write_text("".join(json.dumps(i) + "\n" for i in issues))
             env = {**os.environ, "PATH": f"{tmp}:{os.environ['PATH']}", "GH_LOG": f"{tmp}/log",
                    "GH_ISSUES": f"{tmp}/issues", "GITHUB_REPOSITORY": "o/r",
-                   "GITHUB_SERVER_URL": "https://github.com", "GITHUB_RUN_ID": "1"}
+                   "GITHUB_SERVER_URL": "https://github.com", "GITHUB_RUN_ID": "10"}
             subprocess.run([sys.executable, str(SCRIPT), *args], env=env, check=True,
                            capture_output=True)
             return [json.loads(line) for line in Path(tmp, "log").read_text().splitlines()]
@@ -104,3 +111,10 @@ class MainTest(unittest.TestCase):
         self.assertEqual(calls[1]["input"], {"state": "closed", "state_reason": "not_planned"})
         self.assertEqual(calls[2]["input"]["state"], "open")
         self.assertEqual(calls[3]["input"], {"labels": [tracking.P1]})
+
+    def test_a_green_run_closes_the_issue_removes_p1_and_comments(self) -> None:
+        calls = self.run_main([issue("open", "2026-11-01", (tracking.P1,))], JOB, "success")
+        self.assertEqual([c["args"][:3] for c in calls[1:]], [
+            ["-X", "PATCH", "repos/o/r/issues/3"], ["-X", "DELETE", "repos/o/r/issues/3/labels/priority%2FP1"],
+            ["repos/o/r/issues/3/comments", "--input", "-"]])
+        self.assertEqual((calls[1]["input"]["state"], calls[1]["input"]["state_reason"]), ("closed", "completed"))
