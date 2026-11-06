@@ -80,7 +80,7 @@ class MainTest(unittest.TestCase):
         data = {"repos/o/r/pulls": "".join(json.dumps(p) + "\n" for p in prs)}
         for n in (1, 2, 3):  # no check suite: the commit date stands for the push
             data |= {f"repos/o/r/pulls/{n}/{path}": "" for path in ("comments", "reviews")}
-            data |= {f"repos/o/r/pulls/{n}/commits": ago(30), f"repos/o/r/issues/{n}/comments": "",
+            data |= {f"repos/o/r/commits/s{n}": ago(30), f"repos/o/r/issues/{n}/comments": "",
                      f"repos/o/r/commits/s{n}/check-suites": ""}
         data |= extra or {}
         with tempfile.TemporaryDirectory() as tmp:
