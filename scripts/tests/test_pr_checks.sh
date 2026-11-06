@@ -72,6 +72,11 @@ expect "skips CHANGELOG.md in a release-plz pull request" 0 "size/L" size-label 
 
 printf '30\t20\tsrc/a.rs\n-\t-\tlogo.bin\n7\t0\tCargo.lock\n' >"$tmp/files.tsv"
 expect "reads a listing from PR_FILES" 0 "size/XS" size-label "PR_FILES=$tmp/files.tsv"
+# A file name can forge a row of the listing; its counts must never reach shell arithmetic.
+# shellcheck disable=SC2016 # the payload stays unexpanded on purpose
+printf '1\t1\tfile\nstatus[$(touch %s/pwned)]\t0\tother\n' "$tmp" >"$tmp/files.tsv"
+expect "refuses a count that is not a number" 2 "not a line count" size-label "PR_FILES=$tmp/files.tsv"
+[[ ! -e $tmp/pwned ]] || { printf 'FAIL a forged count ran a command\n'; failures=$((failures + 1)); }
 expect "a missing base exits 2" 2 "no commit nope" size PR_BASE=nope
 commit_lines 1 $'src/tab\tname.rs'
 expect "a path with a tab exits 2" 2 "a path with a tab or a newline" size
