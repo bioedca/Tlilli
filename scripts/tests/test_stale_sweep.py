@@ -43,14 +43,16 @@ def pr(number: int, age: float, labels: tuple[str, ...] = (), draft: bool = True
 class RuleTest(unittest.TestCase):
     def test_plan_marks_at_7_days_closes_at_21_idle_and_skips_the_exempt(self) -> None:
         plan = sweep.plan
-        self.assertIsNone(plan(pr(1, 6), NOW, NOW))
-        self.assertEqual(plan(pr(1, 8), NOW, NOW), "mark")
-        self.assertIsNone(plan(pr(1, 8, (sweep.STALE,)), NOW, NOW))
-        self.assertEqual(plan(pr(1, 30, (sweep.STALE,)), NOW - sweep.IDLE, NOW), "close")
-        self.assertEqual(plan(pr(1, 30, ("gate",)), NOW - sweep.IDLE, NOW), "close")  # a Draft
+        self.assertIsNone(plan(pr(1, 6), NOW, NOW, False))
+        self.assertEqual(plan(pr(1, 8), NOW, NOW, False), "mark")
+        self.assertIsNone(plan(pr(1, 8, (sweep.STALE,)), NOW, NOW, True))
+        self.assertEqual(plan(pr(1, 8, (sweep.STALE,)), NOW, NOW, False), "mark")  # no comment
+        self.assertEqual(plan(pr(1, 8), NOW, NOW, True), "mark")  # no label
+        self.assertEqual(plan(pr(1, 30, (sweep.STALE,)), NOW - sweep.IDLE, NOW, True), "close")
+        self.assertEqual(plan(pr(1, 30, ("gate",)), NOW - sweep.IDLE, NOW, False), "close")  # Draft
         for kept in (pr(1, 30, ("gate",), draft=False), pr(1, 30, user="dependabot[bot]"),
                      pr(1, 30, head="release-plz-2026-11-06")):
-            self.assertIsNone(plan(kept, NOW - sweep.IDLE, NOW))
+            self.assertIsNone(plan(kept, NOW - sweep.IDLE, NOW, False))
 
     def test_activity_leaves_out_only_the_sweeps_own_comments(self) -> None:
         mine = {"user": sweep.BOT, "created_at": ago(1), "body": f"{sweep.MARK}\nmarked"}
@@ -74,14 +76,16 @@ class RuleTest(unittest.TestCase):
 
 
 class MainTest(unittest.TestCase):
-    def run_main(self, *args: str, extra: dict | None = None) -> tuple[dict, list[dict]]:
-        prs = [pr(1, 8), pr(2, 40, (sweep.STALE,)), pr(3, 40, user="dependabot[bot]"),
-               {**pr(4, 40), "head_repo": "fork/r"}]  # a fork's PR is not this repository's
+    def run_main(self, *args: str, extra: dict | None = None,
+                 prs: list[dict] | None = None) -> tuple[dict, list[dict]]:
+        prs = prs or [pr(1, 8), pr(2, 40, (sweep.STALE,)), pr(3, 40, user="dependabot[bot]"),
+                      {**pr(4, 40), "head_repo": "fork/r"}]  # a fork's PR is not this repository's
         data = {"repos/o/r/pulls": "".join(json.dumps(p) + "\n" for p in prs)}
-        for n in (1, 2, 3):  # no check suite: the commit date stands for the push
+        for n in (1, 2, 3):  # no check suite or force-push: the commit date stands for the push
             data |= {f"repos/o/r/pulls/{n}/{path}": "" for path in ("comments", "reviews")}
             data |= {f"repos/o/r/commits/s{n}": ago(30), f"repos/o/r/issues/{n}/comments": "",
-                     f"repos/o/r/commits/s{n}/check-suites": ""}
+                     f"repos/o/r/commits/s{n}/check-suites": "",
+                     f"repos/o/r/issues/{n}/timeline": ""}
         data |= extra or {}
         with tempfile.TemporaryDirectory() as tmp:
             Path(tmp, "gh").write_text(STUB, encoding="utf-8")
@@ -91,8 +95,9 @@ class MainTest(unittest.TestCase):
             subprocess.run([*git, "init", "-q"], check=True)
             subprocess.run([*git, "commit", "-q", "--allow-empty", "-m", "x"], check=True,
                            env={**os.environ, "GIT_COMMITTER_DATE": ago(9)})
-            subprocess.run([*git, "update-ref", "refs/remotes/origin/claude/gone", "HEAD"],
-                           check=True)
+            for branch in ("gone", "b1", "b2"):  # #1 stays open; #2 is closed by this run
+                subprocess.run([*git, "update-ref", f"refs/remotes/origin/claude/{branch}", "HEAD"],
+                               check=True)
             env = {**os.environ, "PATH": f"{tmp}:{os.environ['PATH']}", "GH_LOG": f"{tmp}/log",
                    "GH_DATA": f"{tmp}/data", "GITHUB_REPOSITORY": "o/r"}
             out = subprocess.run([sys.executable, str(SCRIPTS / "stale_sweep.py"), *args], cwd=tmp,
@@ -104,7 +109,7 @@ class MainTest(unittest.TestCase):
         summary, writes = self.run_main()
         self.assertEqual(summary["marked"], [1])
         self.assertEqual(summary["closed"], [{"number": 2, "branch": "claude/b2"}])
-        self.assertEqual([b["name"] for b in summary["branches"]], ["claude/gone"])
+        self.assertEqual([b["name"] for b in summary["branches"]], ["claude/b2", "claude/gone"])
         paths = [w["args"][2] if w["args"][0] == "-X" else w["args"][0] for w in writes]
         self.assertEqual(paths, [
             "repos/o/r/issues/1/labels", "repos/o/r/issues/1/comments",
@@ -113,12 +118,24 @@ class MainTest(unittest.TestCase):
         self.assertIn("`claude/b2` stays", writes[2]["input"]["body"])
         self.assertEqual(writes[3]["input"], {"state": "closed"})
 
-    def test_a_late_push_of_an_old_commit_or_a_thread_reply_keeps_the_pr_open(self) -> None:
+    def test_a_late_push_a_force_push_a_reopen_or_a_thread_reply_keeps_the_pr_open(self) -> None:
         reply = json.dumps({"user": "bioedca", "created_at": ago(2), "body": "a reply"})
         for extra in ({"repos/o/r/commits/s2/check-suites": f"{ago(1)}\n{ago(3)}"},
+                      {"repos/o/r/commits/s2/check-suites": ago(30),  # a force-push or a reopen
+                       "repos/o/r/issues/2/timeline": ago(1)},
                       {"repos/o/r/pulls/2/comments": reply}):
             summary, _ = self.run_main("--dry-run", extra=extra)
             self.assertEqual(summary["closed"], [], extra)
+
+    def test_a_half_done_mark_is_finished_and_a_whole_one_left_alone(self) -> None:
+        note = json.dumps({"user": sweep.BOT, "created_at": ago(1), "body": f"{sweep.MARKED}\n"})
+        for labels, comments, want in (((sweep.STALE,), "", ["repos/o/r/issues/1/comments"]),
+                                       ((), note, ["repos/o/r/issues/1/labels"]),
+                                       ((sweep.STALE,), note, [])):
+            summary, writes = self.run_main(prs=[pr(1, 8, labels)],
+                                            extra={"repos/o/r/issues/1/comments": comments})
+            self.assertEqual(summary["marked"], [1] if want else [])
+            self.assertEqual([w["args"][0] for w in writes], want)
 
     def test_a_dry_run_changes_nothing(self) -> None:
         summary, writes = self.run_main("--dry-run")
