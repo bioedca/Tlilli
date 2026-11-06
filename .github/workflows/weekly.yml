@@ -1,0 +1,75 @@
+name: weekly
+
+# The weekly checks of PRD 33 §1 on `main` (bootstrap task 22; docs/dev/scheduled-checks.md lists
+# those still to come). Only `report` writes: the `Weekly report` issue (D-084) and the tracking
+# issue of `mutants` (PR-CI-014).
+on:
+  schedule:
+    - cron: "23 5 * * 1" # Monday 05:23 UTC, before the weekly triage
+  workflow_dispatch:
+
+# One run at a time (PR-CI-015, D-083), as in nightly.yml.
+concurrency:
+  group: weekly
+  cancel-in-progress: false
+
+permissions: {} # each job declares the scopes it needs (PR-CI-003)
+
+jobs:
+  # The mutation score of tlilli-core (PR-TST-012) goes to the report; missed mutants pass.
+  mutants:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    outputs:
+      summary: ${{ steps.mutate.outputs.summary }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - name: Toolchain from rust-toolchain.toml
+        run: rustup toolchain install
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - run: cargo install cargo-mutants@27.1.0 --locked
+      - id: mutate
+        name: Mutate tlilli-core
+        run: |
+          status=0
+          cargo mutants --package tlilli-core || status=$?
+          # 2: mutants missed, 3: timeouts; both give a score. Other codes: the run failed.
+          if ((status != 0 && status != 2 && status != 3)); then exit "$status"; fi
+          summary=$(jq -c --rawfile missed mutants.out/missed.txt '{caught, missed, timeout,
+            unviable, missed_names: ($missed | split("\n") | map(select(. != "")) | .[:20])}' \
+            mutants.out/outcomes.json)
+          echo "summary=$summary" >>"$GITHUB_OUTPUT"
+      - if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mutants-out
+          path: mutants.out
+          retention-days: 7
+          if-no-files-found: ignore
+
+  report:
+    needs: [mutants]
+    if: always() && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          MUTANTS: ${{ needs.mutants.outputs.summary }}
+          MUTANTS_RESULT: ${{ needs.mutants.result }}
+        run: |
+          status=0
+          scripts/weekly_report.py || status=1
+          scripts/tracking_issue.py weekly/mutants "$MUTANTS_RESULT" || status=1
+          exit "$status"
