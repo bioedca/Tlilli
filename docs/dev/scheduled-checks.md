@@ -11,7 +11,7 @@
 
 ## Tracking issues
 
-After the four jobs, the `report` job runs `scripts/tracking_issue.py`. It keeps one issue per job, titled `Tracking: nightly/<job>` and labelled `type/task` and `area/ci` (`PR-CI-014`):
+After the four jobs, the `report` job runs `scripts/tracking_issue.py`. It keeps one issue per job, titled `Tracking: nightly/<job>` and labelled `type/task` and `area/ci`, or `area/docs` for `links` (`PR-CI-014`):
 
 - A red run opens the issue, or reopens it, and adds a comment that links the run. The body always shows the last run.
 - On the third red day in a row the issue gets `priority/P1`.
