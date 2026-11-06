@@ -16,7 +16,7 @@
 | Job | Runs | Locally |
 | --- | --- | --- |
 | `mutants` | cargo-mutants 27.1.0 on `tlilli-core` (`PR-TST-012`). Missed mutants do not fail the job; the run fails only when it cannot finish, for example when the tests fail with no mutation. The `mutants-out` artifact keeps the details for 7 days | `cargo mutants --package tlilli-core` |
-| `sweep` | The stale sweep (`PR-PRQ-005`, D-084). An open pull request older than 7 days gets `status/stale` and one comment. One with no push, comment or review other than the sweep's own for 21 days is closed, with a comment naming its branch. Ready gated pull requests, Dependabot's and the release-plz pull request are exempt. No branch is deleted | `GITHUB_REPOSITORY=bioedca/Tlilli scripts/stale_sweep.py --dry-run` in a full clone |
+| `sweep` | The stale sweep (`PR-PRQ-005`, D-084). An open pull request older than 7 days gets `status/stale` and one comment. One with no push, comment or review other than the sweep's own for 21 days is closed, with a comment naming its branch; reopening it starts the 21 days again. Ready gated pull requests, Dependabot's and the release-plz pull request are exempt. No branch is deleted | `GITHUB_REPOSITORY=bioedca/Tlilli scripts/stale_sweep.py --dry-run` in a full clone |
 
 Then the `report` job writes the `Weekly report` issue. Each run replaces its body with the new report and adds the same report as a comment, so past weeks stay readable; the issue stays open, and the run's summary page shows the report too. It has four sections (D-084):
 

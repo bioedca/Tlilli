@@ -2,9 +2,10 @@
 """The weekly stale sweep of pull requests and branches (PR-PRQ-005, PR-GIT-004, D-084).
 
 An open PR older than 7 days gets status/stale and one comment; after 21 days without a push,
-comment or review other than the sweep's own, it is closed with a comment naming its branch. Ready
-gated PRs, Dependabot's PRs and the release-plz PR are exempt. Branches older than 7 days with no
-open PR are listed, never deleted. Prints a one-line JSON summary for weekly_report.py.
+reopen, comment or review other than the sweep's own, it is closed with a comment naming its
+branch. Ready gated PRs, Dependabot's PRs and the release-plz PR are exempt. Branches older than
+7 days with no open PR are listed, never deleted. Prints a one-line JSON summary for
+weekly_report.py.
 Usage: stale_sweep.py [--dry-run]   (in a full clone: branch dates come from refs/remotes/origin)
 """
 
@@ -18,7 +19,8 @@ import sys
 from tracking_issue import BOT, gh
 
 STALE = "status/stale"
-MARK = "<!-- stale-sweep -->"  # on the sweep's own comments, which are no activity
+MARK = "<!-- stale-sweep"  # starts the sweep's own comments, which are no activity
+MARKED, CLOSED = f"{MARK}:mark -->", f"{MARK}:close -->"
 AGE = datetime.timedelta(days=7)
 IDLE = datetime.timedelta(days=21)
 when = datetime.datetime.fromisoformat
@@ -35,21 +37,23 @@ def exempt(pr: dict) -> bool:
             or pr["head"].startswith("release-plz-"))
 
 
-def active(pr: dict, pushed: str, comments: list[dict], reviews: list[dict]) -> datetime.datetime:
-    """The PR's last activity: its opening, last push, or a comment or review not by the sweep."""
-    times = [when(pr["created_at"]), when(pushed)]
+def active(pr: dict, moved: str, comments: list[dict], reviews: list[dict]) -> datetime.datetime:
+    """The PR's last activity: its opening, its last push or reopen (`moved`), or a comment or
+    review not by the sweep."""
+    times = [when(pr["created_at"]), when(moved)]
     times += [when(c["created_at"]) for c in comments
               if not (c["user"] == BOT and MARK in (c["body"] or ""))]
     return max(times + [when(r["submitted_at"]) for r in reviews if r["submitted_at"]])
 
 
-def plan(pr: dict, last: datetime.datetime, now: datetime.datetime) -> str | None:
-    """What the sweep does to one open PR: close it, mark it, or nothing."""
+def plan(pr: dict, last: datetime.datetime, now: datetime.datetime, said: bool) -> str | None:
+    """What the sweep does to one open PR: close it, mark it, or nothing. A mark lacking its
+    label or its comment (`said`), say after a failed request, is finished on the next run."""
     if exempt(pr):
         return None
     if now - last >= IDLE:
         return "close"
-    if now - when(pr["created_at"]) >= AGE and STALE not in pr["labels"]:
+    if now - when(pr["created_at"]) >= AGE and (STALE not in pr["labels"] or not said):
         return "mark"
     return None
 
@@ -89,30 +93,39 @@ def main() -> int:
         # last push even when the commit itself is older; without one, the commit date stands.
         suites = gh("--paginate", f"repos/{repo}/commits/{pr['sha']}/check-suites?per_page=100",
                     "--jq", ".check_suites[].created_at").split()
-        pushed = min(suites, default=None) or gh(f"repos/{repo}/commits/{pr['sha']}", "--jq",
-                                                  ".commit.committer.date").strip()
+        first = min(suites, default=None) or gh(f"repos/{repo}/commits/{pr['sha']}", "--jq",
+                                                 ".commit.committer.date").strip()
+        # A force-push may go back to a commit checked long ago, and a reopen after a close by the
+        # sweep starts the 21 days again.
+        events = gh("--paginate", f"repos/{repo}/issues/{n}/timeline?per_page=100", "--jq",
+                    '.[] | select(.event == "head_ref_force_pushed" or .event == "reopened") '
+                    "| .created_at").split()
+        moved = max([first, *events])
         comments = [c for path in (f"issues/{n}/comments", f"pulls/{n}/comments")  # threads too
                     for c in lines(gh("--paginate", f"repos/{repo}/{path}?per_page=100", "--jq",
                                       ".[] | {user: .user.login, created_at, body}"))]
         reviews = lines(gh("--paginate", f"repos/{repo}/pulls/{n}/reviews?per_page=100", "--jq",
                            ".[] | {submitted_at}"))
-        action = plan(pr, active(pr, pushed, comments, reviews), now)
+        said = any(c["user"] == BOT and MARKED in (c["body"] or "") for c in comments)
+        action = plan(pr, active(pr, moved, comments, reviews), now, said)
         if action == "mark":
             marked.append(n)
-            if not dry:
+            if not dry and STALE not in pr["labels"]:
                 gh(f"repos/{repo}/issues/{n}/labels", payload={"labels": [STALE]})
+            if not dry and not said:
                 gh(f"repos/{repo}/issues/{n}/comments", payload={"body": (
-                    f"{MARK}\nThis pull request is more than 7 days old (`PR-GIT-004`), so the "
+                    f"{MARKED}\nThis pull request is more than 7 days old (`PR-GIT-004`), so the "
                     f"weekly sweep marked it `{STALE}`. After 21 days without a push, comment or "
                     "review it is closed (`PR-PRQ-005`, D-084).")})
         elif action == "close":
             closed.append({"number": n, "branch": pr["head"]})
             if not dry:
                 gh(f"repos/{repo}/issues/{n}/comments", payload={"body": (
-                    f"{MARK}\nClosed by the weekly sweep after 21 days without a push, comment or "
-                    f"review (`PR-PRQ-005`, D-084). The branch `{pr['head']}` stays: reopen this "
-                    "pull request, or open a new one from it, to go on.")})
+                    f"{CLOSED}\nClosed by the weekly sweep after 21 days without a push, comment "
+                    f"or review (`PR-PRQ-005`, D-084). The branch `{pr['head']}` stays: reopen "
+                    "this pull request, or open a new one from it, to go on.")})
                 gh("-X", "PATCH", f"repos/{repo}/pulls/{n}", payload={"state": "closed"})
+            pr["state"] = "closed"  # so the branch list below sees this run's closes
         print(f"#{n}: {action or 'nothing'}", file=sys.stderr)
     print(json.dumps({"marked": marked, "closed": closed, "branches": branches(refs, prs, now)}))
     return 0
