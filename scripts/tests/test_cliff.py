@@ -19,7 +19,7 @@ COMMITS = [
     "v0.2.0-beta.1",  # not stable: the commits before it go into 0.2.0
     "feat(cli): deprecate the raw flag",
     "perf(core): cache the style sheet",
-    "build(repo): raise the msrv to 1.98",
+    "build(repo): raise the MSRV to 1.98",
     "fix(core)!: change the event id format\n\nBREAKING CHANGE: ids are uuids",
     "chore(release): v0.2.0",
 ]
@@ -28,7 +28,7 @@ WANT = """## [0.2.0] - DATE
 ### Changed
 
 - **core:** Cache the style sheet
-- **repo:** Raise the msrv to 1.98
+- **repo:** Raise the MSRV to 1.98
 
 ### Deprecated
 

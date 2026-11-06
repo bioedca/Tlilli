@@ -48,7 +48,7 @@ sort_commits = "oldest"
 commit_parsers = [
   { message = "^chore\\(release\\)", skip = true },
   { footer = "^(?i)security", group = "<!-- 5 -->Security" },
-  { message = "^(build|chore)(\\([a-z]+\\))?!?: .*\\b(msrv|rust-version)\\b", group = "<!-- 1 -->Changed" },
+  { message = "^(build|chore)(\\([a-z]+\\))?!?: .*\\b(?i:msrv|rust-version)\\b", group = "<!-- 1 -->Changed" },
   { message = "^[a-z]+\\((ci|docs|prd|repo|fixtures)\\)", skip = true },
   { message = "^(feat|fix|refactor|perf)(\\([a-z]+\\))?!?: .*\\bremov", field = "breaking", pattern = "true", group = "<!-- 3 -->Removed" },
   { message = "^(feat|fix|refactor|perf)(\\([a-z]+\\))?!?: .*deprecat", group = "<!-- 2 -->Deprecated" },
