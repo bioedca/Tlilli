@@ -34,10 +34,10 @@ def ago(days: float) -> str:
 
 def pr(number: int, age: float, labels: tuple[str, ...] = (), draft: bool = True,
        user: str = "bioedca", head: str = "", state: str = "open") -> dict:
+    head = head or f"claude/b{number}"
     return {"number": number, "state": state, "draft": draft, "merged_at": None,
-            "created_at": ago(age), "user": user, "head": head or f"claude/b{number}",
-            "sha": f"s{number}",
-            "head_repo": "o/r", "labels": list(labels)}
+            "created_at": ago(age), "user": user, "head": head, "label": f"o:{head}",
+            "sha": f"s{number}", "head_repo": "o/r", "labels": list(labels)}
 
 
 class RuleTest(unittest.TestCase):
@@ -78,10 +78,10 @@ class RuleTest(unittest.TestCase):
 class MainTest(unittest.TestCase):
     def run_main(self, *args: str, extra: dict | None = None,
                  prs: list[dict] | None = None) -> tuple[dict, list[dict]]:
-        prs = prs or [pr(1, 8), pr(2, 40, (sweep.STALE,)), pr(3, 40, user="dependabot[bot]"),
-                      {**pr(4, 40), "head_repo": "fork/r"}]  # a fork's PR is not this repository's
+        fork = {**pr(4, 40, head="claude/gone"), "head_repo": "f/r", "label": "f:claude/gone"}
+        prs = prs or [pr(1, 8), pr(2, 40, (sweep.STALE,)), pr(3, 40, user="dependabot[bot]"), fork]
         data = {"repos/o/r/pulls": "".join(json.dumps(p) + "\n" for p in prs)}
-        for n in (1, 2, 3):  # no check suite or force-push: the commit date stands for the push
+        for n in (1, 2, 3, 4):  # no check suite or force-push: the commit date stands for the push
             data |= {f"repos/o/r/pulls/{n}/{path}": "" for path in ("comments", "reviews")}
             data |= {f"repos/o/r/commits/s{n}": ago(30), f"repos/o/r/issues/{n}/comments": "",
                      f"repos/o/r/commits/s{n}/check-suites": "",
@@ -105,15 +105,18 @@ class MainTest(unittest.TestCase):
             calls = [json.loads(line) for line in Path(tmp, "log").read_text().splitlines()]
         return json.loads(out), [c for c in calls if c["input"] is not None]
 
-    def test_marks_the_old_pr_closes_the_idle_one_and_lists_the_old_branch(self) -> None:
+    def test_marks_the_old_pr_closes_the_idle_ones_and_lists_the_old_branches(self) -> None:
         summary, writes = self.run_main()
         self.assertEqual(summary["marked"], [1])
-        self.assertEqual(summary["closed"], [{"number": 2, "branch": "claude/b2"}])
-        self.assertEqual([b["name"] for b in summary["branches"]], ["claude/b2", "claude/gone"])
+        self.assertEqual(summary["closed"], [{"number": 2, "branch": "claude/b2"},
+                                             {"number": 4, "branch": "f:claude/gone"}])  # a fork's
+        self.assertEqual([(b["name"], b["pr"]) for b in summary["branches"]],
+                         [("claude/b2", 2), ("claude/gone", None)])  # the fork's PR is not its
         paths = [w["args"][2] if w["args"][0] == "-X" else w["args"][0] for w in writes]
         self.assertEqual(paths, [
             "repos/o/r/issues/1/labels", "repos/o/r/issues/1/comments",
-            "repos/o/r/issues/2/comments", "repos/o/r/pulls/2"])
+            "repos/o/r/issues/2/comments", "repos/o/r/pulls/2",
+            "repos/o/r/issues/4/comments", "repos/o/r/pulls/4"])
         self.assertEqual(writes[0]["input"], {"labels": [sweep.STALE]})
         self.assertIn("`claude/b2` stays", writes[2]["input"]["body"])
         self.assertEqual(writes[3]["input"], {"state": "closed"})
@@ -125,7 +128,7 @@ class MainTest(unittest.TestCase):
                        "repos/o/r/issues/2/timeline": ago(1)},
                       {"repos/o/r/pulls/2/comments": reply}):
             summary, _ = self.run_main("--dry-run", extra=extra)
-            self.assertEqual(summary["closed"], [], extra)
+            self.assertNotIn(2, [pr["number"] for pr in summary["closed"]], extra)
 
     def test_a_half_done_mark_is_finished_and_a_whole_one_left_alone(self) -> None:
         note = json.dumps({"user": sweep.BOT, "created_at": ago(1), "body": f"{sweep.MARKED}\n"})
@@ -139,7 +142,7 @@ class MainTest(unittest.TestCase):
 
     def test_a_dry_run_changes_nothing(self) -> None:
         summary, writes = self.run_main("--dry-run")
-        self.assertEqual((summary["marked"], len(summary["closed"]), writes), ([1], 1, []))
+        self.assertEqual((summary["marked"], len(summary["closed"]), writes), ([1], 2, []))
 
 
 if __name__ == "__main__":
