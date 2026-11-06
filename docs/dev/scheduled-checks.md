@@ -15,8 +15,8 @@ After the four jobs, the `report` job runs `scripts/tracking_issue.py`. It keeps
 
 - A red run opens the issue, or reopens it, and adds a comment that links the run. The body always shows the last run.
 - On the third red day in a row the issue gets `priority/P1`.
-- A green run closes the issue and removes `priority/P1`. A cancelled or skipped job changes nothing.
-- Only issues that `github-actions[bot]` opened count; if two runs at once opened two, the newer is closed. Leave the first line of the body as it is: it records the day the job turned red.
+- A green run closes the issue and removes `priority/P1`. A cancelled or skipped job changes nothing, and so does a run older than the last one recorded, which finished late.
+- Only issues that `github-actions[bot]` opened count; if two runs at once opened two, the newer is closed. Leave the first line of the body as it is: it records the day the job turned red and the last run.
 
 ## Links that cannot be checked
 
