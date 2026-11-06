@@ -9,6 +9,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 SCRIPTS = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SCRIPTS))  # weekly_report imports tracking_issue
@@ -66,8 +67,14 @@ class SectionTest(unittest.TestCase):
             "| #9 | open | `needs-tests` |  |",
             "| #8 | merged | `docs:not-needed` | no reason line |"])
         self.assertIn("No pull request", weekly.audit(prs[2:], WEEK))
-        many = [pr(n, ("size/S",)) for n in range(weekly.PAGE)]
-        self.assertIn(f"Only the {weekly.PAGE} most", weekly.audit([prs[0], *many[1:]], WEEK))
+
+    def test_pull_requests_are_read_page_by_page_until_one_predates_the_week(self) -> None:
+        full = "".join(json.dumps(pr(n, ())) + "\n" for n in range(weekly.PAGE))
+        old = json.dumps(pr(1, (), updated="2026-10-01T00:00:00Z"))
+        with mock.patch.object(weekly, "gh", side_effect=[full, full, old]) as gh:
+            self.assertEqual(len(weekly.pulls("o/r", WEEK)), 2 * weekly.PAGE + 1)
+        self.assertEqual([c.args[0][-7:] for c in gh.call_args_list],
+                         ["&page=1", "&page=2", "&page=3"])
 
     def test_the_budgets_count_requests_by_people_and_the_busiest_hour(self) -> None:
         comments = [
@@ -110,12 +117,14 @@ class MainTest(unittest.TestCase):
             subprocess.run([sys.executable, str(SCRIPTS / "weekly_report.py")], env=env, check=True,
                            capture_output=True)
             self.assertIn("Score 50%", Path(tmp, "sum").read_text())
-            return [json.loads(line) for line in Path(tmp, "log").read_text().splitlines()][3:]
+            calls = [json.loads(line) for line in Path(tmp, "log").read_text().splitlines()]
+            self.assertIn("creator=github-actions%5Bbot%5D", calls[2]["args"][1])  # not by label
+            return calls[3:]
 
     @staticmethod
     def issue(number: int, run: int, user="github-actions[bot]", state="open") -> dict:
         return {"number": number, "title": "Weekly report", "state": state, "user": user,
-                "body": f"<!-- weekly-report run={run} -->\nold", "labels": ["type/task"]}
+                "body": f"<!-- weekly-report run={run} -->\nold", "labels": []}
 
     def test_creates_the_issue_with_its_labels_and_comments_the_report(self) -> None:
         calls = self.run_main([self.issue(2, 1, user="someone")])

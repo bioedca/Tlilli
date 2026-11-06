@@ -7,6 +7,7 @@ Environment: MUTANTS (the mutants job's JSON summary, empty if it did not finish
 """
 
 import datetime
+import itertools
 import json
 import os
 import re
@@ -68,10 +69,20 @@ def audit(prs: list[dict], since: datetime.datetime) -> str:
             rows.append(f"| #{pr['number']} | {state} | `{label}` | {text} |")
     if not rows:
         return "No pull request updated this week has an audited label."
-    table = ["| Pull request | State | Label | Reason |", "| --- | --- | --- | --- |", *rows]
-    if len(prs) >= PAGE and when(prs[-1]["updated_at"]) >= since:
-        table += ["", f"Only the {PAGE} most recently updated pull requests were read."]
-    return "\n".join(table)
+    head = ["| Pull request | State | Label | Reason |", "| --- | --- | --- | --- |"]
+    return "\n".join(head + rows)
+
+
+def pulls(repo: str, since: datetime.datetime) -> list[dict]:
+    """The pull requests, most recently updated first, page by page until one predates since."""
+    prs = []
+    for page in itertools.count(1):
+        batch = lines(gh(f"repos/{repo}/pulls?state=all&sort=updated&direction=desc&per_page={PAGE}"
+                         f"&page={page}", "--jq", ".[] | {number, state, merged_at, updated_at, "
+                         "body, labels: [.labels[].name]}"))
+        prs += batch
+        if len(batch) < PAGE or when(batch[-1]["updated_at"]) < since:
+            return prs
 
 
 def budget(comments: list[dict], week: datetime.datetime, month: datetime.datetime,
@@ -124,9 +135,7 @@ def main() -> int:
     now = datetime.datetime.now(datetime.UTC)
     week = now - datetime.timedelta(days=7)
     month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    prs = lines(gh(f"repos/{repo}/pulls?state=all&sort=updated&direction=desc&per_page={PAGE}",
-                   "--jq", ".[] | {number, state, merged_at, updated_at, body, "
-                   "labels: [.labels[].name]}"))
+    prs = pulls(repo, week)
     since = min(week, month).strftime("%Y-%m-%dT%H:%M:%SZ")  # filters on updated_at
     comments = lines(gh("--paginate", f"repos/{repo}/issues/comments?since={since}&per_page=100",
                         "--jq", ".[] | {user: .user.login, user_type: .user.type, created_at, "
