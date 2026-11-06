@@ -61,12 +61,8 @@ jobs:
 
       # Rustdoc under /api. The guard lets the site deploy before the Cargo workspace exists
       # (bootstrap task 12); remove the guard and the placeholder once it does.
-      - name: Tauri 2 Linux prerequisites
+      - uses: ./.github/actions/tauri-deps # zizmor: ignore[self-repository] actionlint rejects the $/ form
         if: hashFiles('src-tauri/Cargo.toml') != ''
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file \
-            libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
 
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable branch, 2026-11-04
         if: hashFiles('Cargo.toml') != ''
