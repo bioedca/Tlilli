@@ -107,9 +107,41 @@ jobs:
           tool: cargo-deny@0.20.2
       - run: cargo deny check advisories
 
+  # The criterion benchmarks against their stored baselines; a 20% regression fails (PR-TST-014).
+  # A skeleton until the first benchmark lands, which then fails here until the comparison is wired.
+  bench:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - name: Toolchain from rust-toolchain.toml
+        run: rustup toolchain install
+      - name: Count the benchmarks
+        run: |
+          count=$(cargo metadata --no-deps --format-version 1 |
+            jq '[.packages[].targets[] | select(.kind | index("bench"))] | length')
+          if ((count > 0)); then
+            echo "::error::$count benchmark targets, but no baseline comparison yet (PR-TST-014)"
+            exit 1
+          fi
+          echo "::notice::No criterion benchmark yet; this job is a skeleton (PR-TST-014)"
+
+  # The LaTeX compile of exports in a TeX container (PRD 34 §3). A skeleton until the LaTeX export
+  # lands in v0.4.
+  latex:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - run: echo "::notice::No LaTeX export before v0.4; this job is a skeleton (PRD 34 §3)"
+
   # A new advisory and a fuzz crash are priority/P1 at once; broken links are a docs issue.
   report:
-    needs: [fuzz, playwright, links, advisories]
+    needs: [fuzz, playwright, links, advisories, bench, latex]
     if: always() && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -126,10 +158,14 @@ jobs:
           PLAYWRIGHT: ${{ needs.playwright.result }}
           LINKS: ${{ needs.links.result }}
           ADVISORIES: ${{ needs.advisories.result }}
+          BENCH: ${{ needs.bench.result }}
+          LATEX: ${{ needs.latex.result }}
         run: |
           status=0
           scripts/tracking_issue.py nightly/fuzz "$FUZZ" --p1 || status=1
           scripts/tracking_issue.py nightly/playwright "$PLAYWRIGHT" || status=1
           scripts/tracking_issue.py nightly/links "$LINKS" --area docs || status=1
           scripts/tracking_issue.py nightly/advisories "$ADVISORIES" --p1 || status=1
+          scripts/tracking_issue.py nightly/bench "$BENCH" || status=1
+          scripts/tracking_issue.py nightly/latex "$LATEX" || status=1
           exit "$status"

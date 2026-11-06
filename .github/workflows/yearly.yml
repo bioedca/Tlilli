@@ -1,0 +1,31 @@
+name: yearly
+
+# Reopens the updater-key restore drill, issue #5, every 1 November (PR-REL-034, T-09): the drill
+# is due in the first week of November, with the token rotation (docs/dev/github-settings.md).
+on:
+  schedule:
+    - cron: "41 6 1 11 *" # 1 November, 06:41 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: yearly
+  cancel-in-progress: false
+
+permissions: {} # each job declares the scopes it needs (PR-CI-003)
+
+jobs:
+  restore-drill:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: 5
+        run: |
+          gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/$ISSUE" -f state=open >/dev/null
+          gh api "repos/$GITHUB_REPOSITORY/issues/$ISSUE/comments" -f body="The yearly restore \
+          drill is due this week (\`PR-REL-034\`, T-09). Follow the procedure above, comment with \
+          the result of each step, then close this issue. Reopened by \`yearly.yml\`." >/dev/null
