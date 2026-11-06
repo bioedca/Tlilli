@@ -77,9 +77,9 @@ def gh(*args: str, payload: dict | None = None) -> str:
 
 def find(repo: str, title: str) -> list[dict]:
     """The issues with this title that the bot opened, open or closed, oldest first."""
-    text = gh("--paginate", f"repos/{repo}/issues?state=all&labels=type/task&sort=created"
-              "&direction=asc&per_page=100", "--jq", '.[] | select(.pull_request == null) | '
-              '{number, title, state, body, user: .user.login, labels: [.labels[].name]}')
+    text = gh("--paginate", f"repos/{repo}/issues?state=all&creator=github-actions%5Bbot%5D"
+              "&sort=created&direction=asc&per_page=100", "--jq", '.[] | select(.pull_request '
+              '== null) | {number, title, state, body, user: .user.login, labels: [.labels[].name]}')
     issues = [json.loads(line) for line in filter(str.strip, text.splitlines())]
     return [issue for issue in issues if issue["user"] == BOT and issue["title"] == title]
 
