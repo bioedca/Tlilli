@@ -58,7 +58,7 @@ jobs:
           LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
         run: |
           gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR/files" \
-            --jq '.[] | "\(.additions)\t\(.deletions)\t\(.filename)"' >"$RUNNER_TEMP/files.tsv"
+            --jq '.[] | [.additions, .deletions, .filename] | @tsv' >"$RUNNER_TEMP/files.tsv"
           label=$(PR_FILES="$RUNNER_TEMP/files.tsv" scripts/pr_checks.sh size-label)
           echo "$label"
           for old in size/XS size/S size/M size/L size/XL; do

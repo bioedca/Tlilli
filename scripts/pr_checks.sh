@@ -69,6 +69,11 @@ listing() {
 changed_lines() {
   local add del path total=0
   while IFS=$'\t' read -r add del path _; do
+    # Counts reach $(( )), which would run a command hidden in a subscript such as a[$(cmd)].
+    if ! [[ $add =~ ^([0-9]+|-)$ && $del =~ ^([0-9]+|-)$ ]]; then
+      printf 'pr_checks.sh: not a line count: %q %q (%q)\n' "$add" "$del" "$path" >&2
+      exit 2
+    fi
     case $path in
       '' | Cargo.lock | */Cargo.lock | pnpm-lock.yaml | */pnpm-lock.yaml | *.snap | docs/reference/mcp/* | \
         tests/fixtures/* | *.svg | *.png | *.jpg | *.jpeg | *.gif | *.webp | *.ico | *.icns)
