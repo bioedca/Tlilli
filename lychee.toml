@@ -1,0 +1,11 @@
+# lychee 0.24, run by the `links` job of nightly.yml (PR-DOC-019). External links only: `mkdocs build
+# --strict` checks the site's own. Each `exclude` entry names its reason and, if it has one, its end.
+no_progress = true
+scheme = ["https", "http"]
+exclude_loopback = true # local servers in the setup pages
+accept = ["200..=299", "429"] # 429: a rate limit, not a broken link
+timeout = 30
+exclude = [
+  'zenodo\.XXXXXXX', # the README's DOI badge, until Zenodo archives the first release
+  '^https://bioedca\.github\.io/Tlilli/updates/', # the updater feed, published from v0.2 (D-049)
+]
