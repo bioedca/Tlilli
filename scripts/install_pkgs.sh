@@ -23,6 +23,14 @@ if [ -f Cargo.lock ] && ! command -v cargo-nextest >/dev/null 2>&1; then
     cargo install --locked "cargo-nextest@$NEXTEST_VERSION" >>.cache/cargo-nextest.log 2>&1 &
 fi
 
+# tauri-driver starts the app for the desktop smoke suite (scripts/ci.sh e2e/smoke), at the version
+# ci.yml installs. It builds in the background the same way, logging to .cache/tauri-driver.log.
+TAURI_DRIVER_VERSION=2.1.0
+if [ -f src-tauri/Cargo.toml ] && ! command -v tauri-driver >/dev/null 2>&1; then
+  nohup flock -n .cache/tauri-driver.lock \
+    cargo install --locked "tauri-driver@$TAURI_DRIVER_VERSION" >>.cache/tauri-driver.log 2>&1 &
+fi
+
 stamp=.cache/install_pkgs.sha256
 inputs="scripts/install_pkgs.sh"
 [ -f ui/pnpm-lock.yaml ] && inputs="$inputs ui/package.json ui/pnpm-lock.yaml"
