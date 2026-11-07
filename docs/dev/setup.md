@@ -32,7 +32,7 @@ Install the Tauri 2 prerequisites. This is the list in `.devcontainer/post-creat
 sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev pkg-config
 ```
 
-For the desktop end-to-end tests (the `tauri-driver` smoke suite, whose `ui` script has not landed yet), also install `xvfb` and `webkit2gtk-driver`, and run them under a virtual display with `xvfb-run -a`. The browser suite, `pnpm -C ui test:e2e`, runs headless and needs neither.
+For the desktop smoke suite, also install `xvfb` and `webkit2gtk-driver`, and `tauri-driver` with `cargo install --locked tauri-driver@2.1.0`, the release CI installs. Build the debug app with the UI embedded, `pnpm -C ui tauri build --debug --no-bundle`, then run the suite under a virtual display: `xvfb-run -a pnpm -C ui test:e2e:desktop` (`TLILLI_APP` points it at another build). The browser suite, `pnpm -C ui test:e2e`, runs headless and needs none of them. The suite runs on Linux only: `tauri-driver` has no WebDriver for macOS, and the suite does not set up the Windows one.
 
 ## macOS
 
@@ -48,7 +48,7 @@ Install the Microsoft C++ Build Tools with the "Desktop development with C++" wo
 
 Claude Code cloud sessions run on Ubuntu 24.04 with no display. `CLAUDE.md` holds the notes that agents read; in short:
 
-- At session start, `scripts/install_pkgs.sh` installs the UI packages and fetches the crates. It skips the work when the lockfiles, `ui/package.json` and the script itself have not changed since the last successful run. When `cargo-nextest` is missing, the script builds it in the background, with the output in `.cache/cargo-nextest.log`.
+- At session start, `scripts/install_pkgs.sh` installs the UI packages and fetches the crates. It skips the work when the lockfiles, `ui/package.json` and the script itself have not changed since the last successful run. When `cargo-nextest` or `tauri-driver` is missing, the script builds it in the background, with the output in `.cache/cargo-nextest.log` or `.cache/tauri-driver.log`.
 - Use `pnpm -C ui tauri build --no-bundle` for the Tauri compile check, and `xvfb-run -a` for WebDriver tests. Do not start `tauri dev`.
 - Playwright cannot download browsers there. Point the browser tests at the preinstalled Chromium:
 
