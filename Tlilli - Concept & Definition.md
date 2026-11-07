@@ -13,7 +13,7 @@ Nahuatl stays to three terms so the interface is learnable: **Tlilli** (the app)
 | Candidate | Say it | Meaning | Why it fits | Collision check |
 | --- | --- | --- | --- | --- |
 | **Tlilli** (recommended) | TLEE-lee | black ink; with *tlapalli*, writing and knowledge | author's ink vs agent's red ink; provenance in the name | no software hit found; only phonetic neighbours ("Tilli", "Tili"), unrelated kids' and social apps |
-| Tlacuilo | tla-KWEE-lo | scribe-painter of the codices | the Nahuatl "Scrivener"; names the author's role | a small iOS book-sharing app already uses it ([App Store](https://apps.apple.com/is/app/tlacuilo/id1557794923)); the word is common in Mexican cultural projects |
+| Tlacuilo | tla-KWEE-lo | scribe-painter of the codices | the Nahuatl "Scrivener"; names the author's role | a small iOS book-sharing app used it (App Store id 1557794923, no longer listed as of 2026-11-07); the word is common in Mexican cultural projects |
 | Amoxtli | ah-MOSH-tli | book, codex | the manuscript as codex | not exhaustively checked; common in library and heritage projects |
 | Amatl | AH-matl | bark paper the codices were painted on | short, brandable | taken: an MIT-licensed Go CLI that renders Markdown to documents ([pkg.go.dev](https://beta.pkg.go.dev/github.com/Bornholm/amatl)) |
 
