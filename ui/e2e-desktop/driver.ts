@@ -60,7 +60,10 @@ export default async function setup(project: TestProject) {
     if (exit !== undefined) {
       throw new Error(exit);
     }
-    const ready = await fetch(`${server}/status`).then(
+    // A driver that accepts the request but never answers must not outlast the deadline.
+    const ready = await fetch(`${server}/status`, {
+      signal: AbortSignal.timeout(Math.max(deadline - Date.now(), 1)),
+    }).then(
       (response) => response.ok,
       () => false,
     );
