@@ -17,7 +17,7 @@ What an agent session cannot read, and therefore records as Maintainer: Actions 
 | Account successor | Designated in Settings → Account → Successor settings | **Not yet designated** (2026-11-04): no GitHub account the maintainer trusts with this yet. Revisit before v1.0; Gate G6 requires GOVERNANCE to name a successor and a backup admin |
 | Backup admin | Admin collaborator before v1.0 ([PRD 38 §8](../prd/38-maintenance-and-support.md#8-continuity-bus-factor)) | Later (before v1.0); the same person can be the successor |
 | GitHub Pro (Student Developer Pack) | Active; re-verification date recorded here | Maintainer, 2026-11-04: active with about two years remaining (re-verification around 2028-11; the exact date is shown on education.github.com/pack). Review at the yearly maintenance pass |
-| Sponsors profile | Personal Sponsors profile; `FUNDING.yml` points to it | Live since 2026-11-07 (maintainer); `FUNDING.yml` (bootstrap task 10) points at `github.com/sponsors/bioedca`. The repository's Sponsor button also needs Settings > General > Features > Sponsorships, which was not observed on the repository page on 2026-11-07 |
+| Sponsors profile | Personal Sponsors profile; `FUNDING.yml` points to it | Live since 2026-11-07 (maintainer); `FUNDING.yml` (bootstrap task 10) points at `github.com/sponsors/bioedca`. Observed signed out on 2026-11-07: the repository page shows the Sponsor button and a "Sponsor this project" section, which stay while Settings > General > Features > Sponsorships is on |
 
 ## 2. Repository settings (`bioedca/Tlilli`)
 
@@ -144,4 +144,4 @@ Not yet run. The maintainer scoped the trademark searches (USPTO, EUIPO, TMview,
 | 2026-11-04 | Pro horizon (about two years), token expiry 2027-11-03 and the deferral of the trademark search to an agent task before v0.1.0 recorded from the maintainer's notes | maintainer and agent |
 | 2026-11-04 | Merge methods observed rebase-only with branch-update suggestion on; Project URL recorded (projects/5) | maintainer and agent |
 | 2026-11-04 | Updater public key (key ID `B83A0AA7DD3EDF35`) wired into `src-tauri/tauri.conf.json` with the `stable.json` endpoint on the docs site (bootstrap task 14) | agent |
-| 2026-11-07 | Sponsors profile recorded as live; the repository's Sponsor button waits on the Sponsorships feature setting | maintainer and agent |
+| 2026-11-07 | Sponsors profile recorded as live; the repository page observed showing the Sponsor button | maintainer and agent |
