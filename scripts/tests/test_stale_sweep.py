@@ -32,6 +32,9 @@ def ago(days: float) -> str:
     return (NOW - datetime.timedelta(days=days)).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+NOTE = json.dumps({"user": sweep.BOT, "created_at": ago(7), "body": f"{sweep.MARKED}\nmarked"})
+
+
 def pr(number: int, age: float, labels: tuple[str, ...] = (), draft: bool = True,
        user: str = "bioedca", head: str = "", state: str = "open") -> dict:
     head = head or f"claude/b{number}"
@@ -49,7 +52,8 @@ class RuleTest(unittest.TestCase):
         self.assertEqual(plan(pr(1, 8, (sweep.STALE,)), NOW, NOW, False), "mark")  # no comment
         self.assertEqual(plan(pr(1, 8), NOW, NOW, True), "mark")  # no label
         self.assertEqual(plan(pr(1, 30, (sweep.STALE,)), NOW - sweep.IDLE, NOW, True), "close")
-        self.assertEqual(plan(pr(1, 30, ("gate",)), NOW - sweep.IDLE, NOW, False), "close")  # Draft
+        self.assertEqual(plan(pr(1, 30), NOW - sweep.IDLE, NOW, False), "mark")  # never warned
+        self.assertEqual(plan(pr(1, 30, ("gate",)), NOW - sweep.IDLE, NOW, True), "close")  # Draft
         for kept in (pr(1, 30, ("gate",), draft=False), pr(1, 30, user="dependabot[bot]"),
                      pr(1, 30, head="release-plz-2026-11-06")):
             self.assertIsNone(plan(kept, NOW - sweep.IDLE, NOW, False))
@@ -86,6 +90,7 @@ class MainTest(unittest.TestCase):
             data |= {f"repos/o/r/commits/s{n}": ago(30), f"repos/o/r/issues/{n}/comments": "",
                      f"repos/o/r/commits/s{n}/check-suites": "",
                      f"repos/o/r/issues/{n}/timeline": ""}
+        data |= {f"repos/o/r/issues/{n}/comments": NOTE for n in (2, 4)}  # marked a week ago
         data |= extra or {}
         with tempfile.TemporaryDirectory() as tmp:
             Path(tmp, "gh").write_text(STUB, encoding="utf-8")
@@ -131,10 +136,9 @@ class MainTest(unittest.TestCase):
             self.assertNotIn(2, [pr["number"] for pr in summary["closed"]], extra)
 
     def test_a_half_done_mark_is_finished_and_a_whole_one_left_alone(self) -> None:
-        note = json.dumps({"user": sweep.BOT, "created_at": ago(1), "body": f"{sweep.MARKED}\n"})
         for labels, comments, want in (((sweep.STALE,), "", ["repos/o/r/issues/1/comments"]),
-                                       ((), note, ["repos/o/r/issues/1/labels"]),
-                                       ((sweep.STALE,), note, [])):
+                                       ((), NOTE, ["repos/o/r/issues/1/labels"]),
+                                       ((sweep.STALE,), NOTE, [])):
             summary, writes = self.run_main(prs=[pr(1, 8, labels)],
                                             extra={"repos/o/r/issues/1/comments": comments})
             self.assertEqual(summary["marked"], [1] if want else [])
