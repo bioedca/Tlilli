@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """The weekly stale sweep of pull requests and branches (PR-PRQ-005, PR-GIT-004, D-084).
 
-An open PR older than 7 days gets status/stale and one comment; after 21 days without a push,
-reopen, comment or review other than the sweep's own, it is closed with a comment naming its
-branch. Ready gated PRs, Dependabot's PRs and the release-plz PR are exempt. Branches older than
-7 days with no open PR are listed, never deleted. Prints a one-line JSON summary for
+An open PR older than 7 days gets status/stale and one comment; once marked, after 21 days
+without a push, reopen, comment or review other than the sweep's own, it is closed with a comment
+naming its branch. Ready gated PRs, Dependabot's PRs and the release-plz PR are exempt. Branches
+older than 7 days with no open PR are listed, never deleted. Prints a one-line JSON summary for
 weekly_report.py.
 Usage: stale_sweep.py [--dry-run]   (in a full clone: branch dates come from refs/remotes/origin)
 """
@@ -47,11 +47,13 @@ def active(pr: dict, moved: str, comments: list[dict], reviews: list[dict]) -> d
 
 
 def plan(pr: dict, last: datetime.datetime, now: datetime.datetime, said: bool) -> str | None:
-    """What the sweep does to one open PR: close it, mark it, or nothing. A mark lacking its
-    label or its comment (`said`), say after a failed request, is finished on the next run."""
+    """What the sweep does to one open PR: close it, mark it, or nothing. Only a PR whose mark
+    comment is there (`said`) is closed, so each one is warned on an earlier run; an idle PR never
+    marked is marked first. A mark lacking its label or its comment, say after a failed request,
+    is finished on the next run."""
     if exempt(pr):
         return None
-    if now - last >= IDLE:
+    if now - last >= IDLE and said:
         return "close"
     if now - when(pr["created_at"]) >= AGE and (STALE not in pr["labels"] or not said):
         return "mark"
