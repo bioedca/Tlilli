@@ -61,9 +61,9 @@ and ADRs).
   `pnpm -C ui typecheck`, `pnpm -C ui test` (Vitest), `pnpm -C ui build`, `pnpm -C ui format`.
 - Browser end-to-end tests (Playwright, headless, against `vite preview`): `pnpm -C ui test:e2e`; where Playwright
   cannot download a browser, set `TLILLI_PW_CHROMIUM` to a local Chromium.
-- Tauri compile check with no display and no bundling: `pnpm -C ui tauri build --no-bundle` (from task 14). The
-  desktop smoke suite (`tauri-driver`, WebDriver) needs a fake display:
-  `xvfb-run -a pnpm -C ui test:e2e:desktop` (script from task 14).
+- Tauri compile check with no display and no bundling: `pnpm -C ui tauri build --no-bundle`. The desktop smoke
+  suite (`ui/e2e-desktop/`, Vitest over WebDriver) drives the debug app through `tauri-driver` and needs a fake
+  display: `pnpm -C ui tauri build --debug --no-bundle`, then `xvfb-run -a pnpm -C ui test:e2e:desktop`.
 - Docs: `scripts/docs.sh` (`mkdocs build --strict`, hash-pinned toolchain), `scripts/docs.sh serve` for a preview,
   `cargo doc --workspace --no-deps` for rustdoc. Licensing: `reuse lint` (`docs/dev/licensing.md`).
 - Git hooks (lefthook): pre-commit runs rustfmt, clippy and Biome on staged files; commit-msg runs commitlint with

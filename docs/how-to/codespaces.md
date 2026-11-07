@@ -33,10 +33,11 @@ cargo test --workspace
 pnpm -C ui install --frozen-lockfile
 pnpm -C ui build
 pnpm -C ui test
-xvfb-run -a pnpm -C ui test:e2e
+pnpm -C ui tauri build --debug --no-bundle
+xvfb-run -a pnpm -C ui test:e2e:desktop
 ```
 
-`xvfb-run` gives the end-to-end tests a virtual display independent of the desktop, the way the cloud sandbox and CI run them. The Cargo workspace, `ui/` and `src-tauri/` land with bootstrap tasks 12 to 14 ([42 Bootstrap backlog](../prd/42-bootstrap-backlog.md)); a command whose directory does not exist yet fails with `could not find Cargo.toml` or `No such file or directory` until that task merges.
+`xvfb-run` gives the desktop smoke suite a virtual display independent of the desktop, the way the cloud sandbox and CI run it. The suite has `tauri-driver`, which the container installs, start the debug app that `tauri build --debug` writes.
 
 ## See the Tauri window
 
@@ -65,6 +66,7 @@ node --version                             # v22.x
 pnpm --version                             # 10.28.0, the version ui/package.json names
 pkg-config --modversion webkit2gtk-4.1     # prints a version: the Tauri prerequisites are installed
 command -v xvfb-run                        # /usr/bin/xvfb-run
+command -v tauri-driver                    # ~/.cargo/bin/tauri-driver
 ```
 
 ## Troubleshooting
