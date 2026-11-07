@@ -1,0 +1,6 @@
+# SPDX-FileCopyrightText: 2026 bioedca
+# SPDX-License-Identifier: Apache-2.0
+#
+# Every text file is checked out with LF line endings on every OS (NFR-PORT-004), so the Windows
+# build job and Windows contributors see the same bytes as Linux and macOS; binaries stay as they are.
+* text=auto eol=lf
