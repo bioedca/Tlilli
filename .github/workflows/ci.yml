@@ -331,9 +331,17 @@ jobs:
       # A path, not inline JSON: on Windows the `tauri` script runs under cmd.exe, which would
       # mangle the quotes. The path is relative to the repository root, where that script runs.
       - run: pnpm -C ui tauri build --target "$TARGET" --config src-tauri/tauri.unsigned.conf.json
+      # The installers only, not the staging directories next to them (the AppImage's AppDir, the
+      # unpacked .deb and .rpm trees, the .app that the .dmg already holds).
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: bundle-${{ matrix.name }}
-          path: target/${{ matrix.target }}/release/bundle/
+          path: |
+            target/${{ matrix.target }}/release/bundle/*/*.deb
+            target/${{ matrix.target }}/release/bundle/*/*.rpm
+            target/${{ matrix.target }}/release/bundle/*/*.AppImage
+            target/${{ matrix.target }}/release/bundle/*/*.dmg
+            target/${{ matrix.target }}/release/bundle/*/*.msi
+            target/${{ matrix.target }}/release/bundle/*/*.exe
           retention-days: 7
           if-no-files-found: error
