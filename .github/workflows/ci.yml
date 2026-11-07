@@ -1,8 +1,9 @@
 name: ci
 
 # The jobs of PRD 33 §2. Bootstrap task 20 lands them in parts: rust-lint and rust-test, then ui
-# and docs-build, then the pull-request checks, then the build/* matrix of the release targets. The
-# job ids and names are the check names of PR-GIT-043, which the `main` ruleset requires.
+# and docs-build, then the pull-request checks, then the build/* matrix of the release targets,
+# then protocol-ref/drift and workflows/zizmor; e2e/smoke comes last. The job ids and names are the
+# check names of PR-GIT-043, which the `main` ruleset requires.
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
@@ -243,6 +244,60 @@ jobs:
         env:
           PR_BASE: ${{ github.event.pull_request.base.sha }}
           PR_HEAD: ${{ github.event.pull_request.head.sha }}
+
+  # The generated reference pages under docs/reference/ against their generators (PR-DOC-003):
+  # scripts/gen_reference.sh --check regenerates them into a scratch directory and diffs the two.
+  # rust-test runs the same comparison as a test; this check names it for the ruleset (PR-GIT-043).
+  protocol-ref-drift:
+    name: protocol-ref/drift
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - name: Toolchain from rust-toolchain.toml
+        run: rustup toolchain install
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - run: scripts/gen_reference.sh --check
+
+  # The workflows' own lint (PRD 33 §2): zizmor at --min-severity low (unpinned actions, template
+  # injection, dangerous triggers, persisted credentials), then actionlint. zizmor runs offline, the
+  # same audits as scripts/ci.sh runs locally without a token. Both tools are fixed releases whose
+  # downloads are checked against their published SHA-256.
+  workflows-zizmor:
+    name: workflows/zizmor
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      ZIZMOR_WHEEL: https://files.pythonhosted.org/packages/6f/b2/45f4fcb6f428e774750709ecf5320ba6d96393c03b941d9f37a4586f6924/zizmor-1.32.0-py3-none-manylinux_2_28_x86_64.whl
+      ZIZMOR_SHA256: 84a6acb975accc13408786a2bd274b572537ca19c933ebbc13e78f3988562071
+      ACTIONLINT_TAR: https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz
+      ACTIONLINT_SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - name: zizmor 1.32.0 and actionlint 1.7.12
+        run: |
+          tools="$RUNNER_TEMP/tools"
+          mkdir -p "$tools"
+          wheel="$tools/${ZIZMOR_WHEEL##*/}"
+          curl -fsSL --retry 3 -o "$wheel" "$ZIZMOR_WHEEL"
+          echo "$ZIZMOR_SHA256  $wheel" | sha256sum -c -
+          curl -fsSL --retry 3 -o "$tools/actionlint.tar.gz" "$ACTIONLINT_TAR"
+          echo "$ACTIONLINT_SHA256  $tools/actionlint.tar.gz" | sha256sum -c -
+          python3 -m venv "$tools/venv"
+          "$tools/venv/bin/pip" install --quiet --disable-pip-version-check --no-deps "$wheel"
+          tar -xzf "$tools/actionlint.tar.gz" -C "$tools" actionlint
+          echo "$tools/venv/bin" >>"$GITHUB_PATH"
+          echo "$tools" >>"$GITHUB_PATH"
+      - run: zizmor --offline --min-severity low .github/workflows
+      - run: actionlint
 
   # Compile check of the full app (PRD 33 §2, bootstrap task 14): `tauri build` runs the UI build
   # and compiles the release shell with the UI embedded, without bundling or signing.

@@ -9,10 +9,10 @@ tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
 mkdir "$tmp/bin"
-for tool in cargo pnpm; do
+for tool in cargo pnpm zizmor actionlint; do
   cat >"$tmp/bin/$tool" <<'EOF'
 #!/bin/bash
-line="$(basename "$0") $*"
+line="$(basename "$0")${*:+ $*}"
 echo "$line" >>"$STUB_LOG"
 if [[ -n $STUB_FAIL && $line == "$STUB_FAIL"* ]]; then exit "$STUB_FAIL_STATUS"; fi
 EOF
@@ -35,7 +35,11 @@ make_repo() {
     : >"$dir/$file"
   done
 }
-make_repo "$tmp/full" Cargo.toml ui/package.json
+make_repo "$tmp/full" Cargo.toml ui/package.json .github/workflows/ci.yml
+# protocol-ref/drift calls the repository's own generator script; this one only records the call.
+# shellcheck disable=SC2016 # $* and $STUB_LOG expand when the stub runs
+printf '#!/bin/bash\necho "gen_reference.sh $*" >>"$STUB_LOG"\n' >"$tmp/full/scripts/gen_reference.sh"
+chmod +x "$tmp/full/scripts/gen_reference.sh"
 make_repo "$tmp/bare"
 
 failures=0
@@ -78,11 +82,15 @@ pnpm -C ui tauri build --no-bundle"
 check "--help exits 0" "$tmp/full" 0 "" --help
 check "no arguments exit 2" "$tmp/full" 2 ""
 check "an unknown job exits 2 and runs nothing" "$tmp/full" 2 "" rust no-such-job
-check "a pending job exits 2 and runs nothing" "$tmp/full" 2 "" rust protocol-ref/drift
+check "a pending job exits 2 and runs nothing" "$tmp/full" 2 "" rust e2e/smoke
 check "passing jobs run CI's commands in order" "$tmp/full" 0 "$rust_calls
 $ui_calls" rust ui
 check "tauri/linux runs CI's no-bundle build" "$tmp/full" 0 "$tauri_calls" tauri/linux
-check "missing manifests skip the jobs" "$tmp/bare" 0 "" rust-lint rust-test ui tauri/linux
+check "the drift and workflow checks run CI's commands" "$tmp/full" 0 "gen_reference.sh --check
+zizmor --offline --min-severity low .github/workflows
+actionlint" protocol-ref/drift workflows/zizmor
+check "missing manifests skip the jobs" "$tmp/bare" 0 "" rust-lint rust-test ui tauri/linux \
+  protocol-ref/drift workflows/zizmor
 
 # all_case <name> <want in the last line> <ci.sh args>...: `all` in a repository with no manifests,
 # where the docs, diff, scripts and reuse jobs find stubs, so nothing real runs; checks the closing
@@ -109,7 +117,7 @@ all_case() {
     failures=$((failures + 1))
   fi
 }
-pending="protocol-ref/drift workflows/zizmor e2e/smoke"
+pending="e2e/smoke"
 all_case "all names reuse as not run" "ci.sh: not run: reuse (only when named), $pending (pending)" all
 all_case "all reuse does not name reuse as not run" "ci.sh: not run: $pending (pending)" all reuse
 

@@ -18,9 +18,10 @@ REUSE_VERSION=6.3.0
 # Both lists follow the PRD 33 §2 table. A job moves from PENDING to JOBS when its commands exist.
 # scripts (the tests of these dev scripts) has no row there and runs last. EXTRA jobs run only when
 # named: they are not in CI yet (reuse has no row in the table either).
-JOBS="rust-lint rust-test ui docs-build commits size/limit docs/contract-sync tauri/linux scripts"
+JOBS="rust-lint rust-test ui docs-build commits size/limit docs/contract-sync protocol-ref/drift"
+JOBS="$JOBS workflows/zizmor tauri/linux scripts"
 EXTRA="reuse"
-PENDING="protocol-ref/drift workflows/zizmor e2e/smoke"
+PENDING="e2e/smoke"
 
 usage() {
   cat <<'EOF'
@@ -42,6 +43,10 @@ Jobs, in CI order (docs/prd/33-ci-cd.md §2):
                       (cap 400) and the file-size caps
   docs/contract-sync  scripts/pr_checks.sh contract-sync: a change to a contract path also changes
                       docs/ (PR_LABELS and PR_BODY stand in for the PR's labels and description)
+  protocol-ref/drift  scripts/gen_reference.sh --check: the generated pages under docs/reference/
+                      against their generators
+  workflows/zizmor    zizmor --offline --min-severity low .github/workflows; actionlint (zizmor
+                      1.32.0 and actionlint 1.7.12, the releases CI pins)
   tauri/linux         pnpm -C ui install --frozen-lockfile; pnpm -C ui tauri build --no-bundle
   scripts             the tests of ci.sh, api_docs.sh, pr_checks.sh and gen_fixtures.py under
                       scripts/tests (not in ci.yml yet)
@@ -51,10 +56,8 @@ Jobs, in CI order (docs/prd/33-ci-cd.md §2):
 Runs only when named, until CI runs it (bootstrap task 20):
   reuse               reuse lint (docs/dev/licensing.md)
 
-Pending until bootstrap task 20 (`all` skips them; naming one exits with status 2):
-  protocol-ref/drift  regenerate docs/reference/mcp/ and the schemas, then git diff --exit-code
-  workflows/zizmor    zizmor and actionlint on .github/workflows
-  e2e/smoke           xvfb-run -a pnpm -C ui test:e2e:desktop (needs src-tauri/, task 14)
+Pending until bootstrap task 20 (`all` skips it; naming it exits with status 2):
+  e2e/smoke           xvfb-run -a pnpm -C ui test:e2e:desktop (the tauri-driver suite)
 
 Not mirrored: the build/* matrix (run on Ready), the coverage that rust-test collects under
 cargo-llvm-cov in CI, and codecov/patch/* (the Codecov service). A Rust or UI job is skipped when
@@ -138,6 +141,22 @@ job_commits() {
 job_size_limit() { run scripts/pr_checks.sh size; }
 job_contract_sync() { run scripts/pr_checks.sh contract-sync; }
 
+# The generated reference pages under docs/reference/ against their generators (PR-DOC-003).
+job_protocol_ref_drift() {
+  [ -f Cargo.toml ] || { skip Cargo.toml; return 0; }
+  need cargo "rustup; rust-toolchain.toml picks the channel"
+  run scripts/gen_reference.sh --check
+}
+
+# The workflows' own lint, with the audits CI runs: zizmor offline, then actionlint.
+job_workflows_zizmor() {
+  [ -d .github/workflows ] || { skip .github/workflows; return 0; }
+  need zizmor "zizmor 1.32.0, e.g. pip install zizmor==1.32.0"
+  need actionlint "actionlint 1.7.12, from its GitHub release"
+  run zizmor --offline --min-severity low .github/workflows
+  run actionlint
+}
+
 # The compile check of the full app: the UI build, then the release shell with the UI embedded,
 # without bundling or signing.
 job_tauri_linux() {
@@ -182,6 +201,8 @@ run_job() {
     commits) job_commits ;;
     size/limit) job_size_limit ;;
     docs/contract-sync) job_contract_sync ;;
+    protocol-ref/drift) job_protocol_ref_drift ;;
+    workflows/zizmor) job_workflows_zizmor ;;
     tauri/linux) job_tauri_linux ;;
     scripts) job_scripts ;;
     reuse) job_reuse ;;
