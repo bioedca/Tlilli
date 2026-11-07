@@ -110,7 +110,7 @@ class SectionTest(unittest.TestCase):
                     "greptile-apps[bot]", "Bot")]
         text = weekly.budget(comments, WEEK, MONTH, NOW)
         self.assertIn("3 requests since 2026-11-02, at most 2 in one hour (from 2026-11-06 07:00 "
-                      "UTC); the threshold is 6", text)
+                      "UTC); the threshold is 2", text)
         self.assertIn("- Greptile: 3 reviews in November 2026", text)
         self.assertNotIn("90%", text)
         many = [{**comments[6], "body": "<!-- greptile_summary -->\nReviews (18)"}]
