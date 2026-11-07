@@ -12,7 +12,7 @@ INTERSECT Testing rules adopted: testing is a design tool (write the test first;
 | Contract | `crates/tlilli-mcp/tests/contract/**` | rmcp client against an in-process server; golden JSON-RPC transcripts under `tests/fixtures/transcripts/` | every PR | Every tool and resource: success and each refusal; schema snapshots; timing (`NFR-PERF-005`) |
 | UI unit/integration | `ui/src/**/*.test.tsx` | Vitest + Testing Library; core mocked by a typed fake implementing the command interface | every PR | Components, store, keyboard flows, a11y (axe) |
 | Browser E2E | `ui/e2e/**` | Playwright against the web UI with the mocked core (`pnpm -C ui test:e2e`) | smoke subset every PR; full nightly | User journeys end to end in the view; visual snapshots; keyboard-only suite; axe audits |
-| Desktop smoke | `e2e/smoke/**` | `tauri-driver` + WebDriver under `xvfb-run` (Linux), `pnpm -C ui test:e2e:desktop` | every PR | The shell wires up: open workspace, type, send a run, cancel, accept a suggestion (from v0.2 with a fake agent) |
+| Desktop smoke | `ui/e2e-desktop/**` (D-086) | `tauri-driver` + WebDriver under `xvfb-run` (Linux), `pnpm -C ui test:e2e:desktop` | every PR | The shell wires up: open workspace, type, send a run, cancel, accept a suggestion (from v0.2 with a fake agent) |
 | Fuzz | `fuzz/fuzz_targets/*.rs` | `cargo-fuzz` (libFuzzer) with corpora committed | nightly, 10 min per target | Markdown/docx/LaTeX importers, PDF text extraction, DOI sniffing, MCP tool inputs, JSON-RPC framing |
 | Mutation | `tlilli-core` | `cargo-mutants` | weekly | Test-suite strength; score tracked |
 | Benchmarks | `crates/*/benches/*.rs` | `criterion` with stored baselines in `benches/baseline/` | nightly | NFR-PERF regressions (fail at +20%) |
