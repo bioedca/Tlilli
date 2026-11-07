@@ -21,7 +21,7 @@ MARK = re.compile(r"<!-- weekly-report run=(\d+) -->")
 AUDITED = ("docs:not-needed", "size:override", "needs-tests")
 REASONS = {"docs:not-needed": "Docs not needed because", "size:override": "Size override"}
 REQUEST = re.compile(r"^\s*@coderabbitai (full )?review\b", re.IGNORECASE | re.MULTILINE)
-HOURLY_CAP = 6  # CodeRabbit requests in any 60 minutes, across the repository (D-062)
+HOURLY_CAP = 2  # CodeRabbit requests in any 60 minutes, across the repository (D-085)
 GREPTILE_BUDGET = 20  # reviews a month, the top of D-021's 15 to 20
 PAGE = 100
 when = datetime.datetime.fromisoformat  # reads GitHub's `...Z` stamps since Python 3.11
@@ -123,7 +123,7 @@ def budget(comments: list[dict], week: datetime.datetime, month: datetime.dateti
             count = re.search(r"Reviews \((\d+)\)", c["body"])
             reviews += int(count.group(1)) if count else 1
     lines = [(f"- CodeRabbit: {len(asks)} requests since {week:%Y-%m-%d}{busiest}; the threshold "
-              f"is {HOURLY_CAP} an hour (D-062). Local `coderabbit review` runs count too but do "
+              f"is {HOURLY_CAP} an hour (D-085). Local `coderabbit review` runs count too but do "
               "not show here."),
              (f"- Greptile: {reviews} reviews in {month:%B %Y}, against a budget of 15 to "
               f"{GREPTILE_BUDGET} (D-021). The count includes earlier reviews of a pull request "
