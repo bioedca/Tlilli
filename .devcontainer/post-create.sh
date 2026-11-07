@@ -8,8 +8,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # Tauri 2 prerequisites for Ubuntu 24.04, the same list as .github/workflows/ci.yml, plus:
-# pkg-config, which the -sys crates use to locate webkit2gtk; xvfb for the WebDriver tests
-# (CLAUDE.md: `xvfb-run -a pnpm -C ui test:e2e`); webkit2gtk-driver, the WebDriver that
+# pkg-config, which the -sys crates use to locate webkit2gtk; xvfb for the desktop smoke suite
+# (`xvfb-run -a pnpm -C ui test:e2e:desktop`); webkit2gtk-driver, the WebDriver that
 # tauri-driver talks to on Linux.
 export DEBIAN_FRONTEND=noninteractive
 sudo apt-get update
@@ -31,4 +31,9 @@ fi
 # (bootstrap task 12), so the first `cargo build` only compiles.
 if [ -f Cargo.lock ]; then
   cargo fetch
+fi
+
+# tauri-driver, which starts the app for the desktop smoke suite, at the version ci.yml installs.
+if [ -f src-tauri/Cargo.toml ]; then
+  cargo install --locked tauri-driver@2.1.0
 fi
