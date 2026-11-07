@@ -58,5 +58,5 @@ The job reads the title and description from the API when it runs, so after fixi
 
 ## Related checks
 
-- `scripts/gen_reference.sh --check` generates the reference pages into a temporary directory, compares them with `docs/reference/` and fails when they differ (`PR-DOC-003`); it changes nothing. Without `--check`, the script replaces the committed pages. The pending `protocol-ref/drift` job covers `docs/reference/mcp/` and the schemas ([33 CI/CD](../prd/33-ci-cd.md) §2); `--check` also compares `cli.md` and `skills.md`.
+- `scripts/gen_reference.sh --check` generates the reference pages into a temporary directory, compares them with `docs/reference/` and fails when they differ (`PR-DOC-003`); it changes nothing. Without `--check`, the script replaces the committed pages. The `protocol-ref/drift` job runs it, so it covers all four: `docs/reference/mcp/`, the schemas, `cli.md` and `skills.md` ([33 CI/CD](../prd/33-ci-cd.md) §2 names the first two).
 - The lefthook hooks installed by `pnpm -C ui install` run at commit time. When Rust files are staged, `cargo fmt --all --check` and `cargo clippy` check the whole workspace; Biome checks only the staged UI files; commitlint checks the message.
