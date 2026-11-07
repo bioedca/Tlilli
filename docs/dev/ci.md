@@ -28,7 +28,7 @@ The script installs no toolchain: it expects rustup, cargo-nextest, cargo-deny, 
 
 Pending jobs are named but not run until the rest of the `ci.yml` rewrite (bootstrap task 20) adds them: `protocol-ref/drift`, `workflows/zizmor` and `e2e/smoke`. `all` skips them, and naming one exits with status 2. Not mirrored:
 
-- the `build/*` matrix, which runs when a pull request is Ready;
+- the `build/*` matrix of the release targets, which runs when a pull request is Ready or labelled `ci:full`, and on `main`. Its bundles are unsigned, without the updater artifacts. `build/linux-bundle` runs the same as `pnpm -C ui tauri build --target x86_64-unknown-linux-gnu --config src-tauri/tauri.unsigned.conf.json`, which writes the `.deb`, `.rpm` and AppImage under `target/x86_64-unknown-linux-gnu/release/bundle/`;
 - the Rust coverage: CI runs the nextest commands of `rust-test` under `cargo llvm-cov`, and the local job runs them without it;
 - the uploads to Codecov, of that Rust report and of the Vitest report (the local `ui` job writes the Vitest report to `ui/coverage/` but uploads nothing);
 - the `codecov/patch/*` checks, which the Codecov service computes;
