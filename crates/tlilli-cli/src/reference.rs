@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 bioedca
+// SPDX-License-Identifier: Apache-2.0
+
 //! The generators of the reference pages under `docs/reference/` (`PR-DOC-003`, ADR-0001).
 //!
 //! Every generated file says that it is generated: a Markdown page opens with an HTML comment and

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 bioedca
+// SPDX-License-Identifier: Apache-2.0
+
 //! Configuration: the one place where the core's settings and named constants live
 //! (`docs/prd/21-architecture-and-tech-stack.md` §7: no magic numbers, configuration in one place).
 //!

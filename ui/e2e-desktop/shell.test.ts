@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 bioedca
+// SPDX-License-Identifier: Apache-2.0
+
 import { afterAll, beforeAll, expect, inject, test } from "vitest";
 import { Session } from "./webdriver";
 

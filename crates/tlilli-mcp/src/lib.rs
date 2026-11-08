@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 bioedca
+// SPDX-License-Identifier: Apache-2.0
+
 //! Tlilli MCP server library: tools, resources, prompts, guardrails, transports and the auth token
 //! (`docs/prd/21-architecture-and-tech-stack.md` §4). It is the only door for agents and stands
 //! inside the trust boundary of the user's machine; it never calls `tlilli-core`'s storage

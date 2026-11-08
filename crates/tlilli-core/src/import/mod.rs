@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 bioedca
+// SPDX-License-Identifier: Apache-2.0
+
 //! Import: Markdown, docx and basic LaTeX into the document model, with an import report. Text
 //! from imported files is untrusted input and is labelled as such. Depends on `model` and `event`
 //! only.

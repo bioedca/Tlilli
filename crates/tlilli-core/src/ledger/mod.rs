@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 bioedca
+// SPDX-License-Identifier: Apache-2.0
+
 //! Ledger: sources and claim links, identifier normalization and deduplication, CSL-JSON as the
 //! canonical record, rendering of citations and reference lists, and quote verification.
 //! Depends on `model` and `event` only.

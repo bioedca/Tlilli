@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 bioedca
+// SPDX-License-Identifier: Apache-2.0
+
 //! The drift check for the generated reference pages (`PR-DOC-003`): each test runs a generator of
 //! the `tlilli` binary into a scratch directory and compares the result, file by file, with the
 //! pages committed under `docs/reference/`. `scripts/gen_reference.sh` regenerates them, and

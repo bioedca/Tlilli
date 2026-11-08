@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 bioedca
+// SPDX-License-Identifier: Apache-2.0
+
 //! The `tlilli-mcp` binary: a thin command-line front over the library. `.mcp.json` runs
 //! `tlilli-mcp stdio` so a coding agent can dogfood the server from a session.
 

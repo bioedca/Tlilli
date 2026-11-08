@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 bioedca
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Global setup of the desktop smoke suite: starts tauri-driver before the tests and stops it
  * after them (PRD 34 §1, D-086). tauri-driver starts the platform's WebDriver itself
