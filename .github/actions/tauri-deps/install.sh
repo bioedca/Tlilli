@@ -3,8 +3,10 @@
 # (restored from the cache) go into apt's archive first, so apt downloads only what changed.
 set -euo pipefail
 
+# webkit2gtk-driver and xvfb serve the e2e/smoke job: WebKitWebDriver, which tauri-driver drives,
+# and the virtual display it runs under (the runner image has xvfb; the list makes it explicit).
 packages=(libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev
-  libayatana-appindicator3-dev librsvg2-dev)
+  libayatana-appindicator3-dev librsvg2-dev webkit2gtk-driver xvfb)
 cache=~/.cache/tauri-debs
 archives=/var/cache/apt/archives
 

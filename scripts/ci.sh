@@ -3,11 +3,11 @@
 #   scripts/ci.sh <job>...   run the named jobs in the order given; `all` runs every job in CI order
 #   scripts/ci.sh --help     list the jobs and their commands
 # The first failing command stops the run, and the script exits with that command's status.
-# The commands are today's: the `rust-lint`, `rust-test`, `ui`, `docs-build`, `commits`,
-# `size/limit`, `docs/contract-sync` and `tauri/linux` jobs of .github/workflows/ci.yml, and `reuse lint` from
-# docs/dev/licensing.md. The rest of the ci.yml rewrite (bootstrap task 20) fills in the pending
-# jobs and moves reuse into `all` once CI runs it. No toolchain is installed: rustup, cargo-nextest, cargo-deny, pnpm, Node 22 and
-# python3 must be on PATH, as in the cloud sandbox and the devcontainer.
+# The jobs are those of .github/workflows/ci.yml but the build/* matrix, plus `scripts` (the tests
+# of these dev scripts) and `reuse lint` from docs/dev/licensing.md, which joins `all` once CI runs
+# it. No toolchain is installed: rustup, cargo-nextest, cargo-deny, pnpm, Node 22 and python3 must
+# be on PATH, as in the cloud sandbox and the devcontainer; e2e/smoke also needs tauri-driver,
+# WebKitWebDriver and xvfb-run.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -15,13 +15,12 @@ cd "$(dirname "$0")/.."
 # Installed into .cache/ on first use; task 20 installs the same release in CI.
 REUSE_VERSION=6.3.0
 
-# Both lists follow the PRD 33 §2 table. A job moves from PENDING to JOBS when its commands exist.
-# scripts (the tests of these dev scripts) has no row there and runs last. EXTRA jobs run only when
-# named: they are not in CI yet (reuse has no row in the table either).
+# JOBS follows the PRD 33 §2 table; scripts (the tests of these dev scripts) has no row there and
+# runs last. EXTRA jobs run only when named: they are not in CI yet (reuse has no row in the table
+# either).
 JOBS="rust-lint rust-test ui docs-build commits size/limit docs/contract-sync protocol-ref/drift"
-JOBS="$JOBS workflows/zizmor tauri/linux scripts"
+JOBS="$JOBS workflows/zizmor tauri/linux e2e/smoke scripts"
 EXTRA="reuse"
-PENDING="e2e/smoke"
 
 usage() {
   cat <<'EOF'
@@ -48,20 +47,20 @@ Jobs, in CI order (docs/prd/33-ci-cd.md §2):
   workflows/zizmor    zizmor --offline --min-severity low .github/workflows; actionlint (zizmor
                       1.32.0 and actionlint 1.7.12, the releases CI pins)
   tauri/linux         pnpm -C ui install --frozen-lockfile; pnpm -C ui tauri build --no-bundle
+  e2e/smoke           pnpm -C ui install --frozen-lockfile; pnpm -C ui tauri build --debug
+                      --no-bundle; xvfb-run -a pnpm -C ui test:e2e:desktop (the tauri-driver suite;
+                      needs tauri-driver, WebKitWebDriver and xvfb-run)
   scripts             the tests of ci.sh, api_docs.sh, pr_checks.sh and gen_fixtures.py under
                       scripts/tests (not in ci.yml yet)
   rust                alias: rust-lint, then rust-test
   all                 alias: every job above, in that order
 
-Runs only when named, until CI runs it (bootstrap task 20):
+Runs only when named, until CI runs it:
   reuse               reuse lint (docs/dev/licensing.md)
-
-Pending until bootstrap task 20 (`all` skips it; naming it exits with status 2):
-  e2e/smoke           xvfb-run -a pnpm -C ui test:e2e:desktop (the tauri-driver suite)
 
 Not mirrored: the build/* matrix (run on Ready), the coverage that rust-test collects under
 cargo-llvm-cov in CI, and codecov/patch/* (the Codecov service). A Rust or UI job is skipped when
-Cargo.toml or ui/package.json is missing; tauri/linux needs both.
+Cargo.toml or ui/package.json is missing; tauri/linux and e2e/smoke need both.
 EOF
 }
 
@@ -168,6 +167,21 @@ job_tauri_linux() {
   run pnpm -C ui tauri build --no-bundle
 }
 
+# The desktop smoke suite: the debug app with the UI embedded, which tauri-driver starts and drives
+# through WebKitWebDriver under a virtual display (Linux only).
+job_e2e_smoke() {
+  [ -f Cargo.toml ] || { skip Cargo.toml; return 0; }
+  [ -f ui/package.json ] || { skip ui/package.json; return 0; }
+  need cargo "rustup; rust-toolchain.toml picks the channel"
+  need pnpm "the version in the packageManager field of ui/package.json"
+  need tauri-driver "cargo install --locked tauri-driver@2.1.0, the release CI installs"
+  need WebKitWebDriver "the webkit2gtk-driver package"
+  need xvfb-run "the xvfb package"
+  run pnpm -C ui install --frozen-lockfile
+  run pnpm -C ui tauri build --debug --no-bundle
+  run xvfb-run -a pnpm -C ui test:e2e:desktop
+}
+
 # The dev scripts' own tests: bash and python3 only, no network.
 job_scripts() {
   need python3 "for the gen_fixtures.py tests"
@@ -204,6 +218,7 @@ run_job() {
     protocol-ref/drift) job_protocol_ref_drift ;;
     workflows/zizmor) job_workflows_zizmor ;;
     tauri/linux) job_tauri_linux ;;
+    e2e/smoke) job_e2e_smoke ;;
     scripts) job_scripts ;;
     reuse) job_reuse ;;
     *) fail 2 "no such job" ;;
@@ -228,13 +243,8 @@ for arg in "$@"; do
     all) selected="$selected $JOBS" ;;
     rust) selected="$selected rust-lint rust-test" ;;
     *)
-      # The JOBS names stand before the bar, the PENDING names after it.
-      case " $JOBS $EXTRA | $PENDING " in
-        *" $arg "*"|"*) selected="$selected $arg" ;;
-        *"|"*" $arg "*)
-          printf 'ci.sh: job %s has no commands yet; it arrives with bootstrap task 20\n' "$arg" >&2
-          exit 2
-          ;;
+      case " $JOBS $EXTRA " in
+        *" $arg "*) selected="$selected $arg" ;;
         *)
           printf 'ci.sh: unknown job %s (scripts/ci.sh --help lists the jobs)\n' "$arg" >&2
           exit 2
@@ -249,7 +259,7 @@ for name in $selected; do
 done
 
 printf '\nci.sh: done:%s\n' "$summary"
-# After `all`, name what it left out: the EXTRA jobs not also named, and the pending ones.
+# After `all`, name what it left out: the EXTRA jobs not also named.
 case " $* " in
   *" all "*)
     unnamed=""
@@ -260,9 +270,7 @@ case " $* " in
       esac
     done
     if [ -n "$unnamed" ]; then
-      printf 'ci.sh: not run:%s (only when named), %s (pending)\n' "$unnamed" "$PENDING"
-    else
-      printf 'ci.sh: not run: %s (pending)\n' "$PENDING"
+      printf 'ci.sh: not run:%s (only when named)\n' "$unnamed"
     fi
     ;;
   *) ;;

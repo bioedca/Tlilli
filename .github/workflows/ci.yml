@@ -1,8 +1,8 @@
 name: ci
 
-# The jobs of PRD 33 §2. Bootstrap task 20 lands them in parts: rust-lint and rust-test, then ui
+# The jobs of PRD 33 §2. Bootstrap task 20 landed them in parts: rust-lint and rust-test, then ui
 # and docs-build, then the pull-request checks, then the build/* matrix of the release targets,
-# then protocol-ref/drift and workflows/zizmor; e2e/smoke comes last. The job ids and names are the
+# then protocol-ref/drift and workflows/zizmor, and e2e/smoke last. The job ids and names are the
 # check names of PR-GIT-043, which the `main` ruleset requires.
 on:
   pull_request:
@@ -324,6 +324,38 @@ jobs:
           cache-dependency-path: ui/pnpm-lock.yaml
       - run: pnpm -C ui install --frozen-lockfile
       - run: pnpm -C ui tauri build --no-bundle
+
+  # The desktop smoke suite (PRD 34 §1, D-086): tauri-driver starts the debug app, built with the
+  # UI embedded, and drives it through WebKitWebDriver under a virtual display. Linux only, since
+  # tauri-driver has no macOS driver. The test step keeps PRD 33's bound of 10 minutes, and the
+  # suite retries a failed test once, the one retry PR-CI-009 allows.
+  e2e-smoke:
+    name: e2e/smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/tauri-deps # zizmor: ignore[self-repository] actionlint rejects the $/ form
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable branch, 2026-11-04
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      # The cache above keeps ~/.cargo/bin, so a warm run finds tauri-driver installed.
+      - run: cargo install --locked tauri-driver@2.1.0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+        with:
+          package_json_file: ui/package.json
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: ui/pnpm-lock.yaml
+      - run: pnpm -C ui install --frozen-lockfile
+      - run: pnpm -C ui tauri build --debug --no-bundle
+      - run: xvfb-run -a pnpm -C ui test:e2e:desktop
+        timeout-minutes: 10
 
   # The bundles of the release targets (PRD 33 §2). The matrix runs on a Ready pull request, on one
   # labelled `ci:full`, and on `main`. When a Draft skips it, GitHub reports no build/<name> check,
