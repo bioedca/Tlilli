@@ -14,8 +14,10 @@ body:
       value: |
         A task is Ready for an agent when it has type, area, priority, phase
         and milestone, names requirement IDs, has acceptance criteria an
-        agent can test, and is sized at most M (about 400 changed lines).
-        Larger work is an epic with sub-issues sized to one PR each.
+        agent can test, is sized at most M (about 400 changed lines) or is
+        an epic with Ready sub-issues, has its dependencies closed or linked,
+        and carries no `status/*` blocker. Larger work is an epic with
+        sub-issues sized to one PR each.
   - type: textarea
     id: goal
     attributes:

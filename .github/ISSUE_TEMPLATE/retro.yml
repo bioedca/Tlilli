@@ -67,6 +67,25 @@ body:
     validations:
       required: true
   - type: textarea
+    id: velocity
+    attributes:
+      label: Velocity
+      description: >-
+        PRs merged per week, FRs verified in the phase, median lead time and
+        review rounds per PR (PR-GATE-008, docs/prd/40-roadmap-and-gates.md §4).
+    validations:
+      required: true
+  - type: textarea
+    id: projection
+    attributes:
+      label: Projection for the next gate
+      description: >-
+        From G1 on: a range for the next gate, labelled as a projection and
+        never a commitment. G0 writes n/a (PR-GATE-008).
+      placeholder: "Projection, not a commitment: G2 in 6 to 9 weeks."
+    validations:
+      required: true
+  - type: textarea
     id: budget
     attributes:
       label: Budget use

@@ -70,7 +70,9 @@ body:
       label: Prompt mirror affected
       description: >-
         The MCP prompts generated from skills, for clients without skill
-        support.
+        support. A new prompt changes the server's protocol surface
+        (FR-02-060): file it with the Protocol change form and link that
+        issue here.
       multiple: true
       options:
         - run
