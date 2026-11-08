@@ -137,6 +137,7 @@ gate:
           - '.coderabbit.yaml'
           - 'greptile.json'
           - 'AGENTS.md'
+          - 'crates/tlilli-core/AGENTS.md' # the crate's review rules (PR-REV-005); tlilli-mcp's is under crates/tlilli-mcp/**
           - 'CLAUDE.md'
           - 'deny.toml'
           - 'release-plz.toml'
