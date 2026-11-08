@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 bioedca
+// SPDX-License-Identifier: Apache-2.0
+
 import { defineConfig } from "vitest/config";
 
 // The desktop smoke suite, `pnpm -C ui test:e2e:desktop` (PRD 34 §1, D-086): the debug app driven

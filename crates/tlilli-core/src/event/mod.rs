@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 bioedca
+// SPDX-License-Identifier: Apache-2.0
+
 //! Event log: one enum of events. Every mutation is an event with an actor (`Author`,
 //! `Agent { run_id, identity }` or `System`), a timestamp, a parent hash and a payload; the log
 //! is append-only with a hash chain, and snapshots are materialized from it. The validator

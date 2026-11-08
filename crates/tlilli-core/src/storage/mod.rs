@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 bioedca
+// SPDX-License-Identifier: Apache-2.0
+
 //! Storage: the `SQLite` schema, forward-only numbered migrations with a pre-migration backup,
 //! full-text search and the workspace file layout. The only module that touches the filesystem;
 //! no other module reaches into its tables.

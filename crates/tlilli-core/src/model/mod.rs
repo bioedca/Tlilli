@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 bioedca
+// SPDX-License-Identifier: Apache-2.0
+
 //! Document model: `Workspace`, `Manuscript`, `Section`, `Block`, `Span`, `Request`, `IdeaStub`,
 //! `Suggestion`, `MechanicalEdit`, `Comment`, `Run`, `Snapshot`, `Source`, `ClaimLink`,
 //! `StyleSheet`, `ProvenanceMark` and `FigureAsset`: exactly the objects of the concept's domain

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 bioedca
+// SPDX-License-Identifier: Apache-2.0
+
 //! Tlilli core: the document model, the event log, the ledger, the style sheet, provenance and
 //! import/export. Both doors into a workspace, the desktop shell and the MCP server, go through
 //! this crate and emit events; no state lives anywhere else (`INV-02`).

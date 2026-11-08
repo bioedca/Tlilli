@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 bioedca
+// SPDX-License-Identifier: Apache-2.0
+
 //! The `tlilli` command (`docs/prd/21-architecture-and-tech-stack.md` §2, ADR-0001): `export
 //! --canonical`, `import`, `skills install`, `mcp` (proxy to the server), `doctor` and the
 //! generators of the reference pages.

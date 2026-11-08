@@ -31,8 +31,14 @@ path = [
   "**/*.png",
   "**/*.ico",
   "**/*.icns",
+  # JavaScript configuration (commitlint.config.mjs), the UI's HTML entry page and SVG images,
+  # and pip-compile inputs (docs/requirements.in).
+  "**/*.mjs",
+  "**/*.html",
+  "**/*.svg",
+  "**/*.in",
   ".github/CODEOWNERS",
-  ".gitignore",
+  "**/.gitignore",
   "NOTICE",
   "scripts/**/*.py",
 ]
@@ -52,6 +58,9 @@ path = [
   "skills/**/*.json",
   "skills/**/*.toml",
   "skills/**/*.txt",
+  "skills/**/*.sh",
+  "skills/**/*.lock",
+  "skills/**/*.cff",
 ]
 precedence = "closest"
 SPDX-FileCopyrightText = "2026 bioedca"

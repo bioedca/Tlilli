@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 bioedca
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * A small W3C WebDriver client for the desktop smoke suite (PRD 34 §1, D-086).
  *

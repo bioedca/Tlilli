@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 bioedca
+// SPDX-License-Identifier: Apache-2.0
+
 import { defineConfig, devices } from "@playwright/test";
 
 // The cloud sandbox ships a Chromium build that Playwright cannot download itself.
