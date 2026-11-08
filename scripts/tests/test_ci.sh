@@ -45,13 +45,14 @@ make_repo "$tmp/bare"
 
 failures=0
 fail_on=""
+extra_path="" # directories put before the stubs on PATH, each followed by a colon
 
 # check <name> <repo> <want status> <want calls> <ci.sh args>...
 check() {
   local name=$1 repo=$2 want_status=$3 want_calls=$4 status=0 calls
   shift 4
   : >"$tmp/log"
-  STUB_LOG="$tmp/log" STUB_FAIL="$fail_on" STUB_FAIL_STATUS=101 PATH="$tmp/bin:$PATH" \
+  STUB_LOG="$tmp/log" STUB_FAIL="$fail_on" STUB_FAIL_STATUS=101 PATH="$extra_path$tmp/bin:$PATH" \
     "$repo/scripts/ci.sh" "$@" >"$tmp/out" 2>&1 || status=$?
   calls=$(cat "$tmp/log")
   if [[ $status == "$want_status" && $calls == "$want_calls" ]]; then
@@ -127,6 +128,38 @@ summary="rust-lint:skipped rust-test:skipped ui:skipped docs-build:passed commit
 summary="$summary size/limit:passed docs/contract-sync:passed protocol-ref/drift:skipped"
 summary="$summary workflows/zizmor:skipped tauri/linux:skipped e2e/smoke:skipped reuse:passed"
 all_case "all runs every job, reuse and scripts included" "ci.sh: done: $summary scripts:passed" all
+
+# The reuse job's own environment: a stub python3 whose `-m venv <dir>` gives <dir> stub pip and
+# reuse, which record their calls like the other stubs.
+mkdir "$tmp/py"
+cat >"$tmp/py/python3" <<'EOF'
+#!/bin/bash
+echo "python3 $*" >>"$STUB_LOG"
+if [[ $1 == -m && $2 == venv ]]; then
+  mkdir -p "$3/bin"
+  cp "$(dirname "$0")/../bin/cargo" "$3/bin/pip"
+  cp "$(dirname "$0")/../bin/cargo" "$3/bin/reuse"
+fi
+EOF
+chmod +x "$tmp/py/python3"
+make_repo "$tmp/reuse" scripts/reuse-requirements.txt
+reuse_build="python3 -m venv .cache/venv-reuse
+pip install --quiet --require-hashes -r scripts/reuse-requirements.txt
+reuse lint"
+extra_path="$tmp/py:"
+check "reuse builds its environment when there is none" "$tmp/reuse" 0 "$reuse_build" reuse
+check "reuse keeps the environment while the requirements match" "$tmp/reuse" 0 "reuse lint" reuse
+echo "changed" >>"$tmp/reuse/scripts/reuse-requirements.txt"
+check "reuse rebuilds the environment when the requirements change" "$tmp/reuse" 0 \
+  "$reuse_build" reuse
+echo "changed again" >>"$tmp/reuse/scripts/reuse-requirements.txt"
+fail_on="pip install"
+check "a failed install stops the job" "$tmp/reuse" 101 "python3 -m venv .cache/venv-reuse
+pip install --quiet --require-hashes -r scripts/reuse-requirements.txt" reuse
+fail_on=""
+check "the next run after a failed install rebuilds the environment" "$tmp/reuse" 0 \
+  "$reuse_build" reuse
+extra_path=""
 
 fail_on="cargo clippy"
 check "the first failure stops the run with its status" "$tmp/full" 101 "cargo fmt --all --check
