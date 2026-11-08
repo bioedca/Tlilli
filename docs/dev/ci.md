@@ -8,7 +8,7 @@ scripts/ci.sh rust-test    # one job
 scripts/ci.sh rust ui      # several jobs, in the order given
 ```
 
-The script installs no toolchain: it expects rustup, cargo-nextest, cargo-deny, pnpm, Node 22 and Python 3 on `PATH` ([Setup](setup.md)). A Rust or UI job is skipped when `Cargo.toml` or `ui/package.json` is missing.
+The script installs no toolchain: it expects rustup, cargo-nextest, cargo-deny, pnpm, Node 22 and Python 3 on `PATH`, and for `e2e/smoke` also `tauri-driver`, `WebKitWebDriver` and `xvfb-run` ([Setup](setup.md)). A Rust or UI job is skipped when `Cargo.toml` or `ui/package.json` is missing.
 
 ## Jobs
 
@@ -24,11 +24,12 @@ The script installs no toolchain: it expects rustup, cargo-nextest, cargo-deny, 
 | `protocol-ref/drift` | `scripts/gen_reference.sh --check`: regenerates the pages under `docs/reference/` into a scratch directory and fails when the committed ones differ; `scripts/gen_reference.sh` rewrites them |
 | `workflows/zizmor` | `zizmor --offline --min-severity low .github/workflows`, then `actionlint`. CI pins zizmor 1.32.0 and actionlint 1.7.12 and checks their downloads' SHA-256; install the same releases locally |
 | `tauri/linux` | `pnpm -C ui install --frozen-lockfile`, then `pnpm -C ui tauri build --no-bundle` |
+| `e2e/smoke` | `pnpm -C ui install --frozen-lockfile`, `pnpm -C ui tauri build --debug --no-bundle`, then `xvfb-run -a pnpm -C ui test:e2e:desktop`: the desktop smoke suite in `ui/e2e-desktop/`, which starts `tauri-driver`, has it start the debug app, and checks the window over WebDriver. A failed test runs once more, the one retry `PR-CI-009` allows. CI gives the test step 10 minutes |
 | `scripts` | the tests of `ci.sh`, `api_docs.sh`, `pr_checks.sh` and `gen_fixtures.py` under `scripts/tests/` (not in `ci.yml` yet) |
 | `rust` | an alias for `rust-lint` then `rust-test` |
 | `reuse` | `reuse lint` ([Licensing](licensing.md)); it runs only when named, until CI runs it |
 
-A pending job is named but not run until the rest of the `ci.yml` rewrite (bootstrap task 20) adds it: `e2e/smoke`, which needs the tauri-driver suite. `all` skips it, and naming it exits with status 2. Not mirrored:
+Not mirrored:
 
 - the `build/*` matrix of the release targets, which runs when a pull request is Ready or labelled `ci:full`, and on `main`. Its bundles are unsigned, without the updater artifacts. `build/linux-bundle` runs the same as `pnpm -C ui tauri build --target x86_64-unknown-linux-gnu --config src-tauri/tauri.unsigned.conf.json`, which writes the `.deb`, `.rpm` and AppImage under `target/x86_64-unknown-linux-gnu/release/bundle/`;
 - the Rust coverage: CI runs the nextest commands of `rust-test` under `cargo llvm-cov`, and the local job runs them without it;
