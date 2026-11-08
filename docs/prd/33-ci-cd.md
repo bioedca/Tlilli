@@ -59,6 +59,8 @@ env:
 | `workflows/zizmor` | `ubuntu-24.04` | `zizmor .github/workflows` (pinned-SHA, template injection, dangerous triggers, credential persistence) at `--min-severity low`; `actionlint` | yes | yes |
 | `tauri/linux` | `ubuntu-24.04` | `pnpm -C ui tauri build --no-bundle` (compile check of the full app) | yes | yes |
 | `e2e/smoke` | `ubuntu-24.04` | `xvfb-run -a pnpm -C ui test:e2e:desktop` (tauri-driver smoke suite; `test:e2e` is the Playwright browser suite, D-077; ≤ 10 min, 1 retry allowed) | yes | yes |
+| `reuse` | `ubuntu-24.04` | `reuse lint`: every file declares its copyright and licence (REUSE 3.3, D-003); `reuse` is installed from the hash-pinned `scripts/reuse-requirements.txt` (D-088) | yes | yes |
+| `scripts` | `ubuntu-24.04` | the dev scripts' tests under `scripts/tests/`: `python3 -m unittest`, `test_ci.sh`, `test_api_docs.sh`, `test_pr_checks.sh` (D-088) | yes | yes |
 | `build/macos-arm64`, `build/macos-x86_64`, `build/windows`, `build/linux-bundle` | `macos-15` (both targets), `windows-2025`, `ubuntu-24.04` | `pnpm -C ui tauri build --target <t>` (bundles), upload artifacts (7-day retention); `cargo nextest run --workspace` on macOS and Windows | yes | only if `ready_for_review`, `ci:full` or `push` |
 | `codecov/patch/tlilli-core`, `codecov/patch/tlilli-mcp` | Codecov | patch coverage ≥ 80% per flag (`codecov.yml`); project coverage informational | yes | yes |
 
