@@ -61,6 +61,11 @@ path = [
   "skills/**/*.sh",
   "skills/**/*.lock",
   "skills/**/*.cff",
+  "skills/**/*.mjs",
+  "skills/**/*.html",
+  "skills/**/*.svg",
+  "skills/**/*.in",
+  "skills/**/.gitignore",
 ]
 precedence = "closest"
 SPDX-FileCopyrightText = "2026 bioedca"
