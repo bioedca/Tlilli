@@ -106,8 +106,10 @@ jobs:
     # event that can change X's verdict carries X as the head in its payload (`synchronize` to X; label,
     # edit and ready events while X is the head; reviews on X reach the relay as its head SHA), including
     # events of other PRs that share X. Never cancel an in-progress run: a cancelled `labeled` run would
-    # lose its approval record. A queued run replaced by a newer one loses nothing, because each run reads
-    # all of X's state afresh.
+    # lose its approval record. A queued run that a newer one replaces loses no verdict, because each run
+    # reads all of X's state afresh, with one exception: a queued `labeled` run for `gate:approved` that
+    # is replaced never writes its approval record (only that run may, see above), so the verdict fails
+    # closed with "no record" and the label must be re-applied in person.
     concurrency:
       group: gate-${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
       cancel-in-progress: false
