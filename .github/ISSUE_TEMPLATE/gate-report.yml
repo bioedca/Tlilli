@@ -89,7 +89,7 @@ body:
         | Metric | Target | From | Measured |
         | --- | --- | --- | --- |
         | Author time per cycle, 3-request run | ≤ 10 min | v0.2 | |
-        | Agent turn wall-clock, 3 requests | ≤ 5 min; ≤ 30 min hard | v0.2 | |
+        | Agent turn wall-clock, 3 requests | ≤ 5 min typical; ≤ 30 min hard timeout | v0.2 | |
         | Span-ID survival, unchanged sentences | ≥ 99%; locked 100% | v0.1 | |
         | Author-text overwrites by an agent | 0, ever | v0.2 | |
         | Suggestions accepted per run | ≥ 50% | v0.2 | |
