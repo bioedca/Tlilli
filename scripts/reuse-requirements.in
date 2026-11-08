@@ -1,0 +1,7 @@
+# Python dependencies of the `reuse` check: the `reuse` job of ci.yml and `scripts/ci.sh reuse`
+# (D-003, docs/dev/licensing.md). This is the hand-edited input; scripts/reuse-requirements.txt is
+# compiled from it with hashes. To change or upgrade the release, edit this file, then run
+# (Python 3.13, the version ci.yml uses):
+#   pip install pip-tools
+#   pip-compile --generate-hashes --strip-extras --output-file scripts/reuse-requirements.txt scripts/reuse-requirements.in
+reuse==6.3.0

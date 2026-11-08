@@ -100,10 +100,12 @@ check "missing manifests skip the jobs" "$tmp/bare" 0 "" rust-lint rust-test ui 
 # where the docs, diff, scripts and reuse jobs find stubs, so nothing real runs; checks the closing
 # line.
 stubs="scripts/docs.sh scripts/pr_checks.sh scripts/tests/test_ci.sh scripts/tests/test_api_docs.sh
-  scripts/tests/test_pr_checks.sh .cache/venv-reuse-6.3.0/bin/reuse"
+  scripts/tests/test_pr_checks.sh .cache/venv-reuse/bin/reuse"
 # shellcheck disable=SC2086 # one path per word
-make_repo "$tmp/stubs" $stubs
+make_repo "$tmp/stubs" $stubs scripts/reuse-requirements.txt
 for stub in $stubs; do chmod +x "$tmp/stubs/$stub"; done
+# The reuse job reuses its virtual environment while the requirements' checksum matches the stamp.
+(cd "$tmp/stubs" && sha256sum scripts/reuse-requirements.txt >.cache/venv-reuse/requirements.sha256)
 printf 'import unittest\n\n\nclass Stub(unittest.TestCase):\n    def test_stub(self):\n        pass\n' \
   >"$tmp/stubs/scripts/tests/test_stub.py"
 all_case() {
@@ -121,11 +123,10 @@ all_case() {
     failures=$((failures + 1))
   fi
 }
-all_case "all names reuse as not run" "ci.sh: not run: reuse (only when named)" all
-skipped="rust-lint:skipped rust-test:skipped ui:skipped docs-build:passed commits:passed"
-skipped="$skipped size/limit:passed docs/contract-sync:passed protocol-ref/drift:skipped"
-skipped="$skipped workflows/zizmor:skipped tauri/linux:skipped e2e/smoke:skipped scripts:passed"
-all_case "all reuse ends on the summary" "ci.sh: done: $skipped reuse:passed" all reuse
+summary="rust-lint:skipped rust-test:skipped ui:skipped docs-build:passed commits:passed"
+summary="$summary size/limit:passed docs/contract-sync:passed protocol-ref/drift:skipped"
+summary="$summary workflows/zizmor:skipped tauri/linux:skipped e2e/smoke:skipped reuse:passed"
+all_case "all runs every job, reuse and scripts included" "ci.sh: done: $summary scripts:passed" all
 
 fail_on="cargo clippy"
 check "the first failure stops the run with its status" "$tmp/full" 101 "cargo fmt --all --check

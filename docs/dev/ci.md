@@ -3,7 +3,7 @@
 `scripts/ci.sh` runs the commands of the CI jobs on your machine and stops at the first failure (`PR-CI-010`). Run it before you push, or before marking a pull request Ready. The jobs and their gates are defined in [33 CI/CD](../prd/33-ci-cd.md) §2; `scripts/ci.sh --help` prints the current list.
 
 ```bash
-scripts/ci.sh all          # the CI jobs in CI order, then scripts; reuse only when named
+scripts/ci.sh all          # every CI job but the build/* matrix, in CI order
 scripts/ci.sh rust-test    # one job
 scripts/ci.sh rust ui      # several jobs, in the order given
 ```
@@ -25,9 +25,9 @@ The script installs no toolchain: it expects rustup, cargo-nextest, cargo-deny, 
 | `workflows/zizmor` | `zizmor --offline --min-severity low .github/workflows`, then `actionlint`. CI pins zizmor 1.32.0 and actionlint 1.7.12 and checks their downloads' SHA-256; install the same releases locally |
 | `tauri/linux` | `pnpm -C ui install --frozen-lockfile`, then `pnpm -C ui tauri build --no-bundle` |
 | `e2e/smoke` | `pnpm -C ui install --frozen-lockfile`, `pnpm -C ui tauri build --debug --no-bundle`, then `xvfb-run -a pnpm -C ui test:e2e:desktop`: the desktop smoke suite in `ui/e2e-desktop/`, which starts `tauri-driver`, has it start the debug app, and checks the window over WebDriver. A failed test runs once more, the one retry `PR-CI-009` allows. CI gives the test step 10 minutes |
-| `scripts` | the tests of `ci.sh`, `api_docs.sh`, `pr_checks.sh` and `gen_fixtures.py` under `scripts/tests/` (not in `ci.yml` yet) |
+| `reuse` | `reuse lint` ([Licensing](licensing.md)), with `reuse` installed into `.cache/venv-reuse` from the hash-pinned `scripts/reuse-requirements.txt`, as CI's `reuse` job installs it |
+| `scripts` | the tests under `scripts/tests/`: `python3 -m unittest`, then `test_ci.sh`, `test_api_docs.sh` and `test_pr_checks.sh`, as CI's `scripts` job runs them |
 | `rust` | an alias for `rust-lint` then `rust-test` |
-| `reuse` | `reuse lint` ([Licensing](licensing.md)); it runs only when named, until CI runs it |
 
 Not mirrored:
 

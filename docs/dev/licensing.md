@@ -43,8 +43,8 @@ Copyright lines: the maintainer is the only human committer through v1.0, so the
 
 ## Checking
 
-- Locally: `scripts/ci.sh reuse` (it installs the pinned `reuse` release into `.cache/`), or `pip install reuse && reuse lint` from the repository root. The run must end with "your project is compliant with version 3.3 of the REUSE Specification". `reuse lint --json` lists the files that lack information.
-- In CI: a `reuse lint` step is wired into the Linux lane when `ci.yml` is rewritten by bootstrap task 20 (`uses: fsfe/reuse-action` is not on the `PR-CI-019` allow-list, so the job installs `reuse` with `pip` and runs it directly).
+- Locally: `scripts/ci.sh reuse` (it installs `reuse` into `.cache/` from the hash-pinned `scripts/reuse-requirements.txt`), or `pip install reuse && reuse lint` from the repository root. The run must end with "your project is compliant with version 3.3 of the REUSE Specification". `reuse lint --json` lists the files that lack information.
+- In CI: the `reuse` job of `ci.yml` runs `reuse lint` on every pull request and on `main`, and it is a required check (`PR-GIT-043`, D-088). It installs `reuse` from `scripts/reuse-requirements.txt` with `pip --require-hashes`, because `uses: fsfe/reuse-action` is not on the `PR-CI-019` allow-list.
 - Dependencies: `cargo deny check licenses` on every PR against the allow-list in `deny.toml` (bootstrap task 12): Apache-2.0, MIT, BSD-2-Clause, BSD-3-Clause, ISC, Zlib, MPL-2.0, Unicode-3.0, CC0-1.0. Anything else needs an ADR (`PR-ARCH-003`). npm dependencies of the UI follow the same allow-list.
 - Fixtures: `tests/fixtures/LICENSES.md` is a gated path; only CC-BY and CC0 papers with their DOI are vendored (R-23).
 

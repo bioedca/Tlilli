@@ -2,8 +2,8 @@ name: ci
 
 # The jobs of PRD 33 §2. Bootstrap task 20 landed them in parts: rust-lint and rust-test, then ui
 # and docs-build, then the pull-request checks, then the build/* matrix of the release targets,
-# then protocol-ref/drift and workflows/zizmor, and e2e/smoke last. The job ids and names are the
-# check names of PR-GIT-043, which the `main` ruleset requires.
+# then protocol-ref/drift and workflows/zizmor, and e2e/smoke last; reuse and scripts followed
+# (D-088). The job ids and names are the check names of PR-GIT-043, which the `main` ruleset requires.
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
@@ -356,6 +356,46 @@ jobs:
       - run: pnpm -C ui tauri build --debug --no-bundle
       - run: xvfb-run -a pnpm -C ui test:e2e:desktop
         timeout-minutes: 10
+
+  # REUSE 3.3 compliance (D-003, D-088, docs/dev/licensing.md): every file declares its copyright
+  # and licence. `reuse` comes from the hash-pinned scripts/reuse-requirements.txt; fsfe/reuse-action
+  # is not on the PR-CI-019 allow-list, so the job runs the tool itself.
+  reuse:
+    name: reuse
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13" # the version scripts/reuse-requirements.txt was compiled with
+      - run: pip install --require-hashes -r scripts/reuse-requirements.txt
+      - run: reuse lint
+
+  # The dev scripts' own tests (D-088): in Python the stale sweep, the weekly report, the tracking
+  # issues, the changelog and CITATION.cff scripts and the fixture generator; in bash ci.sh,
+  # api_docs.sh and pr_checks.sh. They stub every tool they call: no toolchain, no network.
+  scripts:
+    name: scripts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13" # the version the cloud sandbox and docs-build use
+      - run: python3 -B -m unittest discover -s scripts/tests -p 'test_*.py'
+      - run: scripts/tests/test_ci.sh
+      - run: scripts/tests/test_api_docs.sh
+      - run: scripts/tests/test_pr_checks.sh
 
   # The bundles of the release targets (PRD 33 §2). The matrix runs on a Ready pull request, on one
   # labelled `ci:full`, and on `main`. When a Draft skips it, GitHub reports no build/<name> check,

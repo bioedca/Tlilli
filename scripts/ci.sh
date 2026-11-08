@@ -3,24 +3,16 @@
 #   scripts/ci.sh <job>...   run the named jobs in the order given; `all` runs every job in CI order
 #   scripts/ci.sh --help     list the jobs and their commands
 # The first failing command stops the run, and the script exits with that command's status.
-# The jobs are those of .github/workflows/ci.yml but the build/* matrix, plus `scripts` (the tests
-# of these dev scripts) and `reuse lint` from docs/dev/licensing.md, which joins `all` once CI runs
-# it. No toolchain is installed: rustup, cargo-nextest, cargo-deny, pnpm, Node 22 and python3 must
+# The jobs are those of .github/workflows/ci.yml but the build/* matrix. No toolchain is installed: rustup, cargo-nextest, cargo-deny, pnpm, Node 22 and python3 must
 # be on PATH, as in the cloud sandbox and the devcontainer; e2e/smoke also needs tauri-driver,
 # WebKitWebDriver and xvfb-run.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-# Installed into .cache/ on first use; task 20 installs the same release in CI.
-REUSE_VERSION=6.3.0
-
-# JOBS follows the PRD 33 §2 table; scripts (the tests of these dev scripts) has no row there and
-# runs last. EXTRA jobs run only when named: they are not in CI yet (reuse has no row in the table
-# either).
+# JOBS follows the PRD 33 §2 table.
 JOBS="rust-lint rust-test ui docs-build commits size/limit docs/contract-sync protocol-ref/drift"
-JOBS="$JOBS workflows/zizmor tauri/linux e2e/smoke scripts"
-EXTRA="reuse"
+JOBS="$JOBS workflows/zizmor tauri/linux e2e/smoke reuse scripts"
 
 usage() {
   cat <<'EOF'
@@ -50,13 +42,12 @@ Jobs, in CI order (docs/prd/33-ci-cd.md §2):
   e2e/smoke           pnpm -C ui install --frozen-lockfile; pnpm -C ui tauri build --debug
                       --no-bundle; xvfb-run -a pnpm -C ui test:e2e:desktop (the tauri-driver suite;
                       needs tauri-driver, WebKitWebDriver and xvfb-run)
-  scripts             the tests of ci.sh, api_docs.sh, pr_checks.sh and gen_fixtures.py under
-                      scripts/tests (not in ci.yml yet)
+  reuse               reuse lint (docs/dev/licensing.md), with reuse installed into .cache/ from
+                      the hash-pinned scripts/reuse-requirements.txt
+  scripts             the tests under scripts/tests: python3 -m unittest, then test_ci.sh,
+                      test_api_docs.sh and test_pr_checks.sh
   rust                alias: rust-lint, then rust-test
   all                 alias: every job above, in that order
-
-Runs only when named, until CI runs it:
-  reuse               reuse lint (docs/dev/licensing.md)
 
 Not mirrored: the build/* matrix (run on Ready), the coverage that rust-test collects under
 cargo-llvm-cov in CI, and codecov/patch/* (the Codecov service). A Rust or UI job is skipped when
@@ -191,13 +182,16 @@ job_scripts() {
   run scripts/tests/test_pr_checks.sh
 }
 
+# REUSE compliance, with the release CI pins: the virtual environment is rebuilt only when
+# scripts/reuse-requirements.txt changes.
 job_reuse() {
-  need python3 "for the reuse virtual environment"
-  local venv=".cache/venv-reuse-$REUSE_VERSION"
-  if [ ! -x "$venv/bin/reuse" ]; then
+  need python3 "3.13, the version scripts/reuse-requirements.txt was compiled with"
+  local venv=.cache/venv-reuse
+  if [ ! -x "$venv/bin/reuse" ] || ! sha256sum --check --status "$venv/requirements.sha256" 2>/dev/null; then
     rm -rf "$venv"
     run python3 -m venv "$venv"
-    run "$venv/bin/pip" install --quiet "reuse==$REUSE_VERSION"
+    run "$venv/bin/pip" install --quiet --require-hashes -r scripts/reuse-requirements.txt
+    sha256sum scripts/reuse-requirements.txt >"$venv/requirements.sha256"
   fi
   run "$venv/bin/reuse" lint
 }
@@ -243,7 +237,7 @@ for arg in "$@"; do
     all) selected="$selected $JOBS" ;;
     rust) selected="$selected rust-lint rust-test" ;;
     *)
-      case " $JOBS $EXTRA " in
+      case " $JOBS " in
         *" $arg "*) selected="$selected $arg" ;;
         *)
           printf 'ci.sh: unknown job %s (scripts/ci.sh --help lists the jobs)\n' "$arg" >&2
@@ -259,19 +253,3 @@ for name in $selected; do
 done
 
 printf '\nci.sh: done:%s\n' "$summary"
-# After `all`, name what it left out: the EXTRA jobs not also named.
-case " $* " in
-  *" all "*)
-    unnamed=""
-    for name in $EXTRA; do
-      case " $selected " in
-        *" $name "*) ;;
-        *) unnamed="$unnamed $name" ;;
-      esac
-    done
-    if [ -n "$unnamed" ]; then
-      printf 'ci.sh: not run:%s (only when named)\n' "$unnamed"
-    fi
-    ;;
-  *) ;;
-esac
