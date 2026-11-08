@@ -9,7 +9,7 @@ tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
 mkdir "$tmp/bin"
-for tool in cargo pnpm zizmor actionlint; do
+for tool in cargo pnpm zizmor actionlint xvfb-run; do
   cat >"$tmp/bin/$tool" <<'EOF'
 #!/bin/bash
 line="$(basename "$0")${*:+ $*}"
@@ -18,8 +18,9 @@ if [[ -n $STUB_FAIL && $line == "$STUB_FAIL"* ]]; then exit "$STUB_FAIL_STATUS";
 EOF
   chmod +x "$tmp/bin/$tool"
 done
-# The jobs check that the cargo subcommands they call are installed; the cargo stub runs them.
-for tool in cargo-deny cargo-nextest; do
+# The jobs check that the tools they call through others are installed: the cargo subcommands,
+# which the cargo stub runs, and the drivers that the desktop suite starts.
+for tool in cargo-deny cargo-nextest tauri-driver WebKitWebDriver; do
   printf '#!/bin/bash\n' >"$tmp/bin/$tool"
   chmod +x "$tmp/bin/$tool"
 done
@@ -78,19 +79,22 @@ pnpm -C ui build
 pnpm -C ui exec playwright test --grep @smoke"
 tauri_calls="pnpm -C ui install --frozen-lockfile
 pnpm -C ui tauri build --no-bundle"
+e2e_calls="pnpm -C ui install --frozen-lockfile
+pnpm -C ui tauri build --debug --no-bundle
+xvfb-run -a pnpm -C ui test:e2e:desktop"
 
 check "--help exits 0" "$tmp/full" 0 "" --help
 check "no arguments exit 2" "$tmp/full" 2 ""
 check "an unknown job exits 2 and runs nothing" "$tmp/full" 2 "" rust no-such-job
-check "a pending job exits 2 and runs nothing" "$tmp/full" 2 "" rust e2e/smoke
 check "passing jobs run CI's commands in order" "$tmp/full" 0 "$rust_calls
 $ui_calls" rust ui
 check "tauri/linux runs CI's no-bundle build" "$tmp/full" 0 "$tauri_calls" tauri/linux
+check "e2e/smoke builds the debug app and runs the desktop suite" "$tmp/full" 0 "$e2e_calls" e2e/smoke
 check "the drift and workflow checks run CI's commands" "$tmp/full" 0 "gen_reference.sh --check
 zizmor --offline --min-severity low .github/workflows
 actionlint" protocol-ref/drift workflows/zizmor
 check "missing manifests skip the jobs" "$tmp/bare" 0 "" rust-lint rust-test ui tauri/linux \
-  protocol-ref/drift workflows/zizmor
+  e2e/smoke protocol-ref/drift workflows/zizmor
 
 # all_case <name> <want in the last line> <ci.sh args>...: `all` in a repository with no manifests,
 # where the docs, diff, scripts and reuse jobs find stubs, so nothing real runs; checks the closing
@@ -117,9 +121,11 @@ all_case() {
     failures=$((failures + 1))
   fi
 }
-pending="e2e/smoke"
-all_case "all names reuse as not run" "ci.sh: not run: reuse (only when named), $pending (pending)" all
-all_case "all reuse does not name reuse as not run" "ci.sh: not run: $pending (pending)" all reuse
+all_case "all names reuse as not run" "ci.sh: not run: reuse (only when named)" all
+skipped="rust-lint:skipped rust-test:skipped ui:skipped docs-build:passed commits:passed"
+skipped="$skipped size/limit:passed docs/contract-sync:passed protocol-ref/drift:skipped"
+skipped="$skipped workflows/zizmor:skipped tauri/linux:skipped e2e/smoke:skipped scripts:passed"
+all_case "all reuse ends on the summary" "ci.sh: done: $skipped reuse:passed" all reuse
 
 fail_on="cargo clippy"
 check "the first failure stops the run with its status" "$tmp/full" 101 "cargo fmt --all --check
