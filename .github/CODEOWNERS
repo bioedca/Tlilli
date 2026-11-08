@@ -43,6 +43,7 @@
 /.coderabbit.yaml                       @bioedca
 /greptile.json                          @bioedca
 /AGENTS.md                              @bioedca
+/crates/tlilli-core/AGENTS.md            @bioedca
 /CLAUDE.md                              @bioedca
 /deny.toml                              @bioedca
 /release-plz.toml                       @bioedca
