@@ -2,10 +2,10 @@
 # Enables GitHub auto-merge with the rebase method; GitHub then lands the PR only when the `main` ruleset's
 # required checks pass on an up-to-date branch (PR-GIT-042, PR-GIT-043), so "after CI" is the ruleset's job.
 # Eligible: group `patch-minor`, highest update type patch or minor, in an entry whose changes PR CI builds
-# and tests: cargo `/` and npm `/ui`. Everything else is left for triage: the `major` group, ungrouped
-# security updates, github-actions (.github/workflows is gated, PR-PRQ-009), devcontainers (no PR job builds
-# the devcontainer) and pip `/docs` (no required check builds the docs yet; task 20's `docs-build` job adds
-# one, and then "pip /docs" joins the list below).
+# and tests: cargo `/`, npm `/ui`, and pip `/docs`, which the required `docs-build` check installs and
+# builds with. Everything else is left for triage: the `major` group, ungrouped security updates,
+# github-actions (.github/workflows is gated, PR-PRQ-009) and devcontainers (no PR job builds the
+# devcontainer).
 #
 # Trust: `pull_request`, not `pull_request_target`. For a Dependabot PR, GitHub gives the token only the
 # scopes declared below and no Actions secrets; no PR code is checked out or run. The job runs only for PRs
@@ -52,7 +52,7 @@ jobs:
         if: >-
           steps.meta.outputs.dependency-group == 'patch-minor' &&
           contains(fromJSON('["version-update:semver-patch", "version-update:semver-minor"]'), steps.meta.outputs.update-type) &&
-          contains(fromJSON('["cargo /", "npm_and_yarn /ui"]'), format('{0} {1}', steps.meta.outputs.package-ecosystem, steps.meta.outputs.directory))
+          contains(fromJSON('["cargo /", "npm_and_yarn /ui", "pip /docs"]'), format('{0} {1}', steps.meta.outputs.package-ecosystem, steps.meta.outputs.directory))
         env:
           GH_TOKEN: ${{ github.token }}
           PR_ID: ${{ github.event.pull_request.node_id }}
