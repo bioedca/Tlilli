@@ -122,6 +122,19 @@ class SectionTest(unittest.TestCase):
         many = [{**comments[7], "body": "<!-- greptile_summary -->\nReviews (18)"}]
         self.assertIn("90% of 20 is used before day 20", weekly.budget(many, WEEK, MONTH, NOW))
 
+    def test_a_command_in_a_review_thread_counts_against_the_week(self) -> None:
+        def rows(items: list[dict]) -> str:
+            return "".join(json.dumps(c) + "\n" for c in items)
+        top = [comment("@coderabbitai review", f"2026-11-0{3 + i // 10}T{10 + i % 10}:00:00Z")
+               for i in range(29)]
+        thread = [comment("@coderabbitai is this still needed?", "2026-11-06T12:00:00Z")]
+        with mock.patch.object(weekly, "gh", side_effect=[rows(top), rows(thread)]) as gh:
+            found = weekly.fetch_comments("o/r", "2026-11-01T00:00:00Z")
+        self.assertEqual([c.args[1].split("?")[0] for c in gh.call_args_list],
+                         ["repos/o/r/issues/comments", "repos/o/r/pulls/comments"])
+        self.assertIn("The week's 30 CodeRabbit requests are used",
+                      weekly.budget(found, WEEK, MONTH, NOW))
+
 
 class MainTest(unittest.TestCase):
     def run_main(self, issues: list[dict], fail: str = "") -> list[dict]:
@@ -144,8 +157,9 @@ class MainTest(unittest.TestCase):
             self.assertEqual(done.returncode != 0, bool(fail), done.stderr)
             self.assertIn("Score 50%", Path(tmp, "sum").read_text())
             calls = [json.loads(line) for line in Path(tmp, "log").read_text().splitlines()]
-            self.assertIn("creator=github-actions%5Bbot%5D", calls[2]["args"][1])  # not by label
-            return calls[3:]
+            self.assertIn("/pulls/comments?since=", calls[2]["args"][1])  # review threads too
+            self.assertIn("creator=github-actions%5Bbot%5D", calls[3]["args"][1])  # not by label
+            return calls[4:]
 
     @staticmethod
     def issue(number: int, run: int, user="github-actions[bot]", state="open") -> dict:
