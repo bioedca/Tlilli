@@ -24,7 +24,7 @@ Requirements:
 ## Review pipeline
 <!-- Filled by the author as the pipeline advances. -->
 - Codex local rounds: N · Codex cloud: clean / pending
-- CodeRabbit: round N clean / pending
+- CodeRabbit: round N clean / pending / not required (no `review:coderabbit` label)
 - Greptile: n/a / requested / clean
 - Gated paths touched: none / <paths>
 

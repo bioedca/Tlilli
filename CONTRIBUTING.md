@@ -23,7 +23,7 @@ Thank you for considering a contribution. Tlilli is pre-alpha (Phase 0): one mai
 Automated review is the default; the maintainer reviews only gated paths.
 
 1. Self-review: run the checks below and read your whole diff once.
-2. On the draft, once the Linux lane is green, comment `@codex review` and repeat until Codex reports no open findings; then `@coderabbitai review`. Answer every finding in its thread (fixed with the SHA, declined with a reason, or escalated) and resolve a thread only after answering.
+2. On the draft, once the Linux lane is green, comment `@codex review` and repeat until Codex reports no open findings; then, on a PR labelled `review:coderabbit` only, `@coderabbitai review`. Answer every finding in its thread (fixed with the SHA, declined with a reason, or escalated) and resolve a thread only after answering.
 3. Mark the PR **Ready for review** only when CI is green, the AI rounds are clean, the commits are squashed and rebased, and the body is complete. Ready triggers the full three-OS matrix and, for gated paths, Greptile and the maintainer.
 4. Gated paths (the core model, event log, storage and provenance code, the MCP server, `skills/`, `.github/`, the licenses and the public root files, the PRD and ADRs) carry the `gate` label and merge only with the maintainer's approval. Everything else merges automatically once the branch is up to date with `main` and every required check passes; the author enables auto-merge at Ready.
 

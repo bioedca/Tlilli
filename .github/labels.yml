@@ -66,6 +66,7 @@
 - { name: "gate", color: "f0932b", description: "Touches a gated path; needs the maintainer gate" }
 - { name: "gate:approved", color: "f0932b", description: "Maintainer approval for the gate check (reset on push)" }
 - { name: "review:deep", color: "f0932b", description: "Request a Greptile deep review" }
+- { name: "review:coderabbit", color: "f0932b", description: "Load-bearing: needs a CodeRabbit round (D-089)" }
 - { name: "ci:full", color: "f0932b", description: "Run the full OS matrix on a Draft" }
 - { name: "docs:not-needed", color: "f0932b", description: "No documentation change required (reason in PR body)" }
 - { name: "needs-tests", color: "f0932b", description: "Tests missing or insufficient" }

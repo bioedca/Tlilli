@@ -1,8 +1,9 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 # CodeRabbit review lane. Policy: docs/prd/32-code-review.md §2.
 # CodeRabbit runs only when the author asks for it with `@coderabbitai review`, after the Codex
-# lane is clean; it never reviews drafts or re-reviews on every push. This file is a maintainer-
-# gated path.
+# lane is clean, and only on pull requests labelled `review:coderabbit` (D-089); it never reviews
+# drafts, re-reviews on every push or answers replies on its own. This file is a maintainer-gated
+# path.
 language: "en-US"
 reviews:
   request_changes_workflow: true
@@ -30,4 +31,5 @@ reviews:
     Critique the text or code, not the person. Prefer questions and "we could". Prefix nits with
     "Nit:". Do not repeat findings already present in the pull request.
 chat:
-  auto_reply: true
+  # Off: every answer counts against the seat's allowance (D-089). Tag @coderabbitai to ask.
+  auto_reply: false
