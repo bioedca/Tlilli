@@ -45,7 +45,9 @@ Everything the project relies on in GitHub, as a checklist that can be audited. 
 
 **Ruleset `release/*`** (post-1.0): same as `main`, with the `backport` label required by `gate.yml` logic.
 
-**Ruleset `tags v*`**: restrict creation to the `release-plz` token identity and the repository owner; block update and deletion.
+**Ruleset `tags v*`** (target: tags `v*`, enforcement: active, bypass list: empty): restrict updates; restrict deletions. No identity, the owner's included, moves or deletes a release tag (`PR-GIT-030`, D-090).
+
+**Ruleset `tags v* creation`** (target: tags `v*`, enforcement: active, bypass list: the **Repository admin** role with bypass mode **always**): restrict creations. The admin role is the repository owner, and the `release-plz` token identity is the owner's account too; a bypass covers every rule of its ruleset, so creation sits apart from `tags v*` (D-090).
 
 **Ruleset `all branches`**: block force pushes to any branch not owned by the pusher (GitHub cannot express this; approximated by `PR-GIT-005` and the one-writer rule) — recorded as a policy, not a technical rule.
 
@@ -112,7 +114,7 @@ Environment `release`: required reviewers bioedca and the backup admin once name
 
 ## 7. Audit checklist (run at each gate)
 
-- Ruleset `main` matches §3 (export JSON, diff against `docs/dev/github-settings.md`).
+- Rulesets `main`, `tags v*` and `tags v* creation` match §3 (export JSON with the command in `docs/dev/github-settings.md` §8, diff against that page).
 - Required checks list equals `PR-GIT-043`.
 - Apps installed equal §5; permissions unchanged; automatic reviews off in Codex and CodeRabbit.
 - Secrets: all in `release` environment; expiry dates > 90 days away.
