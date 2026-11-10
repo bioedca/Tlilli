@@ -45,11 +45,11 @@ The order is fixed (`PR-REV-001`): a later lane waits while an earlier one has o
     - In a local session, run `codex review --base origin/main` before pushing and again after each local fix, until it finds nothing, and record the number of rounds.
     - A cloud session has no Codex CLI, so it records `Codex local rounds: 0` with that reason.
 2. **Codex cloud.** Comment `@codex review` once the Linux lane is green. Codex does not review on its own. After a round that led to code changes, request another round on the new head.
-3. **CodeRabbit.** Comment `@coderabbitai review` once Codex is clean and the ledger allows it: at most 1 request in any 60 minutes, counted across the whole repository (D-087). Write each request, with its time and running count, in the PR body's `## Review pipeline` section and in the Agent-session report ([32](../prd/32-code-review.md) §2, D-064). Request a second round only if the first led to code changes, and never a third (D-019).
+3. **CodeRabbit, on PRs labelled `review:coderabbit` only.** The labeler adds the label to load-bearing PRs; add it by hand, with the reason in the body, for a security fix, a protocol change or a code PR of size L or above. Without the label, skip this step and write `CodeRabbit: not required (no review:coderabbit label)` in the body (D-089). Comment `@coderabbitai review` once Codex is clean and the ledger allows it: at most 1 request in any 60 minutes and 30 in any 7 days, counted across the whole repository (D-087, D-089). Every `@coderabbitai` command counts, so resolve CodeRabbit's threads yourself after answering them instead of asking it to. Write each request, with its time and running count, in the PR body's `## Review pipeline` section and in the Agent-session report ([32](../prd/32-code-review.md) §2, D-064). Request a second round only if the first led to code changes, and never a third (D-019).
 4. **Mark Ready.** Mark the pull request Ready once every condition of `PR-PRQ-002` holds:
     - the Linux lane is green;
     - Codex is clean;
-    - the CodeRabbit round is done, with every thread answered;
+    - on a PR labelled `review:coderabbit`, the CodeRabbit round is done, with every thread answered;
     - the body is complete;
     - the size is within the cap;
     - docs and tests are in place;

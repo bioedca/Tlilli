@@ -167,3 +167,21 @@ review:deep:
           - 'crates/tlilli-core/src/segment/**'
           - 'crates/tlilli-core/src/export/**'
           - 'ui/src/store/**'
+
+# Load-bearing code (D-089, docs/prd/32-code-review.md §2): the only pull requests that need a
+# CodeRabbit round. The author or the maintainer adds the label by hand for a security fix, a
+# protocol change or a code PR of size L or above.
+review:coderabbit:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'crates/tlilli-core/src/**'
+          - 'crates/tlilli-core/migrations/**'
+          - 'crates/tlilli-mcp/src/**'
+          - 'src-tauri/src/**'
+          - 'src-tauri/tauri.conf.json'
+          - 'src-tauri/capabilities/**'
+          - 'ui/src/store/**'
+          - '.github/workflows/release*.yml'
+          - '.github/workflows/post-release.yml'
+          - 'release-plz.toml'
+          - 'deny.toml'

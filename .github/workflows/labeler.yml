@@ -1,4 +1,4 @@
-# Path labels on pull requests from .github/labeler.yml: area/*, gate, review:deep
+# Path labels on pull requests from .github/labeler.yml: area/*, gate, review:deep, review:coderabbit
 # (docs/prd/32-code-review.md PR-REV-014; docs/prd/33-ci-cd.md §1); and the size/* label.
 # pull_request_target runs in the base-branch context so the token may write labels on fork PRs; no
 # job checks out or executes PR code (PR-CI-006): actions/labeler reads the configuration from the
