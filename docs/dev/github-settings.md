@@ -115,7 +115,224 @@ RWQ13z7dpwo6uBQdPodpTHXEOZvsUigbLQazAdqMlIKpnChWQnpUjQr1
 
 ## 8. Rulesets ([PRD 39 §3](../prd/39-github-configuration.md#3-rulesets-exported-json-kept-in-docsdevgithub-settingsmd))
 
-None exist (observed 2026-11-04). The `main` and `tags v*` rulesets are created after bootstrap tasks 19–21 provide the required checks; their exported JSON is pasted here (bootstrap task 27).
+Maintainer, 2026-11-10: three rulesets, imported from files the bootstrap task 27 agent prepared once the checks of tasks 19–21 had reported on pull request 105. Observed the same day through the API, as below. Personal repositories have no evaluate mode, so each was active at once.
+
+| Ruleset | ID | Target | Rules | Bypass |
+| --- | --- | --- | --- | --- |
+| `main` | 26993310 | `refs/heads/main` | Restrict deletions, block force pushes, linear history, pull request, status checks | Repository admin, pull requests only |
+| `tags v*` | 26993357 | `refs/tags/v*` | Restrict updates, restrict deletions | None |
+| `tags v* creation` | 26993367 | `refs/tags/v*` | Restrict creations | Repository admin, always |
+
+- Required checks: the 20 of `PR-GIT-043`, each pinned to its source: GitHub Actions (integration 15368) for the `ci.yml` jobs and the `gate/maintainer` commit status, the DCO app (1861) for `DCO`, Codecov (254) for `codecov/patch/tlilli-core` and `codecov/patch/tlilli-mcp`. Actor ID 5 is the Repository admin role. The tags split in two because a bypass covers every rule of its ruleset (D-090).
+- GitHub added `require_extra_approval_for_unattributed_changes: true` to the pull-request rule; the import file did not set it. With 0 required approvals it is not expected to ask for one; the first merges under the ruleset show whether it does.
+- Agent-session bypass (PRD 39 §3): for the agent session, which acts as the maintainer's account through the Claude GitHub App, the API answers `current_user_can_bypass` with `pull_requests_only` on `main`, `never` on `tags v*` and `always` on `tags v* creation`. The merge check is the agent-session merge of the gated pull request that added this section, on a relayed authorization; its outcome is recorded in the next change to this page.
+- To export again: `gh api repos/bioedca/Tlilli/rulesets/<id> --jq '{id, name, target, source_type, source, enforcement, conditions, rules, bypass_actors}'`.
+
+`main`:
+
+```json
+{
+  "id": 26993310,
+  "name": "main",
+  "target": "branch",
+  "source_type": "Repository",
+  "source": "bioedca/Tlilli",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "exclude": [],
+      "include": [
+        "refs/heads/main"
+      ]
+    }
+  },
+  "rules": [
+    {
+      "type": "deletion"
+    },
+    {
+      "type": "non_fast_forward"
+    },
+    {
+      "type": "required_linear_history"
+    },
+    {
+      "type": "pull_request",
+      "parameters": {
+        "required_approving_review_count": 0,
+        "dismiss_stale_reviews_on_push": true,
+        "required_reviewers": [],
+        "require_code_owner_review": false,
+        "require_last_push_approval": false,
+        "required_review_thread_resolution": true,
+        "require_extra_approval_for_unattributed_changes": true,
+        "allowed_merge_methods": [
+          "rebase"
+        ]
+      }
+    },
+    {
+      "type": "required_status_checks",
+      "parameters": {
+        "strict_required_status_checks_policy": true,
+        "do_not_enforce_on_create": false,
+        "required_status_checks": [
+          {
+            "context": "rust-lint",
+            "integration_id": 15368
+          },
+          {
+            "context": "rust-test",
+            "integration_id": 15368
+          },
+          {
+            "context": "ui",
+            "integration_id": 15368
+          },
+          {
+            "context": "docs-build",
+            "integration_id": 15368
+          },
+          {
+            "context": "commits",
+            "integration_id": 15368
+          },
+          {
+            "context": "DCO",
+            "integration_id": 1861
+          },
+          {
+            "context": "size/limit",
+            "integration_id": 15368
+          },
+          {
+            "context": "docs/contract-sync",
+            "integration_id": 15368
+          },
+          {
+            "context": "protocol-ref/drift",
+            "integration_id": 15368
+          },
+          {
+            "context": "workflows/zizmor",
+            "integration_id": 15368
+          },
+          {
+            "context": "tauri/linux",
+            "integration_id": 15368
+          },
+          {
+            "context": "e2e/smoke",
+            "integration_id": 15368
+          },
+          {
+            "context": "reuse",
+            "integration_id": 15368
+          },
+          {
+            "context": "scripts",
+            "integration_id": 15368
+          },
+          {
+            "context": "gate/maintainer",
+            "integration_id": 15368
+          },
+          {
+            "context": "codecov/patch/tlilli-core",
+            "integration_id": 254
+          },
+          {
+            "context": "codecov/patch/tlilli-mcp",
+            "integration_id": 254
+          },
+          {
+            "context": "build/macos-arm64",
+            "integration_id": 15368
+          },
+          {
+            "context": "build/macos-x86_64",
+            "integration_id": 15368
+          },
+          {
+            "context": "build/windows",
+            "integration_id": 15368
+          }
+        ]
+      }
+    }
+  ],
+  "bypass_actors": [
+    {
+      "actor_id": 5,
+      "actor_type": "RepositoryRole",
+      "bypass_mode": "pull_request"
+    }
+  ]
+}
+```
+
+`tags v*`:
+
+```json
+{
+  "id": 26993357,
+  "name": "tags v*",
+  "target": "tag",
+  "source_type": "Repository",
+  "source": "bioedca/Tlilli",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "exclude": [],
+      "include": [
+        "refs/tags/v*"
+      ]
+    }
+  },
+  "rules": [
+    {
+      "type": "update"
+    },
+    {
+      "type": "deletion"
+    }
+  ],
+  "bypass_actors": []
+}
+```
+
+`tags v* creation`:
+
+```json
+{
+  "id": 26993367,
+  "name": "tags v* creation",
+  "target": "tag",
+  "source_type": "Repository",
+  "source": "bioedca/Tlilli",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "exclude": [],
+      "include": [
+        "refs/tags/v*"
+      ]
+    }
+  },
+  "rules": [
+    {
+      "type": "creation"
+    }
+  ],
+  "bypass_actors": [
+    {
+      "actor_id": 5,
+      "actor_type": "RepositoryRole",
+      "bypass_mode": "always"
+    }
+  ]
+}
+```
 
 ## 9. Project, milestones and labels ([PRD 36](../prd/36-issues-labels-and-projects.md))
 
@@ -147,3 +364,4 @@ Not yet run. The maintainer scoped the trademark searches (USPTO, EUIPO, TMview,
 | 2026-11-07 | Sponsors profile recorded as live; the repository page observed showing the Sponsor button | maintainer and agent |
 | 2026-11-08 | CodeRabbit ledger threshold lowered to 1 request an hour (D-087), the allowance CodeRabbit reported on pull request 101 | maintainer and agent |
 | 2026-11-10 | CodeRabbit limited to load-bearing PRs (`review:coderabbit`) and 30 requests a week, chat auto-replies off (D-089), after the week's 90 requests rate-limited the maintainer's other repositories | maintainer and agent |
+| 2026-11-10 | Rulesets `main`, `tags v*` and `tags v* creation` created by the maintainer (bootstrap task 27, D-090); their JSON recorded from the API in §8 | maintainer and agent |
