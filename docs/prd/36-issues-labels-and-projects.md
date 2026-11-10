@@ -42,7 +42,7 @@ Prefixed, filterable, machine-readable (D-040). Colours are families: type = blu
 | `priority/` | `P0` (now, blocks everything), `P1` (this phase), `P2` (next phase), `P3` (someday) | triage; maintainer only for P0 |
 | `status/` | `triage`, `needs-info`, `blocked`, `stale`, `needs-maintainer` | forms (`triage`); automation (`stale`); authors (`blocked`, `needs-maintainer`) |
 | `phase/` | `0-foundation`, `v0.1`, `v0.2`, `v0.3`, `v0.4`, `v0.5`, `v1.0`, `post-1.0` | triage (mirrors milestone) |
-| control | `gate`, `gate:approved`, `review:deep`, `ci:full`, `docs:not-needed`, `needs-tests`, `size:override`, `stacked`, `backport`, `breaking-change`, `release`, `dependencies`, `experimental` | see [31](31-pull-requests.md) §4 |
+| control | `gate`, `gate:approved`, `review:deep`, `review:coderabbit`, `ci:full`, `docs:not-needed`, `needs-tests`, `size:override`, `stacked`, `backport`, `breaking-change`, `release`, `dependencies`, `experimental` | see [31](31-pull-requests.md) §4 |
 | size | `size/XS`, `size/S`, `size/M`, `size/L`, `size/XL` | automation |
 | community | `good first issue`, `help wanted` | maintainer |
 
