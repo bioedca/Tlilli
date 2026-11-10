@@ -20,8 +20,10 @@ TITLE = "Weekly report"
 MARK = re.compile(r"<!-- weekly-report run=(\d+) -->")
 AUDITED = ("docs:not-needed", "size:override", "needs-tests")
 REASONS = {"docs:not-needed": "Docs not needed because", "size:override": "Size override"}
-REQUEST = re.compile(r"^\s*@coderabbitai (full )?review\b", re.IGNORECASE | re.MULTILINE)
+# Every @coderabbitai command at the start of a line counts against the budget, not only review (D-089).
+REQUEST = re.compile(r"^\s*@coderabbitai\b", re.IGNORECASE | re.MULTILINE)
 HOURLY_CAP = 1  # CodeRabbit requests in any 60 minutes, across the repository (D-087)
+WEEKLY_CAP = 30  # CodeRabbit requests in any 7 days, across the repository (D-089)
 GREPTILE_BUDGET = 20  # reviews a month, the top of D-021's 15 to 20
 PAGE = 100
 when = datetime.datetime.fromisoformat  # reads GitHub's `...Z` stamps since Python 3.11
@@ -122,12 +124,15 @@ def budget(comments: list[dict], week: datetime.datetime, month: datetime.dateti
                 and "<!-- greptile_summary -->" in (c["body"] or "")):
             count = re.search(r"Reviews \((\d+)\)", c["body"])
             reviews += int(count.group(1)) if count else 1
-    lines = [(f"- CodeRabbit: {len(asks)} requests since {week:%Y-%m-%d}{busiest}; the threshold "
-              f"is {HOURLY_CAP} an hour (D-087). Local `coderabbit review` runs count too but do "
-              "not show here."),
+    lines = [(f"- CodeRabbit: {len(asks)} requests since {week:%Y-%m-%d}{busiest}; the budget "
+              f"is {WEEKLY_CAP} a week and {HOURLY_CAP} an hour (D-089, D-087). Local `coderabbit "
+              "review` runs count too but do not show here."),
              (f"- Greptile: {reviews} reviews in {month:%B %Y}, against a budget of 15 to "
               f"{GREPTILE_BUDGET} (D-021). The count includes earlier reviews of a pull request "
               "that Greptile also reviewed this month.")]
+    if len(asks) >= WEEKLY_CAP:
+        lines.append(f"- The week's {WEEKLY_CAP} CodeRabbit requests are used: labelled pull requests "
+                     "wait for the budget or a waiver from the maintainer (D-089).")
     if reviews >= GREPTILE_BUDGET * 0.9 and now.day < 20:
         lines.append(f"- 90% of {GREPTILE_BUDGET} is used before day 20: `review:deep` requests "
                      "wait for next month (R-11).")
