@@ -99,6 +99,7 @@ class SectionTest(unittest.TestCase):
             comment("@coderabbitai review", "2026-11-06T07:00:00Z"),
             comment("Round 2.\n@coderabbitai full review", "2026-11-06T07:50:00Z"),
             comment("@CodeRabbitAI review", "2026-11-06T08:10:00Z"),
+            comment("@coderabbitai resolve", "2026-11-06T09:30:00Z"),  # every command counts
             comment("Thanks, @coderabbitai review is done", "2026-11-06T07:20:00Z"),  # prose
             comment("@coderabbitai review", "2026-11-06T07:30:00Z", "coderabbitai[bot]", "Bot"),
             comment("@coderabbitai review", "2026-11-01T07:00:00Z"),  # before the week
@@ -109,11 +110,16 @@ class SectionTest(unittest.TestCase):
             comment("<!-- greptile_summary -->\nReviews (5)", "2026-10-30T09:00:00Z",
                     "greptile-apps[bot]", "Bot")]
         text = weekly.budget(comments, WEEK, MONTH, NOW)
-        self.assertIn("3 requests since 2026-11-02, at most 2 in one hour (from 2026-11-06 07:00 "
-                      "UTC); the threshold is 1", text)
+        self.assertIn("4 requests since 2026-11-02, at most 2 in one hour (from 2026-11-06 07:00 "
+                      "UTC); the budget is 30 a week and 1 an hour", text)
+        self.assertNotIn("are used", text)
+        week = [comment("@coderabbitai review", f"2026-11-0{3 + i // 10}T{10 + i % 10}:00:00Z")
+                for i in range(30)]
+        self.assertIn("The week's 30 CodeRabbit requests are used",
+                      weekly.budget(week, WEEK, MONTH, NOW))
         self.assertIn("- Greptile: 3 reviews in November 2026", text)
         self.assertNotIn("90%", text)
-        many = [{**comments[6], "body": "<!-- greptile_summary -->\nReviews (18)"}]
+        many = [{**comments[7], "body": "<!-- greptile_summary -->\nReviews (18)"}]
         self.assertIn("90% of 20 is used before day 20", weekly.budget(many, WEEK, MONTH, NOW))
 
 
