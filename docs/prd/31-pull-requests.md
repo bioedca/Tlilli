@@ -5,7 +5,7 @@ INTERSECT (Making Good PRs): a good PR makes **one cohesive change**, stays a **
 ## 1. Lifecycle (PR-PRQ-001 … 013)
 
 ```
-branch pushed ──▶ Draft PR ──▶ (Linux lane CI, Codex local rounds done, Codex cloud round, CodeRabbit round)
+branch pushed ──▶ Draft PR ──▶ (Linux lane CI, Codex local rounds done, Codex cloud round, CodeRabbit round if labelled review:coderabbit)
           ──▶ author marks Ready ──▶ full matrix + gate check + (Greptile if gate or review:deep)
           ──▶ author enables auto-merge or merges ──▶ branch up to date + checks green ──▶ main
 ```
@@ -13,7 +13,7 @@ branch pushed ──▶ Draft PR ──▶ (Linux lane CI, Codex local rounds do
 | ID | Rule |
 | --- | --- |
 | `PR-PRQ-001` | **Every PR opens as a Draft.** Draft means: work in progress, Linux lane CI runs on each push, AI reviewers are driven by the author, the maintainer does not look at it. |
-| `PR-PRQ-002` | **Ready for review** is asserted by the author (agent or human) only when all of: Linux lane green; Codex local rounds done (a cloud session without the Codex CLI records `0` with that reason) and one Codex cloud round clean ([32](32-code-review.md)); CodeRabbit round done and threads resolved or answered; PR body complete per the template; commits squashed (in a cloud session, unpushed fix-ups only, `PR-GIT-054`) and conventional; branch rebased on `origin/main`; size within cap or `size:override` justified; docs updated or `docs:not-needed` justified; tests included or `needs-tests` explained. Marking Ready triggers the full matrix, the maintainer's attention for a gated PR, and the Greptile review for a PR labelled `gate` or `review:deep` ([32](32-code-review.md) §2). A cloud session marks Ready through the GitHub MCP tools (`PR-GIT-058`); its pushed commits stay unsquashed (`PR-GIT-054`). |
+| `PR-PRQ-002` | **Ready for review** is asserted by the author (agent or human) only when all of: Linux lane green; Codex local rounds done (a cloud session without the Codex CLI records `0` with that reason) and one Codex cloud round clean ([32](32-code-review.md)); on a PR labelled `review:coderabbit`, CodeRabbit round done and threads resolved or answered (D-089); PR body complete per the template; commits squashed (in a cloud session, unpushed fix-ups only, `PR-GIT-054`) and conventional; branch rebased on `origin/main`; size within cap or `size:override` justified; docs updated or `docs:not-needed` justified; tests included or `needs-tests` explained. Marking Ready triggers the full matrix, the maintainer's attention for a gated PR, and the Greptile review for a PR labelled `gate` or `review:deep` ([32](32-code-review.md) §2). A cloud session marks Ready through the GitHub MCP tools (`PR-GIT-058`); its pushed commits stay unsquashed (`PR-GIT-054`). |
 | `PR-PRQ-003` | **Auto-merge** is enabled by the author at Ready with the rebase method (`gh pr merge --auto --rebase <n>`, the UI, or the GitHub MCP tool `enable_pr_auto_merge` from a cloud session). GitHub lands the PR (rebase) when the branch is up to date with `main` and every required check passes, including `gate/maintainer` for gated PRs. GitHub refuses auto-merge on a PR that is already mergeable; the author then merges it with the rebase method and the head SHA it checked as the guard (`PUT /repos/bioedca/Tlilli/pulls/<n>/merge` with `merge_method: rebase` and `sha`, or `merge_pull_request` with `merge_method: rebase` and `expectedHeadSha`). An agent merges only a PR with no open maintainer decision, or one the maintainer authorized (`PR-GIT-058`, D-078). |
 | `PR-PRQ-004` | A Ready PR that receives new review findings goes back to work in place (not to Draft); the author fixes, pushes, resolves threads, re-requests review. Converting back to Draft is only for substantial rework and is announced in a comment. |
 | `PR-PRQ-005` | **Stale policy:** the weekly sweep labels an open PR older than 7 days `status/stale`, with one comment (`PR-GIT-004`); after 21 days with no push, comment or review other than the sweep's own, it closes the PR with a comment naming the branch (recoverable). Exempt: gated PRs that are Ready, which wait on the maintainer; Dependabot's PRs, because closing one tells Dependabot to skip that version; and the release-plz PR, which stays open until the next release. Branches with no PR that are older than 7 days are listed in the weekly report, never deleted (D-084). |
@@ -69,7 +69,7 @@ Requirements:
 ## Review pipeline
 <!-- Filled by the author as the pipeline advances. -->
 - Codex local rounds: N · Codex cloud: clean / pending
-- CodeRabbit: round N clean / pending
+- CodeRabbit: round N clean / pending / not required (no `review:coderabbit` label)
 - Greptile: n/a / requested / clean
 - Gated paths touched: none / <paths>
 
@@ -91,7 +91,7 @@ Until bootstrap task 20 adds `cargo-nextest` to CI and `scripts/install_pkgs.sh`
 
 | ID | Rule |
 | --- | --- |
-| `PR-PRQ-030` | Agents MAY apply freely: `ci:full` (run the matrix on a Draft), `review:deep` (request a Greptile review), `needs-tests` (declares tests are missing with the reason and a follow-up issue; blocks auto-merge until removed by the maintainer or replaced by tests), `stacked`, `area/*` corrections. |
+| `PR-PRQ-030` | Agents MAY apply freely: `ci:full` (run the matrix on a Draft), `review:deep` (request a Greptile review), `review:coderabbit` (require the CodeRabbit lane, with the reason in the PR body, D-089), `needs-tests` (declares tests are missing with the reason and a follow-up issue; blocks auto-merge until removed by the maintainer or replaced by tests), `stacked`, `area/*` corrections. |
 | `PR-PRQ-031` | Agents MAY apply with a written reason in the PR body: `docs:not-needed` (`Docs not needed because:` line) and `size:override` (`Size override:` line). Both are listed in the weekly audit report and may be reverted by the maintainer. |
 | `PR-PRQ-032` | Only automation applies `gate` (from CODEOWNERS paths) and `size/*`; only the maintainer applies `gate:approved` (or the backup admin while the handoff state is active, `PR-REV-010`, `PR-REV-012`), `priority/P0`, `breaking-change` (after confirming), `backport`. |
 | `PR-PRQ-033` | Removing a label that automation applied is forbidden; the automation re-applies it and posts a comment. |

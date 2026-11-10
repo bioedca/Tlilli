@@ -9,7 +9,7 @@ INTERSECT CI/CD rules adopted: separate CI from CD; CD triggers on tags, with `w
 | `ci.yml` | `pull_request` (all types incl. `ready_for_review`, `labeled`), `push` to `main` | Linux lane on every PR push; full matrix on Ready/`ci:full`/`main`; all required checks | none (Codecov upload by OIDC: `codecov/codecov-action` with `use_oidc: true`, `id-token: write` on the uploading jobs; skipped for Dependabot-authored PRs) |
 | `gate.yml` | `pull_request_target` (no checkout of PR code), `workflow_run` of `gate-relay.yml` | `gate/maintainer` required commit status ([32](32-code-review.md) §5) | none (`GITHUB_TOKEN`: `contents: read`, `pull-requests: write`, `statuses: write`) |
 | `gate-relay.yml` | `pull_request_review` | Relays review events to `gate.yml`; `permissions: {}`, no checkout | none |
-| `labeler.yml` | `pull_request_target` | Path labels `area/*`, `gate`; size labels; `review:deep` for gated PRs | none |
+| `labeler.yml` | `pull_request_target` | Path labels `area/*`, `gate`; size labels; `review:deep` for gated PRs; `review:coderabbit` for load-bearing PRs (D-089) | none |
 | `commits.yml` | part of `ci.yml` (`commits` job) | commitlint on all PR commits and title; ≤ 10 commits; branch-name pattern; per-commit `cargo check` (≤ 10 commits) | none |
 | `docs.yml` | `push` to `main` (paths `docs/**`, `mkdocs.yml`, `crates/**`), `workflow_dispatch`, `release: published` | Build MkDocs (`--strict`) + rustdoc; deploy to GitHub Pages; publish `updates/*.json` | none (Pages OIDC) |
 | `codeql.yml` | `pull_request`, `push` to `main`, weekly cron | CodeQL for Rust, JavaScript/TypeScript and the workflows (`actions`) | none |
