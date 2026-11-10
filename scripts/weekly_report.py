@@ -154,6 +154,14 @@ def lines(text: str) -> list[dict]:
     return [json.loads(line) for line in filter(str.strip, text.splitlines())]
 
 
+def fetch_comments(repo: str, since: str) -> list[dict]:
+    """The comments updated since `since`, on the conversation and in review threads: a command to
+    CodeRabbit counts against its budget wherever it is written (D-089)."""
+    fields = ".[] | {user: .user.login, user_type: .user.type, created_at, updated_at, body}"
+    return [c for kind in ("issues", "pulls") for c in lines(gh(
+        "--paginate", f"repos/{repo}/{kind}/comments?since={since}&per_page=100", "--jq", fields))]
+
+
 def main() -> int:
     repo = os.environ["GITHUB_REPOSITORY"]
     run = int(os.environ["GITHUB_RUN_ID"])  # run ids grow, so they order the runs
@@ -163,9 +171,7 @@ def main() -> int:
     month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     prs = pulls(repo, week)
     since = min(week, month).strftime("%Y-%m-%dT%H:%M:%SZ")  # filters on updated_at
-    comments = lines(gh("--paginate", f"repos/{repo}/issues/comments?since={since}&per_page=100",
-                        "--jq", ".[] | {user: .user.login, user_type: .user.type, created_at, "
-                        "updated_at, body}"))
+    comments = fetch_comments(repo, since)
     body, report = render(run, url, now.date(), [
         ("Mutation score of `tlilli-core` (`PR-TST-012`)",
          mutation(os.environ.get("MUTANTS", ""), os.environ.get("MUTANTS_RESULT", ""))),
