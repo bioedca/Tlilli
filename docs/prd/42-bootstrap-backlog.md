@@ -47,7 +47,7 @@ The first issues to open, in dependency order. Each becomes a `type/task` issue 
 | 24 | `release-plz.toml`, `cliff.toml`, `release-plz.yml` (release PR + tag + trusted publishing), `CITATION.cff` version script | `area/release`, `gate` | D-025, [37](37-releases-and-packaging.md) §2 | M |
 | 25 | `release.yml` (tauri-action matrix → draft release, SBOM, checksums, attestations, verify) and `prerelease.yml`; rehearse in the companion repo with `dry_run` | `area/release`, `gate` | [37](37-releases-and-packaging.md) §2, `PR-CI-018` | L (split: build; sbom/checksums; attest/verify; prerelease) |
 | 26 | `post-release.yml` (tap bump, winget, updates JSON, Zenodo check, announcement draft); Flathub manifest deferred to v1.0 | `area/release`, `gate` | `PR-REL-021..025` | M |
-| 27 | Ruleset `main` (bypass only for the repository-admin role on pull requests, checked with one agent-session merge, D-078; PR required, linear history, branch up to date before merging, conversation resolution, the required checks of `PR-GIT-043`), ruleset `tags v*`; export JSON to `docs/dev/github-settings.md` (H) | `area/repo`, `gate` | D-010, D-011, [39](39-github-configuration.md) §3 | S |
+| 27 | Ruleset `main` (bypass only for the repository-admin role on pull requests, checked with one agent-session merge, D-078; PR required, linear history, branch up to date before merging, conversation resolution, the required checks of `PR-GIT-043`), rulesets `tags v*` and `tags v* creation` (D-090); export JSON to `docs/dev/github-settings.md` (H) | `area/repo`, `gate` | D-010, D-011, [39](39-github-configuration.md) §3 | S |
 
 ## E. Documentation and developer environment
 
