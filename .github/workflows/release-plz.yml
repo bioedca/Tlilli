@@ -152,7 +152,13 @@ jobs:
             echo "v$version is released and nothing is waiting: no release pull request."
             exit 0
           fi
-          git-cliff --config cliff.toml --tag "v$version" --output CHANGELOG.md
+          # git-cliff reads every commit's pull request from the GitHub API; retry a dropped request.
+          for attempt in 1 2 3; do
+            git-cliff --config cliff.toml --tag "v$version" --output CHANGELOG.md && break
+            if [[ $attempt == 3 ]]; then exit 1; fi
+            echo "git-cliff failed (attempt $attempt of 3); retrying in 30 s."
+            sleep 30
+          done
           python3 scripts/citation_version.py
           echo "open=true" >> "$GITHUB_OUTPUT"
           git status --short
