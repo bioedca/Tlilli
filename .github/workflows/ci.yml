@@ -75,8 +75,9 @@ jobs:
           cargo llvm-cov nextest --no-report -p tlilli-core --no-default-features
           cargo llvm-cov report --lcov --output-path lcov.info
       - run: cargo test --doc --workspace
-      # Dependabot's runs get no OIDC token, so they upload nothing (PRD 39 §5). A fork's pull
-      # request uploads without one, which Codecov accepts for a public repository.
+      # Dependabot's runs get no OIDC token, so they upload nothing (PRD 39 §5); a Dependabot PR gets
+      # the required Codecov checks from a run the maintainer starts (D-091). A fork's pull request
+      # uploads without one, which Codecov accepts for a public repository.
       - if: github.actor != 'dependabot[bot]'
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:

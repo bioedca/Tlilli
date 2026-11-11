@@ -2,7 +2,14 @@
 # report with all four Rust flags, and each flag's paths select its crate from it; the ui job
 # uploads Vitest's report with the ui flag. The ui and app flags are measured, not gated.
 codecov:
-  require_ci_to_pass: true
+  # Post the patch checks as soon as the rust-test upload, which carries both gated flags, is
+  # processed, whatever the other statuses say (D-091): a gated PR's gate/maintainer status fails
+  # until the maintainer decides, and the checks must report meanwhile, or a merge on a relayed
+  # authorization (D-078) never has every other required check green. Waiting for CI instead left
+  # them in progress for good (#113).
+  require_ci_to_pass: false
+  notify:
+    wait_for_ci: false
 
 coverage:
   status:
