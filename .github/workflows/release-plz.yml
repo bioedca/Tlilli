@@ -158,7 +158,7 @@ jobs:
           git status --short
           git diff --stat
           if [[ $DRY_RUN == true ]]; then
-            sed -n '1,/^\[/p' CHANGELOG.md
+            awk '/^## \[/ { n++ } n == 1' CHANGELOG.md # the new version's section
             grep -E '^(version|date-released):' CITATION.cff
           fi
       - name: Open or update the release pull request
