@@ -5,7 +5,7 @@ This runbook takes a release from tag to published, and says how someone else ta
 The binding sources are [37 Releases and packaging](../prd/37-releases-and-packaging.md), [38](../prd/38-maintenance-and-support.md) §8 and the secrets inventory in [39 GitHub configuration](../prd/39-github-configuration.md) §5.
 
 !!! note "Status"
-    The release workflows (`release-plz.yml`, `release.yml`, `prerelease.yml`, `post-release.yml`) arrive with bootstrap tasks 24 to 26. Until they land, this page describes the process they implement, and steps 3 to 5 cannot be run yet.
+    `release-plz.yml` is in place (bootstrap task 24). `release.yml`, `prerelease.yml` and `post-release.yml` arrive with bootstrap tasks 25 and 26; until they land, the draft release of step 3 and steps 4 and 5 cannot be run.
 
 ## Cutting a release
 
@@ -14,6 +14,8 @@ The binding sources are [37 Releases and packaging](../prd/37-releases-and-packa
     - For a patch: the fix list is confirmed.
     - `main` is green.
     - release-plz opens the release pull request only for changes to the crates. A release of changes under `ui/`, `skills/` or `docs/` alone starts with a pull request that raises `[workspace.package] version` in `Cargo.toml` (D-081).
+    - While that version is the placeholder `0.0.0`, `release-plz.yml` opens nothing: the first release starts with the pull request that raises it to `0.1.0` (D-092).
+    - A crate that has never been published is published by hand first: see [First publish of a crate](#first-publish-of-a-crate).
 2. **Review the release pull request** (`chore(release): vX.Y.Z`, opened by release-plz).
     - Check the versions, the groups in `CHANGELOG.md`, `CITATION.cff` and the migration notes.
     - The release commit is authored by the `RELEASE_PLZ_TOKEN` user without a sign-off, so the `DCO` check fails on it. Open that check and choose **Set DCO to pass**, again after each update of the pull request (D-081).
@@ -34,9 +36,21 @@ The binding sources are [37 Releases and packaging](../prd/37-releases-and-packa
     - create the next milestone and move the deferred items to it;
     - re-baseline the status line of the PRD.
 
+### First publish of a crate
+
+crates.io adds a trusted publisher only to a crate that exists, so the first version of each crate goes out by hand: `tlilli-core` with v0.1, `tlilli-mcp` and `tlilli-cli` with v0.2 (D-092). Do this after the release pull request's checks pass and before it merges.
+
+1. On crates.io, create an API token named `tlilli-<crate>-first-publish`: scopes `publish-new` and `publish-update`, limited to that crate, expiring in 7 days.
+2. From a checkout of the release pull request's branch, run `cargo publish -p tlilli-<crate> --locked` with the token in `CARGO_REGISTRY_TOKEN`.
+3. Revoke the token.
+4. On the crate's crates.io settings page, under Trusted Publishing, add a GitHub publisher: owner `bioedca`, repository `Tlilli`, workflow `release-plz.yml`, environment `automation`. Then require trusted publishing for the crate, so no token can publish it again.
+5. Merge the release pull request. release-plz skips the version already on crates.io, and `release-plz.yml` creates the tag.
+
 ### Rehearsing workflow changes
 
 Every change to `release-plz.yml`, `release.yml`, `prerelease.yml` or `post-release.yml` is first run in the private companion repository `bioedca/tlilli-release-rehearsal`, with dummy keys and `dry_run=true`. It lands on `main` only after that run passes ([39](../prd/39-github-configuration.md) §6). The companion repository is disposable: it holds only copies of the workflows and dummy secrets.
+
+For `release-plz.yml`, push the branch under test to the companion repository and run the workflow on it by hand, with `dry_run` left on. GitHub offers the manual run once the companion repository's `main` holds a copy of the workflow. The run prints the next version and the new `CHANGELOG.md` and `CITATION.cff`, and runs `release-plz release --dry-run`. It pushes, opens, publishes and tags nothing, and needs no secret.
 
 ## Handoff: the maintainer is unreachable
 
