@@ -1,0 +1,179 @@
+name: release-plz
+
+# The release pull request, the crates.io publish and the release tag (PRD 37 §2, PRD 33 §1 and §4,
+# D-025, D-081, D-092). On every push to `main`:
+#   release     when the pushed commit is a merged release-plz pull request: publish the crates
+#               with crates.io trusted publishing, then create the annotated tag v<version>, which
+#               starts release.yml. Any other commit is left alone.
+#   release-pr  open or update the "chore(release): v<version>" pull request, with CHANGELOG.md
+#               (git-cliff over every commit) and CITATION.cff written before release-plz commits.
+# Both wait while the workspace version is the placeholder 0.0.0; the v0.1 release starts with the
+# pull request that raises it. A manual run with dry_run (the default) does everything but push,
+# open, publish or tag: it is the rehearsal of PRD 37 §7 in bioedca/tlilli-release-rehearsal.
+# release-plz and git-cliff come from taiki-e/install-action: release-plz/action runs actions
+# outside the PR-CI-019 allow-list (D-092).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Rehearse without pushing, opening a pull request, publishing or tagging
+        type: boolean
+        default: true
+
+permissions: {} # each job declares the scopes it needs (PR-CI-003)
+
+env:
+  CARGO_TERM_COLOR: always
+  DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+
+jobs:
+  # No concurrency group: GitHub replaces a group's pending run with a newer one, which could drop
+  # the run of a release commit (D-080). Each run looks only at its own commit.
+  release:
+    name: publish and tag
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: automation
+    permissions:
+      contents: read
+      pull-requests: read # find the pull request behind the pushed commit
+      id-token: write # crates.io trusted publishing
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Decide
+        id: decide
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          version=$(python3 -c 'import tomllib; print(tomllib.load(open("Cargo.toml", "rb"))["workspace"]["package"]["version"])')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          prs=$(gh api "repos/$REPO/commits/$SHA/pulls" --jq '[.[] | select(.merged_at != null and (.head.ref | startswith("release-plz-")))] | length')
+          if [[ $version != 0.0.0 && $prs -gt 0 && $DRY_RUN != true ]]; then
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            echo "$SHA merged a release pull request: releasing v$version"
+          else
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            echo "Not a release commit (version $version, release pull requests $prs, dry run $DRY_RUN)."
+          fi
+      - name: Toolchain from rust-toolchain.toml
+        if: steps.decide.outputs.release == 'true' || env.DRY_RUN == 'true'
+        run: rustup toolchain install
+      - uses: taiki-e/install-action@682ce6c3c696a4cd5168a05f98e51aa02b877941 # v2.89.1
+        if: steps.decide.outputs.release == 'true' || env.DRY_RUN == 'true'
+        with:
+          tool: release-plz@0.4.3
+      - name: Authenticate with crates.io (trusted publishing)
+        id: crates-io
+        if: steps.decide.outputs.release == 'true'
+        uses: rust-lang/crates-io-auth-action@3268eb413133e2960fa4ae0e963ca76380c54cd9 # v1.0.6
+      - name: Publish the crates
+        if: steps.decide.outputs.release == 'true' || env.DRY_RUN == 'true'
+        env:
+          # release-plz only reads which pull request the commit came from (no tag, no GitHub
+          # release), so the job's token is enough.
+          GIT_TOKEN: ${{ github.token }}
+          CRATES_IO_TOKEN: ${{ steps.crates-io.outputs.token }}
+        run: |
+          # A crate whose version is already on crates.io is skipped, as after the manual first
+          # publish of PRD 37 §2. release_always = false: only a release commit publishes.
+          if [[ -n $CRATES_IO_TOKEN ]]; then export CARGO_REGISTRY_TOKEN=$CRATES_IO_TOKEN; fi
+          args=(release --git-token "$GIT_TOKEN" -o json)
+          if [[ $DRY_RUN == true ]]; then args+=(--dry-run); fi
+          release-plz "${args[@]}"
+      - name: Tag v${{ steps.decide.outputs.version }}
+        if: steps.decide.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLZ_TOKEN }} # a tag pushed with GITHUB_TOKEN starts no workflow
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          VERSION: ${{ steps.decide.outputs.version }}
+        run: |
+          if gh api "repos/$REPO/git/ref/tags/v$VERSION" --silent 2>/dev/null; then
+            echo "v$VERSION exists already."
+            exit 0
+          fi
+          read -r login id < <(gh api user --jq '"\(.login) \(.id)"')
+          tag=$(gh api "repos/$REPO/git/tags" -f "tag=v$VERSION" -f "message=Tlilli v$VERSION" \
+            -f "object=$SHA" -f type=commit -f "tagger[name]=$login" \
+            -f "tagger[email]=$id+$login@users.noreply.github.com" --jq .sha)
+          gh api "repos/$REPO/git/refs" -f ref="refs/tags/v$VERSION" -f sha="$tag" --silent
+          echo "Tagged $SHA as v$VERSION."
+
+  # After release, so a release PR is never reopened for a version that release just tagged.
+  release-pr:
+    name: release pull request
+    needs: release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: automation
+    concurrency:
+      group: release-plz-release-pr
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      pull-requests: read # git-cliff links each commit to its pull request
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+      - name: Skip while the version is 0.0.0
+        id: placeholder
+        run: |
+          version=$(python3 -c 'import tomllib; print(tomllib.load(open("Cargo.toml", "rb"))["workspace"]["package"]["version"])')
+          if [[ $version == 0.0.0 && $DRY_RUN != true ]]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "The workspace version is the placeholder 0.0.0: no release pull request yet."
+          fi
+      - name: Toolchain from rust-toolchain.toml
+        if: steps.placeholder.outputs.skip != 'true'
+        run: rustup toolchain install
+      - uses: taiki-e/install-action@682ce6c3c696a4cd5168a05f98e51aa02b877941 # v2.89.1
+        if: steps.placeholder.outputs.skip != 'true'
+        with:
+          tool: release-plz@0.4.3,git-cliff@2.14.2
+      - name: Next version, CHANGELOG.md and CITATION.cff
+        id: next
+        if: steps.placeholder.outputs.skip != 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }} # git-cliff's GitHub integration
+        run: |
+          release-plz update
+          version=$(python3 -c 'import tomllib; print(tomllib.load(open("Cargo.toml", "rb"))["workspace"]["package"]["version"])')
+          if git rev-parse -q --verify "refs/tags/v$version" > /dev/null; then
+            echo "v$version is released and nothing is waiting: no release pull request."
+            exit 0
+          fi
+          git-cliff --config cliff.toml --tag "v$version" --output CHANGELOG.md
+          python3 scripts/citation_version.py
+          echo "open=true" >> "$GITHUB_OUTPUT"
+          git status --short
+          git diff --stat
+          if [[ $DRY_RUN == true ]]; then
+            sed -n '1,/^\[/p' CHANGELOG.md
+            grep -E '^(version|date-released):' CITATION.cff
+          fi
+      - name: Open or update the release pull request
+        if: steps.next.outputs.open == 'true' && env.DRY_RUN != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLZ_TOKEN }}
+          RELEASE_PLZ_TOKEN: ${{ secrets.RELEASE_PLZ_TOKEN }}
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          # release-plz commits through the GitHub API as the token's user, without a sign-off
+          # (D-081): the maintainer sets DCO to pass on the release pull request. The git identity
+          # below is the same user, for anything release-plz commits locally.
+          read -r login id < <(gh api user --jq '"\(.login) \(.id)"')
+          git config user.name "$login"
+          git config user.email "$id+$login@users.noreply.github.com"
+          # --allow-dirty: the files written above become part of the release commit. Without them
+          # a version raised by hand changes nothing, and release-plz would open no pull request.
+          release-plz release-pr --allow-dirty --git-token "$RELEASE_PLZ_TOKEN" --repo-url "$REPO_URL" -o json
