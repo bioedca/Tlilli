@@ -79,7 +79,7 @@ Everything the project relies on in GitHub, as a checklist that can be audited. 
 | OpenAI Codex | GitHub App | pull requests read/write, contents read | automatic reviews **off**; `@codex review` |
 | CodeRabbit | GitHub App | pull requests, contents read, checks | Team plan, one seat (Open Source plan when the repository qualifies, D-062); auto-review off |
 | Greptile | GitHub App | pull requests, contents read | label-triggered |
-| Codecov | GitHub App + OIDC | checks, statuses | Codecov GitHub App installed; `codecov/codecov-action` runs with `use_oidc: true` and the uploading jobs grant `id-token: write`; no token is stored (`PR-CI-007`, D-061); the coverage upload is skipped for Dependabot-authored PRs |
+| Codecov | GitHub App + OIDC | checks, statuses | Codecov GitHub App installed; `codecov/codecov-action` runs with `use_oidc: true` and the uploading jobs grant `id-token: write`; no token is stored (`PR-CI-007`, D-061); the coverage upload is skipped on Dependabot's runs, which get no OIDC token, so a Dependabot PR gets the required Codecov checks from a CI run the maintainer starts; `codecov.yml` sets `require_ci_to_pass: false`, so the checks report while `gate/maintainer` fails (D-091) |
 | DCO | GitHub App (probot) | statuses | required check `DCO` |
 | Zenodo | webhook | releases read | archives on publish |
 | Dependabot | native | — | grouped weekly |

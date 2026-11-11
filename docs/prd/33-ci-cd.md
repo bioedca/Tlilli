@@ -6,7 +6,7 @@ INTERSECT CI/CD rules adopted: separate CI from CD; CD triggers on tags, with `w
 
 | Workflow file | Triggers | Purpose | Secrets |
 | --- | --- | --- | --- |
-| `ci.yml` | `pull_request` (all types incl. `ready_for_review`, `labeled`), `push` to `main` | Linux lane on every PR push; full matrix on Ready/`ci:full`/`main`; all required checks | none (Codecov upload by OIDC: `codecov/codecov-action` with `use_oidc: true`, `id-token: write` on the uploading jobs; skipped for Dependabot-authored PRs) |
+| `ci.yml` | `pull_request` (all types incl. `ready_for_review`, `labeled`), `push` to `main` | Linux lane on every PR push; full matrix on Ready/`ci:full`/`main`; all required checks | none (Codecov upload by OIDC: `codecov/codecov-action` with `use_oidc: true`, `id-token: write` on the uploading jobs; skipped on Dependabot's runs, which get no OIDC token, so a Dependabot PR gets the Codecov checks from a run the maintainer starts, D-091) |
 | `gate.yml` | `pull_request_target` (no checkout of PR code), `workflow_run` of `gate-relay.yml` | `gate/maintainer` required commit status ([32](32-code-review.md) §5) | none (`GITHUB_TOKEN`: `contents: read`, `pull-requests: write`, `statuses: write`) |
 | `gate-relay.yml` | `pull_request_review` | Relays review events to `gate.yml`; `permissions: {}`, no checkout | none |
 | `labeler.yml` | `pull_request_target` | Path labels `area/*`, `gate`; size labels; `review:deep` for gated PRs; `review:coderabbit` for load-bearing PRs (D-089) | none |
