@@ -22,14 +22,14 @@
     // in Cargo.toml (`rust-version`) is the current stable release (D-031). The components are
     // the feature's defaults, spelled out: rustfmt and clippy for the CI checks, rust-analyzer
     // and rust-src for the editor.
-    "ghcr.io/devcontainers/features/rust:1.6.0": {
+    "ghcr.io/devcontainers/features/rust:1.6.1": {
       "version": "latest",
       "profile": "minimal",
       "components": "rustfmt,clippy,rust-analyzer,rust-src"
     },
     // Node 22 (PRD 39 §6; CI uses `node-version: 22`) and the pnpm version that
     // ui/package.json names in `packageManager`, so the two resolve to the same binary.
-    "ghcr.io/devcontainers/features/node:2.1.1": {
+    "ghcr.io/devcontainers/features/node:2.1.2": {
       "version": "22",
       "pnpmVersion": "10.28.0"
     },
