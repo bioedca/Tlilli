@@ -4,9 +4,9 @@
 #   pip install pip-tools
 #   pip-compile --generate-hashes --strip-extras --output-file docs/requirements.txt docs/requirements.in
 # mike (versioned docs) is added at v1.0 (PRD 35 §1); until then the site is a single `latest`.
-mkdocs-material==9.8.0
+mkdocs-material==9.8.1
 # 1.2.3 adds a dependency on `properdocs`, a parallel MkDocs fork that prints an advocacy
 # banner at every build; 1.2.2 is the same plugin without it.
 mkdocs-redirects==1.2.2
-mkdocs-git-revision-date-localized-plugin==1.6.3
+mkdocs-git-revision-date-localized-plugin==1.7.0
 mkdocs-glightbox==0.5.3
